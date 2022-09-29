@@ -4,7 +4,7 @@ Intitial release of CoRL - Part #1 -Approved on 2022-05-2024 12:08:51 - PA Appro
 
 Core act3 reinforcement learning library
 
-- Online documentation: [https://act3-rl.git.act3-ace.com/corl/](https://act3-rl.git.act3-ace.com/corl/)
+<!-- - Online documentation: [https://act3-rl.git.act3-ace.com/corl/](https://act3-rl.git.act3-ace.com/corl/) -->
 
 ### How to install pip package from project level with a personal access token
 
@@ -67,7 +67,7 @@ python -m corl.train_rl --cfg config/experiments/cartpole_v1.yml
 
 - Controlled by: Air Force Research Laboratory (AFRL)
 - Controlled by: AFRL Autonomy Capability Team (ACT3)
-- LDC/Distribution Statement: DIST-D
+- LDC/Distribution Statement: DIST-A
 - POCs:
     - terry.wilson.11@us.af.mil (AFRL ACT3)
     - bejamin.heiner@us.af.mil (AFRL ACT3)
