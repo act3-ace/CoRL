@@ -1,0 +1,42 @@
+teams:
+  team_participant_map:
+    blue:
+    - platform_config: config/tasks/docking_1d/docking1d_platform.yml
+      agents:
+      - name: blue0
+        agent_config: config/tasks/docking_1d/docking1d_agent.yml
+        policy_config: config/policy/ppo/default_config.yml
+        agent_loader:
+          class_path: corl.evaluation.loader.check_point_file.CheckpointFile
+          init_args:
+            checkpoint_filename: /home/vgangal/workspace/ACT3-RLLIB-AGENTS/Docking-1D-EpisodeParameterProviderSavingTrainer_ACT3MultiAgentEnv_27a11_00000_0_num_gpus=0,num_workers=23,rollout_fragment_length_2022-05-12_15-49-49/checkpoint_002200/checkpoint-2200
+            policy_id: blue0
+
+
+  # If platform names ever change from <side><idx> format this will need to be changed
+  participant_id_schema: "%team_name%%idx%"
+
+task:
+    config_yaml_file: config/tasks/docking_1d/docking1d_task.yml
+
+test_cases:
+  pandas:
+    data: config/evaluation/test_cases_config/docking1d_tests.yml
+    source_form: FILE_YAML_CONFIGURATION
+    randomize: False
+
+# eval_config_update is required in a bit of a bad way
+plugins:
+    platform_serialization:
+        class_path: corl.evaluation.serialize_platforms.serialize_Docking_1d    
+
+engine:
+    rllib:
+        callbacks: []
+        workers: 0
+
+recorders:
+- class_path: corl.evaluation.recording.folder.Folder
+  init_args:
+    dir: /home/vgangal/workspace/eval_framework_out/corl/docking1d/
+    append_timestamp: False

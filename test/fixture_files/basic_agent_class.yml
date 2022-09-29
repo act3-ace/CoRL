@@ -1,0 +1,267 @@
+# ---------------------------------------------------------------------------
+#
+#
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
+
+"agent": "corl.agents.base_agent.TrainableBaseAgent"
+"config": {
+    "parts": [
+        {"part": "Controller_Heading"},
+        {"part": "Controller_Speed_Kcas"},
+        {"part": "Controller_Altitude"},
+        {"part": "Sensor_Altitude"},
+        {"part": "Sensor_Time"},
+        {"part": "Sensor_OrientationRate"},
+        {"part": "Sensor_Orientation"},
+        {"part": "Sensor_Gload_Nz"},
+        {"part": "Sensor_Gload_Ny"},
+        {"part": "Sensor_AltitudeRate"},
+        {"part": "Sensor_AngleOfAttack"},
+        {"part": "Sensor_SideSlipAngleRate"},
+        {"part": "Sensor_FlightPathAngle"},
+        {"part": "Sensor_VelocityNED"},
+        {"part": "Sensor_AccelerationNED"},
+        {"part": "Sensor_Speed_Kcas"},
+    ],
+    "glues": [
+        {
+            "functor": "corl.glues.common.controller_glue.ControllerGlue",
+            "config": {
+                "controller": "Controller_Heading",
+            },
+        },
+        {
+            "functor": "corl.glues.common.controller_glue.ControllerGlue",
+            "config":{
+                "controller": "Controller_Speed_Kcas",
+                "minimum": 200.,
+                "maximum": 300.,
+            }
+        },
+        {
+            "functor": "corl.glues.common.controller_glue.ControllerGlue",
+            "config":{
+                "controller": "Controller_Altitude",
+                "minimum": 10000,
+                "maximum": 20000,
+                }
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config": {"sensor": "Sensor_Speed_Kcas"},
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config": {"sensor": "Sensor_AccelerationNED"},
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config": {"sensor": "Sensor_VelocityNED"},
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config": {"sensor": "Sensor_FlightPathAngle"},
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config": {"sensor": "Sensor_SideSlipAngleRate"},
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config": {"sensor": "Sensor_AngleOfAttack"},
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config": {"sensor": "Sensor_Altitude"},
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config":{"sensor": "Sensor_OrientationRate"}
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config":{"sensor": "Sensor_Orientation"}
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config":{"sensor": "Sensor_Gload_Nz"}
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config":{"sensor": "Sensor_Gload_Ny"}
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config":{"sensor": "Sensor_AltitudeRate"}
+        },
+        {
+            "name": "AltitudeTarget",
+            "functor": "corl.glues.common.target_value.TargetValue",
+            "config":{
+                "target_value": 5000,
+                "unit": "meters",
+                "limit": {
+                    "minimum": 2000,
+                    "maximum": 10000,
+                    "unit": meters
+                }
+            },
+        },
+        {
+            "name": "HeadingTarget",
+            "functor": "corl.glues.common.target_value.TargetValue",
+            "config":{
+                "target_value": 0.785398,
+                "unit": "radians",
+                "limit": {
+                    "minimum": -3.2,
+                    "maximum": 3.2,
+                    "unit": radians
+                }
+            }
+        },
+        {
+            "name": "KcasTarget",
+            "functor": "corl.glues.common.target_value.TargetValue",
+            "config":{
+                "target_value": 250,
+                "unit": "KCAS",
+                "limit": {
+                    "minimum": 100,
+                    "maximum": 500,
+                    "unit": KCAS
+                }
+            }
+        },
+        {
+            "functor": "corl.glues.common.target_value_difference.TargetValueDifference",
+            "wrapped": {
+                "sensor": {
+                    "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+                    "config": {"sensor": "Sensor_Altitude"},
+                },
+            },
+            "config":{
+                "target_value": 5000,
+                "unit": "meters",
+                "limit": {
+                    "minimum": -5000,
+                    "maximum": 5000,
+                    "unit": meters
+                }
+            }
+        },
+        {
+            "functor": "corl.glues.common.target_value_difference.TargetValueDifference",
+            "wrapped": {
+                "sensor": {
+                    "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+                    "config":{"sensor": "Sensor_Orientation"}
+                },
+            }
+            "config":{
+                "target_value": 0.785398,
+                "unit": "radians",
+                "is_rad": True,
+                "is_wrap": True,
+                "limit": {
+                    "minimum": -6.4,
+                    "maximum": 6.4,
+                    "unit": "radians"
+                }
+            }
+        },
+        {
+            "functor": "corl.glues.common.target_value_difference.TargetValueDifference",
+            "wrapped": {
+                "sensor": {
+                    "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+                    "config":{"sensor": "Sensor_Speed_Kcas"}
+                },
+            },
+            "config":{
+                "target_value": 250,
+                "unit": "knots",
+                "limit": {
+                    "minimum": -500,
+                    "maximum": 500,
+                    "unit": "knots"
+                }
+            }
+        },
+    ],
+    "dones": [
+        {
+            "functor": "corl.dones.position_capture_done.PositionCaptureDone",
+            "config":{
+                "target_altitude": 5000,
+                "target_heading": 0.785398,
+                "target_speed": 250,
+                "target_altitude_threshold": 100,
+                "target_heading_threshold": 5,
+                "target_speed_threshold": 5,
+                "time_in_bubble": 10
+            },
+        },
+    ],
+    "rewards": [
+        {
+            "name": "AltitudeReward",
+            "functor": "corl.rewards.exponential_decay_from_target_value.ExponentialDecayFromTargetValue",
+            "config": {
+                "observation": {
+                    "glue": "corl.glues.common.observe_sensor.ObserveSensor",
+                    "field": "direct_observation_diff",
+                    "unique_name": "_Sensor_Altitude",
+                    "namepostfix": "Diff"
+                },
+                "eps": 200,
+                "is_closer": true,
+                "closer_tolerance": 100,
+                "reward_scale": 1,
+            }
+        },
+        {
+            "name": "HeadingReward",
+            "functor": "corl.rewards.exponential_decay_from_target_value.ExponentialDecayFromTargetValue",
+            "config": {
+                "observation": {
+                    "glue": "corl.glues.common.observe_sensor.ObserveSensor",
+                    "field": "direct_observation_diff",
+                    "unique_name": "_Sensor_Orientation",
+                    "namepostfix": "Diff",
+                },
+                "eps": .2, # THIS IS RADIANS
+                "reward_scale": 1,
+                "index": 0,
+                "is_wrap": true,
+                "is_rad": true,
+                "is_closer": true,
+                "closer_tolerance": .15,
+            }
+        },
+        {
+            "name": "SpeedReward",
+            "functor": "corl.rewards.exponential_decay_from_target_value.ExponentialDecayFromTargetValue",
+            "config": {
+                "observation": {
+                    "glue": "corl.glues.common.observe_sensor.ObserveSensor",
+                    "field": "direct_observation_diff",
+                    "unique_name": "_Sensor_Speed_Kcas",
+                    "namepostfix": "Diff",
+                },
+                "eps": 5, # THIS IS RADIANS
+                "reward_scale": 1,
+                "is_closer": true,
+                "closer_tolerance": 10,
+            }
+        },
+    ],
+}

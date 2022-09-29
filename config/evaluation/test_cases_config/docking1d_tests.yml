@@ -1,0 +1,9 @@
+episode_parameter_providers:
+  environment:
+    simulator_reset:
+      platforms:
+        blue0:
+          x: 
+            value: [10,25,50]
+          xdot: 
+            value: 0

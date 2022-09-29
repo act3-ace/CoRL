@@ -1,0 +1,24 @@
+"config": "config/tasks/openai_gym/cartpole_v1/cartpole_v1.yml"
+"platform_config":
+  - [
+      "blue0",
+      "config/platforms/gym_platform.yml",
+    ]
+  - [
+      "noop0",
+      "config/platforms/gym_platform.yml",
+    ]
+"agent_config":
+  - [
+      "blue0",
+      "blue0",
+      "config/agents/openai_gym/openai_gym_agent.yml",
+      "config/policy/ppo/default_config.yml",
+    ]
+
+  - [
+      "noop0",
+      "noop0",
+      "config/agents/openai_gym/openai_gym_agent_noop_ctrl.yml",
+      "config/policy/random_action.yml",
+    ]

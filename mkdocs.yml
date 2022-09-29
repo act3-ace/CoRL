@@ -1,0 +1,343 @@
+# -------------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# -------------------------------------------------------------------------------
+site_name: ACT3 RL Core - CoRL
+site_author: ACT3
+docs_dir: docs
+site_description: "The following python project creates a python interface for training Deep RL - provides the base RL functionality and APIs to enable rapid ablation testing and setup"
+repo_name: act3-rl/corl/
+repo_url: https://git.act3-ace.com/act3-rl/corl/
+site_url: https://git.act3-ace.com/
+edit_uri: blob/main/docs/
+site_dir: site
+
+plugins:
+  - search
+  - macros
+  - mkdocstrings
+  - autorefs
+  - gen-files:
+      scripts:
+        - docs/gen_ref_nav.py  # or any other name or path
+  # - literate-nav:
+  #   nav_file: reference/SUMMARY.md
+  - coverage
+  - section-index
+  - pdf-export:
+      verbose: false
+      media_type: print
+      enabled_if_env: ENABLE_PDF_EXPORT
+      combined: true
+      # combined_output_path: pdf/document.pdf
+  
+
+theme:
+  name: material
+  icon:
+    logo: material/currency-sign
+  features:
+  - navigation.tabs
+  - navigation.top
+  palette:
+  - media: "(prefers-color-scheme: dark)"
+    scheme: slate
+    primary: black
+    accent: lime
+    toggle:
+      icon: material/weather-night
+      name: Switch to light mode
+  - media: "(prefers-color-scheme: light)"
+    scheme: default
+    primary: teal
+    accent: purple
+    toggle:
+      icon: material/weather-sunny
+      name: Switch to dark mode
+
+
+extra_css:
+  - css/style.css
+  - css/material.css
+  - css/mkdocstrings.css
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.emoji
+  - pymdownx.magiclink
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist
+  - toc:
+      permalink: "¤"
+  - codehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_div_format
+
+extra_javascript:
+  - https://unpkg.com/mermaid@8.4.2/dist/mermaid.min.js
+
+handlers:
+  python:
+    setup_commands:
+    - import sys
+    - sys.path.append("docs")
+    selection:
+      new_path_syntax: yes
+    import:  # demonstration purpose in the docs
+      - https://docs.python-requests.org/en/master/objects.inv
+
+nav:
+  - "Introduction": index.md
+  - "Concepts":
+    - concepts.md
+    - diverse-frame-rate.md
+  - "Configuration": configuration.md
+  - "Install": install.md
+  - "License": license.md
+  # - "Coverage Report": coverage.md
+  - "Tasks":
+    - "Docking 1D": tasks/docking_1d.md
+  - "ACT3 CORE":
+    - reference/SUMMARY.md
+    - reference/__init__.md
+    - reference/train_rl.md
+    - "Evaluation":
+      - reference/evaluation/__init__.md
+      - reference/evaluation/cli_generate_metrics.md
+      - reference/evaluation/cli_visualize.md
+      - reference/evaluation/default_config_updates.md
+      - reference/evaluation/episode_artifact.md
+      - reference/evaluation/eval_logger_name.md
+      - reference/evaluation/evaluation_outcome.md
+      - reference/evaluation/scene_processors.md
+      - reference/evaluation/serialize_platforms.md
+      - "Launchers":
+        - reference/evaluation/launchers/__init__.md
+        - reference/evaluation/launchers/evaluate_from_config.md
+      - "Loaders":
+        - reference/evaluation/loader/__init__.md
+        - reference/evaluation/loader/check_point_file.md
+        - reference/evaluation/loader/heuristic.md
+        - reference/evaluation/loader/i_agent_loader.md
+        - reference/evaluation/loader/weight_file.md
+      - "Metrics":
+        - reference/evaluation/metrics/__init__.md
+        - reference/evaluation/metrics/alerts.md
+        - reference/evaluation/metrics/generator.md
+        - reference/evaluation/metrics/metric.md
+        - reference/evaluation/metrics/processors.md
+        - reference/evaluation/metrics/scenario_alert_generators.md
+        - reference/evaluation/metrics/scenario_metric_generators.md
+        - reference/evaluation/metrics/scopes.md
+        - "Aggregators":
+          - reference/evaluation/metrics/aggregators/__init__.md
+          - reference/evaluation/metrics/aggregators/accumulate.md
+          - reference/evaluation/metrics/aggregators/average.md
+          - reference/evaluation/metrics/aggregators/criteria_rate.md
+          - reference/evaluation/metrics/aggregators/sum.md
+        - "Generators":
+          - reference/evaluation/metrics/generators/__init__.md
+          - reference/evaluation/metrics/generators/dones.md
+          - reference/evaluation/metrics/generators/rewards.md
+          - reference/evaluation/metrics/generators/meta/__init__.md
+          - reference/evaluation/metrics/generators/meta/episode_length.md
+          - reference/evaluation/metrics/generators/meta/runtime.md
+        - "Types":
+          - reference/evaluation/metrics/types/__init__.md
+          - reference/evaluation/metrics/types/nonterminals/__init__.md
+          - reference/evaluation/metrics/types/nonterminals/dict.md
+          - reference/evaluation/metrics/types/nonterminals/timed_value.md
+          - reference/evaluation/metrics/types/nonterminals/vector.md
+          - reference/evaluation/metrics/types/terminals/__init__.md
+          - reference/evaluation/metrics/types/terminals/discrete.md
+          - reference/evaluation/metrics/types/terminals/rate.md
+          - reference/evaluation/metrics/types/terminals/real.md
+          - reference/evaluation/metrics/types/terminals/string.md
+          - reference/evaluation/metrics/types/terminals/void.md
+        - "Recording":
+          - reference/evaluation/recording/__init__.md
+          - reference/evaluation/recording/folder.md
+          - reference/evaluation/recording/i_recorder.md
+        - "Runners":
+          - reference/evaluation/runners/__init__.md
+          - reference/evaluation/runners/iterate_test_cases.md
+          - reference/evaluation/runners/section_factories/__init__.md
+          - reference/evaluation/runners/section_factories/task.md
+          - reference/evaluation/runners/section_factories/teams.md
+          - reference/evaluation/runners/section_factories/engine/__init__.md
+          - reference/evaluation/runners/section_factories/engine/rllib/__init__.md
+          - reference/evaluation/runners/section_factories/engine/rllib/default_evaluation_callbacks.md
+          - reference/evaluation/runners/section_factories/engine/rllib/eval_config_updates.md
+          - reference/evaluation/runners/section_factories/engine/rllib/rllib_trainer.md
+          - reference/evaluation/runners/section_factories/plugins/__init__.md
+          - reference/evaluation/runners/section_factories/plugins/config_updater.md
+          - reference/evaluation/runners/section_factories/plugins/platform_serializer.md
+          - reference/evaluation/runners/section_factories/plugins/plugins.md
+          - reference/evaluation/runners/section_factories/test_cases/__init__.md
+          - reference/evaluation/runners/section_factories/test_cases/config_parser.md
+          - reference/evaluation/runners/section_factories/test_cases/pandas.md
+          - reference/evaluation/runners/section_factories/test_cases/test_case_generator.md
+        - "Util":
+          - reference/evaluation/util/__init__.md
+          - reference/evaluation/util/condition.md
+        - "Visualization":
+          - reference/evaluation/visualization/__init__.md
+          - reference/evaluation/visualization/print.md
+          - reference/evaluation/visualization/visualization.md
+    - "Agents":
+      - reference/agents/__init__.md
+      - reference/agents/base_agent.md
+      - reference/agents/noop_agent.md
+      - reference/agents/random_action_agent.md
+    - "Dones":
+      - reference/dones/__init__.md
+      - reference/dones/done_func_base.md
+      - reference/dones/done_func_multi_wrapper.md
+      - reference/dones/done_func_wrapper.md
+      - reference/dones/episode_length_done.md
+      - reference/dones/openai_gym_done.md
+      - reference/dones/sensor_bounds_check_done.md
+      - reference/dones/done_func_dict_wrapper.md
+      - "Docking 1D":
+        - reference/dones/docking_1d/__init__.md
+        - reference/dones/docking_1d/dones.md
+    - "Models":
+      - reference/models/__init__.md
+      - reference/models/frame_stacking.md
+      - reference/models/torch_frame_stack.md
+    - "Environment":
+      - reference/environment/__init__.md
+      - reference/environment/default_env_rllib_callbacks.md
+      - reference/environment/gym_env.md
+      - reference/environment/multi_agent_env.md
+      - reference/environment/utils/__init__.md
+      - reference/environment/utils/env_creation.md
+      - reference/environment/utils/obs_buffer.md
+      - reference/environment/utils/space_sort.md
+    - "Episode Parameter Provider":
+      - reference/episode_parameter_providers/__init__.md
+      - reference/episode_parameter_providers/adr.md
+      - reference/episode_parameter_providers/core.md
+      - reference/episode_parameter_providers/remote.md
+      - reference/episode_parameter_providers/simple.md
+      - reference/episode_parameter_providers/tabular_parameter_provider.md
+    - "Experiments":
+      - reference/experiments/__init__.md
+      - reference/experiments/base_experiment.md
+      - reference/experiments/rllib_experiment.md
+      # - reference/experiments/benchmark_experiment.md
+    - "Glues":
+      - reference/glues/__init__.md
+      - reference/glues/base_glue.md
+      - reference/glues/base_multi_wrapper.md
+      - reference/glues/base_wrapper.md
+      - reference/glues/base_dict_wrapper.md
+      - "Common":
+        - reference/glues/common/__init__.md
+        - reference/glues/common/observe_part_validity.md
+        - reference/glues/common/arithmetic_multi_glue.md
+        - reference/glues/common/controller_glue.md
+        - reference/glues/common/observe_sensor.md
+        - reference/glues/common/observe_sensor_repeated.md
+        - reference/glues/common/target_value.md
+        - reference/glues/common/target_value_difference.md
+        - reference/glues/common/projected_quantity.md
+      - "Controller Wrappers":
+        - reference/glues/controller_wrappers/__init__.md
+        - reference/glues/controller_wrappers/obs_relative_delta_controller_dict.md
+        - reference/glues/controller_wrappers/delta_controller.md
+        - reference/glues/controller_wrappers/obs_relative_delta_controller.md
+    - "Libraries":
+      - reference/libraries/__init__.md
+      - reference/libraries/cleanup.md
+      - reference/libraries/collection_utils.md
+      - reference/libraries/env_common.md
+      - reference/libraries/env_func_base.md
+      - reference/libraries/env_space_util.md
+      - reference/libraries/environment_dict.md
+      - reference/libraries/factory.md
+      - reference/libraries/functor.md
+      - reference/libraries/nan_check.md
+      - reference/libraries/observation_extractor.md
+      - reference/libraries/observation_util.md
+      - reference/libraries/parameters.md
+      - reference/libraries/plugin_library.md
+      - reference/libraries/property.md
+      - reference/libraries/state_dict.md
+      - reference/libraries/units.md
+      - reference/libraries/hparam_search_util.md
+      - reference/libraries/rllib_setup_util.md
+    - "Parts":
+      - reference/parts/__init__.md
+      - reference/parts/memory_store.md
+    - "Parsers":
+      - reference/parsers/__init__.md
+      - reference/parsers/yaml_loader.md
+    - "Policies":
+      - reference/policies/__init__.md
+      - reference/policies/base_policy.md
+      - reference/policies/random_action.md
+      - reference/policies/scripted_action.md
+      - reference/policies/custom_policy.md
+    - "Rewards":
+      - reference/rewards/__init__.md
+      - reference/rewards/base_measurement_operation.md
+      - reference/rewards/episode_done.md
+      - reference/rewards/exponential_decay_from_target_value.md
+      - reference/rewards/openai_gym_reward.md
+      - reference/rewards/reward_func_base.md
+      - reference/rewards/reward_func_multi_wrapper.md
+      - reference/rewards/reward_func_wrapper.md
+      - reference/rewards/multi_measurement_operation.md
+      - reference/rewards/reward_func_dict_wrapper.md
+      - "Docking 1D":
+        - reference/rewards/docking_1d/__init__.md
+        - reference/rewards/docking_1d/docking_distance_change_reward.md
+        - reference/rewards/docking_1d/docking_reward.md
+    - "Simulators":
+      - reference/simulators/__init__.md
+      - reference/simulators/base_available_platforms.md
+      - reference/simulators/base_parts.md
+      - reference/simulators/base_platform.md
+      - reference/simulators/base_properties.md
+      - reference/simulators/base_simulator.md
+      - reference/simulators/common_platform_utils.md
+      - "OpenAI Gym":
+        - reference/simulators/openai_gym/__init__.md
+        - reference/simulators/openai_gym/gym_available_platforms.md
+        - reference/simulators/openai_gym/gym_controllers.md
+        - reference/simulators/openai_gym/gym_sensors.md
+        - reference/simulators/openai_gym/gym_simulator.md
+      - "Six DOF":
+        - reference/simulators/six_dof/__init__.md
+        - reference/simulators/six_dof/base_six_dof_controllers.md
+        - reference/simulators/six_dof/base_six_dof_platform.md
+        - reference/simulators/six_dof/base_six_dof_properties.md
+      - "Docking 1D":
+        - reference/simulators/docking_1d/__init__.md
+        - reference/simulators/docking_1d/available_platforms.md
+        - reference/simulators/docking_1d/controllers.md
+        - reference/simulators/docking_1d/entities.md
+        - reference/simulators/docking_1d/platform.md
+        - reference/simulators/docking_1d/properties.md
+        - reference/simulators/docking_1d/sensors.md
+        - reference/simulators/docking_1d/simulator.md
+  - "Change log": change_log.md
+extra:
+  social:
+  - icon: fontawesome/brands/github
+    link: https://git.act3-ace.com
+  - icon: fontawesome/brands/gitlab
+    link: https://git.act3-ace.com/act3-rl/

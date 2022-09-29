@@ -1,0 +1,99 @@
+[tool.poetry]
+name = "corl"
+version = "1.50.5-beta.8"
+description = "Core ACT3 Reinforcement Learning (RL) Library - Core framework and base implementations of common things such as controllers, glues, observes, sensors, evaluation, and ect"
+authors = [
+        "Benjamin K Heiner <benjamin.heiner@us.af.mil>",
+        "Brian Stieber <TBD@TBD.com>",
+        "Cameron Long <TBD@TBD.com>",
+        "Joshua Blackburn <TBD@TBD.com>"
+    ]
+maintainers  = [
+        "Benjamin K Heiner <benjamin.heiner@us.af.mil>",
+        "Brian Stieber <TBD@TBD.com>",
+        "Cameron Long <TBD@TBD.com>",
+        "Joshua Blackburn <TBD@TBD.com>"
+    ]
+readme = "README.md"
+homepage = "https://git.act3-ace.com/act3-rl/corl"
+repository = "https://git.act3-ace.com/act3-rl/corl"
+documentation = "https://act3-rl.git.act3-ace.com/corl/"
+keywords = ["Deep", "Reinforcement", "Learning", "CoRL"]
+include = ["docs/*","config/*"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "Distribution C"
+packages = [
+        {include = "corl"},
+        {include = "docs"},
+    ]
+
+[tool.poetry.dependencies]
+python = ">=3.8, <3.11"
+ray = {version = "1.13.0", extras = ["all"]}
+pydantic = "^1.9.2"
+numpy-ringbuffer = "^0.2.2"
+jsonargparse = {version = "3.19.4", extras = ["signatures", "argcomplete"]}
+flatten-dict = "0.4.1"
+deepmerge = "0.3.0"
+GitPython = "3.1.27"
+h5py = ">=3.7"
+tensorboard = "<2.10"
+tensorflow = "^2.9.1"
+
+[tool.poetry.dev-dependencies]
+torch = "^1.12.0"
+pre-commit = "^2.20.0"
+pre-commit-hooks = "^4.3.0"
+tensorboard = "<2.10"
+tensorflow = "^2.9.1"
+types-PyYAML = "5.4.11"
+rope = "0.19.0"
+
+[tool.poetry.group.lint.dependencies]
+pylint = "2.8.3"
+flake8 = "3.9.2"
+yapf = "^0.32.0"
+mypy = "0.930"
+isort = "5.9.3"
+bashate = "^2.1.0"
+velin = "^0.0.11"
+blacken-docs = "^1.12.1"
+detect-secrets = "1.1.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.1.2"
+pytest-cov = "2.11.1"
+pyinstrument = "^4.3.0"
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "^1.3.1"
+mkdocs-git-revision-date-localized-plugin = "^1.1.0"
+mkdocs-macros-plugin = "^0.7.0"
+mkdocs-material = "^8.4.2"
+mkdocs-material-extensions = "^1.0.3"
+mkdocs-mermaid-plugin = "^0.1.1"
+mkdocs-pdf-export-plugin = "^0.5.10"
+mktheapidocs = {extras = ["plugin"], version = "^0.3.1"}
+mkdocstrings = "0.18.0"
+mkdocs-autorefs = "^0.4.1"
+mkdocs-coverage = "^0.2.5"
+mkdocs-gen-files = "^0.4.0"
+mkdocs-literate-nav = "^0.4.1"
+mkdocs-section-index = "^0.3.4"
+mkdocs-with-pdf = "^0.9.3"
+papermill = "^2.4.0"
+Pillow = "^9.2.0"
+pymdown-extensions = "^9.5"
+
+[tool.poetry.group.profile.dependencies]
+memray = "^1.3.1"
+memory-profiler = "^0.60.0"
+snakeviz = "^2.1.1"
+pyinstrument = "^4.3.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
