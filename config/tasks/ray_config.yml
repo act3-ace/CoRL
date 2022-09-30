@@ -21,4 +21,4 @@ ignore_reinit_error: True
 log_to_driver: True
 # If set will use local mode which ignores remote workers. used for debugging
 local_mode: True
-_temp_dir: data/corl/ray_logs/
+_temp_dir: /tmp/corl/ray_logs/

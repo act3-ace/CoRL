@@ -69,7 +69,7 @@ python -m corl.train_rl --cfg config/experiments/cartpole_v1.yml
         - karl.salva@us.af.mil
         - james.patrick@us.af.mil
         - Training Team
-            - cameron.long@jacobs.com (ML Training)
+            - clong@toyon.com (ML Training)
             - joshua.blackburn@stresearch.com (ML Training)
             - bstieber@toyon.com (ML Training)
 - AFRL Autonomy Capability Team (ACT3) Safe Autonomy (SA) Team
