@@ -33,9 +33,9 @@ conda activate CoRL
 poetry build
 ```
 
-### How to build the documentations
+### How to build the documentations - Local
 
-The following project support documentation via MkDocs
+The follow project is setup to use [MKDOCS](https://www.mkdocs.org/) which is a fast, simple and downright gorgeous static site generator that's geared towards building project documentation. Documentation source files are written in Markdown, and configured with a single YAML configuration file.
 
 To build the documentation:
 ```
@@ -53,17 +53,6 @@ The following project support development via Docker containers in VSCode and on
 
 - ***Setup the user env file:*** in code directory run the following script  --> `./scripts/setup_env_docker.sh`
 - ***Build the Docker containers using compose:*** run the following command --> `docker-compose build`
-
-
-## How to build the documentation locally
-
-This repository is setup to use [MKDOCS](https://www.mkdocs.org/) which is a fast, simple and downright gorgeous static site generator that's geared towards building project documentation. Documentation source files are written in Markdown, and configured with a single YAML configuration file. Start by reading the introductory tutorial, then check the User Guide for more information.
-
-- ***Install Mkdocs Modules*** in container/virtual environment run the following command --> `pip install -U -r mkdocs-requirements.txt`
-- ***Build Documentation:*** Inside Docker container run the following command --> `python -m  mkdocs build`
-- ***Serve Documentation:*** Inside Docker container run one of the following commands --> 
-    - `python -m mkdocs server`
-    - `python -m mkdocs serve --no-livereload`
 
 ## Running base examples
 

@@ -29,7 +29,7 @@ stop:
 # number of samples for population based training
 num_samples: 1
 # directory to store results from trials
-local_dir: /opt/data/corl/ray_results/
+local_dir: data/corl/ray_results/
 # path to restore point
 restore: null
 # If set will try to resume using restore

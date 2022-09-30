@@ -23,11 +23,11 @@ config:
   # Change the default path for saving out the data
   env_config_updates: &env_config_updates
     TrialName: Pendulum-V1
-    output_path: /opt/data/corl/act3
+    output_path: data/corl/act3
 
   # Change the default path for saving out the data
   tune_config_updates: &tune_config_updates
-    local_dir: /opt/data/corl/ray_results/
+    local_dir: data/corl/ray_results/
 
   ####################################################################
   # Setup the actual keys used by the code

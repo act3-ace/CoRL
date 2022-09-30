@@ -206,7 +206,7 @@ class ACT3MultiAgentEnvValidator(BaseModel):
     def create_output_path(cls, v, values):
         """Build the output path."""
 
-        v = v or '/opt/data/act3/ray_results'
+        v = v or 'data/act3/ray_results'
         v = parse_obj_as(Annotated[str, Field(regex=r'^[\w/\.-]+$')], v)
 
         if values['TrialName'] is not None:
