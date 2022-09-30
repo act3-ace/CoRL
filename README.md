@@ -72,6 +72,7 @@ python -m corl.train_rl --cfg config/experiments/cartpole_v1.yml
             - clong@toyon.com (ML Training)
             - joshua.blackburn@stresearch.com (ML Training)
             - bstieber@toyon.com (ML Training)
+            - madison.blake@shield.ai (ML Infrastructure and Evaluation)
 - AFRL Autonomy Capability Team (ACT3) Safe Autonomy (SA) Team
     - kerianne.hobbs@us.af.mil (AFRL ACT3)
     - terry.wilson.11@us.af.mil (AFRL ACT3)
