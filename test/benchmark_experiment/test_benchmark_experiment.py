@@ -21,9 +21,9 @@ from corl.experiments.base_experiment import ExperimentParse
 
 
 # Adjustments to the configuration files used in this test to match the current baseline is authorized, provided you make a post on
-# MatterMost with notifications to joblackburn and bheiner that the change was made.
+# * with notifications to * and * that the change was made.
 # All other changes, such as commenting out tests or disabling inference or evaluation requires coordination on the
-# channel of MatterMost with notifications to joblackburn and bheiner.
+# channel of * with notifications to * and *.
 # This should always be committed as False; however, if you need to debug this unit test, set it temporarily to True
 # @pytest.mark.ray_debug_mode(False)
 @pytest.mark.parametrize(

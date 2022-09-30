@@ -2,26 +2,50 @@ Initial release of CoRL - Part #1 -Approved on 2022-05-2024 12:08:51 - PA Approv
 
 # ACT3 RL Core
 
-Core act3 reinforcement learning library
+***Core act3 reinforcement learning library*** - The Core Reinforcement Learning library is intended to enable scalable deep reinforcement learning experimentation in a manner extensible to new simulations and new ways for the learning agents to interact with them. The hope is that this makes RL research easier by removing lock-in to particular simulations.
 
-- Online documentation: [https://act3-rl.git.act3-ace.com/corl/](https://act3-rl.git.act3-ace.com/corl/)
-
-### How to install pip package from project level with a personal access token
-
-In your User Settings->Access Tokens, you are able to create a Personal Access Token. Create a token with read_api scope. 
-The name of the token will be your username; the value of the token will be your password. Be sure to save them, because you 
-will not be able to view them again. 
-
-Use this command to install the pip package:
+## Install
+### Install the source - Miniconda - local host:
 
 ```bash
-pip install corl --no-deps --index-url https://<username>:<password>@git.act3-ace.com/api/v4/projects/657/packages/pypi/simple`
+# Create a virtual environment to install/run code
+conda create -n CoRL poetry==1.2.1
+# Activate the virtual environment
+conda activate CoRL
+# Install the CoRL dependencies
+poetry install
 ```
 
-The `--no-deps` tag`     is optional. Use it if you do not want dependency packages installed with the package. The project should already have the dependencies in the package.
+### How to install pip package
 
-Do NOT use the command provided by GitLab that utilizes the `--extra-index-url tag`. This tag will check PYPI.org first for the package, 
-and you will get an error.
+## Build
+
+### How to build the wheel file
+
+The following project supports building python packages via `Poetry`. 
+
+```bash
+# Create a virtual environment to install/run code
+conda create -n CoRL poetry==1.2.1
+# Activate the virtual environment
+conda activate CoRL
+# Build the CoRL package
+poetry build
+```
+
+### How to build the documentations
+
+The following project support documentation via MkDocs
+
+To build the documentation:
+```
+mkdocs build
+```
+
+To serve the documentation:
+```
+mkdocs serve
+```
 
 ## How to build the Docker containers
 
