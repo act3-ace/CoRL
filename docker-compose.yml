@@ -152,7 +152,7 @@ services:
     # deploy: *development-deploy-nvidia
 
   poetry-update:
-    image: ${ACT3_OCI_REGISTRY}/act3-rl/corl:pytorch_22_05
+    image: ${AGENTS_BASE_IMAGE}
 
     environment: *default-environment
     working_dir: /opt/project
@@ -165,7 +165,7 @@ services:
     command: bash -c "pip install poetry &&  poetry config virtualenvs.create false && poetry update"
 
   poetry-build-dist:
-    image: ${ACT3_OCI_REGISTRY}/act3-rl/corl:pytorch_22_05
+    image: ${AGENTS_BASE_IMAGE}
 
     environment: *default-environment
     working_dir: /opt/project
@@ -178,7 +178,7 @@ services:
     command: bash -c "pip install poetry &&  poetry config virtualenvs.create false && poetry build -n"
 
   docs:
-    image: ${ACT3_OCI_REGISTRY}/act3-rl/corl:pytorch_22_05
+    image: ${AGENTS_BASE_IMAGE}
 
     environment: *default-environment
     working_dir: /opt/project
@@ -191,7 +191,7 @@ services:
     command: bash -c "pip install poetry &&  poetry config virtualenvs.create false && poetry install --with docs --without test,lint,profile && mkdocs build && PYTHONPATH=/opt/project poetry run python -m mkdocs serve"
 
   lint:
-    image: ${ACT3_OCI_REGISTRY}/act3-rl/corl:pytorch_22_05
+    image: ${AGENTS_BASE_IMAGE}
 
     environment: *default-environment
     working_dir: /opt/project
@@ -204,7 +204,7 @@ services:
     command: bash -c "pip install poetry &&  poetry config virtualenvs.create false && poetry install --with lint --without test,docs,profile && poetry run pre-commit run --all"
 
   py-test:
-    image: ${ACT3_OCI_REGISTRY}/act3-rl/corl:pytorch_22_05
+    image: ${AGENTS_BASE_IMAGE}
 
     environment: *default-environment
     working_dir: /opt/project
