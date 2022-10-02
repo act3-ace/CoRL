@@ -90,6 +90,6 @@ ENV_FILE="$CODE_PATH"/.env
 
 } >| "${ENV_FILE}"
 
-rsync -a --delete ~/.ssh/ "$DEV_PATH"/.ssh/
+# rsync -a --delete ~/.ssh/ "$DEV_PATH"/.ssh/
 
 echo "done"

@@ -59,11 +59,12 @@ services:
       # .ssh
       # - "$HOME/.ssh/:/home/$NEW_USER/.ssh/"
 
-    deploy: &development-deploy-nvidia
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
+    # deploy: &development-deploy-nvidia
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]
+
   develop:
     build:
       context: .

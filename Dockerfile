@@ -8,24 +8,78 @@
 # limitation or restriction. See accompanying README and LICENSE for details.
 # ---------------------------------------------------------------------------
 
-ARG ACT3_OCI_REGISTRY=reg.git.act3-ace.com
-ARG DOCKER_OCI_REGISTRY=${ACT3_OCI_REGISTRY}/act3-rl/external-dependencies/
-# Limits on using newer version until HPC updates!!!
-ARG AGENTS_BASE_TAG=pytorch_22_05
-ARG AGENTS_BASE_IMAGE=${ACT3_OCI_REGISTRY}/act3-rl/corl:${AGENTS_BASE_TAG}
-ARG BUSY_BOX=busybox
-
-# External dependencies
-FROM ${ACT3_OCI_REGISTRY}/act3-rl/external-dependencies/bash-git-prompt:v1.0.12 as bash-git-prompt
-FROM ${ACT3_OCI_REGISTRY}/act3-rl/external-dependencies/fixuid:v1.0.12 as fixuid
-FROM ${ACT3_OCI_REGISTRY}/act3-rl/external-dependencies/duo-connect:v1.0.12 as duo-connect
-FROM ${ACT3_OCI_REGISTRY}/act3-rl/external-dependencies/vs-code-server:v1.0.12 as vs-code-server
-
-ARG APT_MIRROR_URL=http://deb.debian.org/debian
-ARG PIP_INDEX_URL
-
+ARG AGENTS_BASE_IMAGE=nvcr.io/nvidia/pytorch:22.01-py3
+ARG CODE_VERSION=4.6.1
 # set pip environment variable to disable pip upgrade warning
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ARG PIP_DISABLE_PIP_VERSION_CHECK=1
+
+######################################
+# Curl Base
+######################################
+FROM alpine as curl-base
+
+# install curl
+RUN apk update \
+    && apk --no-cache add\
+        curl \
+    && rm -rf /var/cache/apk/*
+
+# Download external files and save to /opt/temp
+WORKDIR /opt/temp
+
+######################################
+# fixuid-0.4-linux-amd64.tar.gz
+######################################
+FROM curl-base as fixuid-base
+RUN curl -sSLO https://github.com/boxboat/fixuid/releases/download/v0.4/fixuid-0.4-linux-amd64.tar.gz && \
+    mkdir fixuid && \
+    tar -xzf /opt/temp/fixuid-0.4-linux-amd64.tar.gz -C fixuid
+
+FROM scratch as fixuid
+COPY --from=fixuid-base /opt/temp/fixuid /opt/temp/fixuid
+
+####################################### 
+# code-server_${CODE_VERSION}_amd64.deb
+#######################################
+FROM curl-base as vs-code-server-base
+ARG CODE_VERSION
+RUN curl -sSLO https://github.com/cdr/code-server/releases/download/v${CODE_VERSION}/code-server_${CODE_VERSION}_amd64.deb 
+
+FROM scratch as vs-code-server
+ARG CODE_VERSION
+COPY --from=vs-code-server-base /opt/temp/code-server_${CODE_VERSION}_amd64.deb /opt/temp/
+
+#######################################
+# google-chrome-stable_current_amd64.deb
+#######################################
+FROM curl-base as chrome-base
+RUN curl -SsLO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb 
+
+FROM scratch as chrome
+COPY --from=chrome-base /opt/temp/google-chrome-stable_current_amd64.deb /opt/temp/
+
+#######################################
+# DuoConnect-latest.tar.gz
+#######################################
+FROM curl-base as duo-connect-base
+RUN curl -SsLO https://dl.duosecurity.com/DuoConnect-latest.tar.gz && \
+    mkdir duoconnect && \
+    tar xvzf /opt/temp/DuoConnect-latest.tar.gz -C duoconnect
+
+FROM scratch as duo-connect
+COPY --from=duo-connect-base /opt/temp/duoconnect /opt/temp/duoconnect
+
+#######################################
+# bash-git-prompt
+#######################################
+FROM curl-base as bash-git-prompt-base
+RUN curl -SsLO https://github.com/magicmonty/bash-git-prompt/archive/refs/tags/2.7.1.tar.gz && \
+    mkdir bash-git-prompt && \
+    tar xvzf /opt/temp/2.7.1.tar.gz -C bash-git-prompt
+
+FROM scratch as bash-git-prompt
+COPY --from=bash-git-prompt-base /opt/temp/bash-git-prompt /opt/temp/bash-git-prompt
+
 
 #########################################################################################
 # develop stage contains base requirements. Used as base for all other stages.
@@ -37,17 +91,6 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 #
 #########################################################################################
 FROM ${AGENTS_BASE_IMAGE} as develop
-ARG PIP_INDEX_URL
-
-# For functionality in 620 environment
-ARG APT_MIRROR_URL=
-ARG SECURITY_MIRROR_URL=
-ARG NVIDIA_MIRROR_URL=
-
-RUN if [ -n "$APT_MIRROR_URL" ] ; then sed -i "s|http://archive.ubuntu.com|${APT_MIRROR_URL}|g" /etc/apt/sources.list ; fi && \
-if [ -n "$SECURITY_MIRROR_URL" ] ; then sed -i "s|http://security.ubuntu.com|${SECURITY_MIRROR_URL}|g" /etc/apt/sources.list ; fi && \
-if [ -n "$NVIDIA_MIRROR_URL" ] && [ -f /etc/apt/sources.list.d/cuda.list ] ; then sed -i "s|https://developer.download.nvidia.com|${NVIDIA_MIRROR_URL}|g" /etc/apt/sources.list.d/cuda.list ; fi && \
-if [ -n "$NVIDIA_MIRROR_URL" ] && [ -f /etc/apt/sources.list.d/nvidia-ml.list ] ; then sed -i "s|https://developer.download.nvidia.com|${NVIDIA_MIRROR_URL}|g" /etc/apt/sources.list.d/nvidia-ml.list ; fi
 
 # FIX NVIDIA CONTAINER ISSUE
 RUN rm /etc/apt/sources.list.d/cuda.list || continue && rm /etc/apt/sources.list.d/nvidia-ml.list || continue && apt-key del 7fa2af80
@@ -134,7 +177,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ##########################################################################################
 # VERSION - Makes version file to be copied in the target stage
 ##########################################################################################
-FROM ${DOCKER_OCI_REGISTRY}docker.io/busybox as version
+FROM busybox as version
 
 RUN mkdir /etc/act3
 WORKDIR /etc/act3
@@ -414,3 +457,4 @@ COPY --from=build ${CORL_ROOT} ${CORL_ROOT}
 # this image should be able to run and test your source code
 # python CI/CD jobs assume a python executable will be in the PATH to run all testing, documentation, etc.
 FROM build as cicd
+# 

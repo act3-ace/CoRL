@@ -24,6 +24,8 @@ conda activate CoRL
 pip install poetry==1.2.1
 # Install the CoRL dependencies
 poetry install
+# Pre-commit setup
+pre-commit install
 ```
 
 ### How to install pip package
