@@ -63,7 +63,7 @@ mkdocs serve
 
 ## How to build the Docker containers
 
-The following project support development via Docker containers in VSCode and on the DoD HPC. This is not strictly required but does provide the mode conveniet way to get started. ***Note:*** fuller documentation is available in the documentation folder or online docs. 
+The following project support development via Docker containers in VSCode. This is not strictly required but does provide the mode conveniet way to get started. ***Note:*** fuller documentation is available in the documentation folder or online docs. 
 
 - ***Setup the user env file:*** in code directory run the following script  --> `./scripts/setup_env_docker.sh`
 - ***Build the Docker containers using compose:*** run the following command --> `docker-compose build`
@@ -71,7 +71,7 @@ The following project support development via Docker containers in VSCode and on
 ## Running base examples
 
 ```bash
-python -m corl.train_rl --cfg config/experiments/cartpole_v1.yml
+    python -m corl.train_rl --cfg config/experiments/cartpole_v1.yml
 ```
 
 # Contributors
