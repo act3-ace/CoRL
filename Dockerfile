@@ -8,7 +8,7 @@
 # limitation or restriction. See accompanying README and LICENSE for details.
 # ---------------------------------------------------------------------------
 
-ARG AGENTS_BASE_IMAGE=nvcr.io/nvidia/pytorch:22.01-py3
+ARG AGENTS_BASE_IMAGE=nvcr.io/nvidia/pytorch:22.05-py3
 ARG CODE_VERSION=4.6.1
 # set pip environment variable to disable pip upgrade warning
 ARG PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -91,9 +91,6 @@ COPY --from=bash-git-prompt-base /opt/temp/bash-git-prompt /opt/temp/bash-git-pr
 #
 #########################################################################################
 FROM ${AGENTS_BASE_IMAGE} as develop
-
-# FIX NVIDIA CONTAINER ISSUE
-RUN rm /etc/apt/sources.list.d/cuda.list || continue && rm /etc/apt/sources.list.d/nvidia-ml.list || continue && apt-key del 7fa2af80
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         # for graph plotting with keras
