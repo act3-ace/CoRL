@@ -10,10 +10,10 @@
 site_name: ACT3 RL Core - CoRL
 site_author: ACT3
 docs_dir: docs
-site_description: "The following python project creates a python interface for training Deep RL - provides the base RL functionality and APIs to enable rapid ablation testing and setup"
-repo_name: act3-rl/corl/
-repo_url: https://git.act3-ace.com/act3-rl/corl/
-site_url: https://git.act3-ace.com/
+site_description: "The following python project creates a python interface for training Deep RL - provides the base RL functionality and APIs to enable rapid ablation testing and setup. The Core Reinforcement Learning library is intended to enable scalable deep reinforcement learning experimentation in a manner extensible to new simulations and new ways for the learning agents to interact with them. The hope is that this makes RL research easier by removing lock-in to particular simulations."
+repo_name: CoRL
+repo_url: https://github.com/act3-ace/CoRL
+site_url: https://act3-ace.github.io/CoRL/
 edit_uri: blob/main/docs/
 site_dir: site
 

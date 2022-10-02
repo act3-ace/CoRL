@@ -1,12 +1,19 @@
-Under Construction.... Still porting items and updating instructions for github site/CICD>
-Initial release of CoRL - Part #1 -Approved on 2022-05-2024 12:08:51 - PA Approval # [AFRL-2022-2455]"
+**The following Site/Repository is currently under construction. We are still porting items and updating instructions for github site/CICD.**
 
 # ACT3 RL Core
 
 ***Core act3 reinforcement learning library*** - The Core Reinforcement Learning library is intended to enable scalable deep reinforcement learning experimentation in a manner extensible to new simulations and new ways for the learning agents to interact with them. The hope is that this makes RL research easier by removing lock-in to particular simulations.
 
+The work is released under the follow APRS approval.
+- Initial release of CoRL - Part #1 -Approved on 2022-05-2024 12:08:51 - PA Approval # [AFRL-2022-2455]"
+
+Documentation 
+- https://act3-ace.github.io/CoRL/
+
 ## Install
 ### Install the source - Miniconda - local host:
+
+- [Miniconda Install Instruction](https://docs.conda.io/en/latest/miniconda.html)
 
 ```bash
 # Create a virtual environment to install/run code

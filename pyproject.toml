@@ -1,23 +1,24 @@
 [tool.poetry]
 name = "corl"
-version = "1.50.5-beta.8"
+version = "1.50.5"
 description = "Core ACT3 Reinforcement Learning (RL) Library - Core framework and base implementations of common things such as controllers, glues, observes, sensors, evaluation, and ect"
 authors = [
         "Benjamin K Heiner <benjamin.heiner@us.af.mil>",
-        "Brian Stieber <TBD@TBD.com>",
-        "Cameron Long <TBD@TBD.com>",
-        "Joshua Blackburn <TBD@TBD.com>"
+        "Brian Stieber <bstieber@toyon.com>",
+        "Cameron Long <clong@toyon.com>",
+        "Joshua Blackburn <joshua.blackburn@stresearch.com>",
+        "Steven Fierro <sfierro@toyon.com>",
+        "Madison Blake <madison.blake@shield.ai>"
     ]
 maintainers  = [
         "Benjamin K Heiner <benjamin.heiner@us.af.mil>",
-        "Brian Stieber <TBD@TBD.com>",
-        "Cameron Long <TBD@TBD.com>",
-        "Joshua Blackburn <TBD@TBD.com>"
+        "Brian Stieber <bstieber@toyon.com>",
+        "Cameron Long <clong@toyon.com>"
     ]
 readme = "README.md"
-homepage = "https://git.act3-ace.com/act3-rl/corl"
-repository = "https://git.act3-ace.com/act3-rl/corl"
-documentation = "https://act3-rl.git.act3-ace.com/corl/"
+homepage = "https://github.com/act3-ace/CoRL"
+repository = "https://github.com/act3-ace/CoRL"
+documentation = "https://act3-ace.github.io/CoRL/"
 keywords = ["Deep", "Reinforcement", "Learning", "CoRL"]
 include = ["docs/*","config/*"]
 classifiers = [
@@ -40,7 +41,6 @@ flatten-dict = "0.4.1"
 deepmerge = "0.3.0"
 GitPython = "3.1.27"
 h5py = ">=3.7"
-tensorboard = "<2.10"
 tensorflow = "^2.9.1"
 
 [tool.poetry.dev-dependencies]

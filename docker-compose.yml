@@ -150,23 +150,6 @@ services:
 
     # deploy: *development-deploy-nvidia
 
-  # Defines the build environment for an HPC
-  hpc:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: hpc-builder
-      args:
-        <<: *default-args
-        BRANCH: $BRANCH
-        DATE: $DATE
-    environment:
-      - SSH_AUTH_SOCK=$SSH_AUTH_SOCK
-    image: $ACT3_OCI_REGISTRY/act3-rl/corl/development/hpc-builder:latest
-    volumes:
-      - "$HOME/.ssh/id_rsa:/home/$USER/.ssh/id_rsa"
-      - "$SSH_AUTH_SOCK:$SSH_AUTH_SOCK"
-
   poetry-update:
     image: ${ACT3_OCI_REGISTRY}/act3-rl/corl:pytorch_22_05
 
