@@ -10,11 +10,11 @@ Initial release of CoRL - Part #1 -Approved on 2022-05-2024 12:08:51 - PA Approv
 
 ```bash
 # Create a virtual environment to install/run code
-conda create -n CoRL 
-# install poetry
-pip install poetry==1.2.1
+conda create -n CoRL python==3.10.4 
 # Activate the virtual environment
 conda activate CoRL
+# install poetry
+pip install poetry==1.2.1
 # Install the CoRL dependencies
 poetry install
 ```
@@ -29,11 +29,11 @@ The following project supports building python packages via `Poetry`.
 
 ```bash
 # Create a virtual environment to install/run code
-conda create -n CoRL
-# install poetry
-poetry==1.2.1
+conda create -n CoRL python==3.10.4 
 # Activate the virtual environment
 conda activate CoRL
+# install poetry
+pip install poetry==1.2.1
 # Build the CoRL package
 poetry build
 ```
