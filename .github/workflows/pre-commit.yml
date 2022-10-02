@@ -11,4 +11,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v3
-    - uses: pre-commit/action@v3.0.0
+      with:
+        python-version: 3.x
+    - run: pip install poetry==1.2.1
+    - run: poetry config virtualenvs.create false && poetry install --no-root --no-interaction --no-ansi
+    - run: pre-commit run --all 
+    
