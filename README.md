@@ -10,6 +10,107 @@ The work is released under the follow APRS approval.
 Documentation 
 - https://act3-ace.github.io/CoRL/
 
+![image](https://user-images.githubusercontent.com/102970755/193952349-108c1acd-ce58-4908-a043-28c2a53c85fa.png)
+
+- Framework Overview - Hyper configurable environment enabling rapid exploration and integration pathways
+   - **A framework for developing highly-configurable environments and agents**
+     - Develop core components in python
+     - Configure experiments/agents in json/yml
+     - Provides tooling to help validate configuration files and give useful feedback when files are misconfigured
+   - **Designed with integration in mind**
+   - **Dramatically reduce development time to put trained agents into an integration or using a different simulation** 
+     - Can work with any training framework
+     - Currently limited to Ray/RLLIB due to multi-agent requirement
+   - **Environment pre-written, users implement plugins**
+     - Simulator
+     - Platforms & Platform Parts
+     - Glues
+     - Rewards
+     - Dones
+- Validators - **Configuration guarantees for enabling validation of user configuration going into the major components** 
+  - All major CoRL python components have a validator
+  - Validators are python dataclasses implemented through the pydantic library
+  - Validators check and validate user configuration arguments going into the major components
+    - If a component successfully initializes, the validators guarantee the developer that the data listed in the validator is available to them
+    - If a component doesn’t initialize, a nice helpful error message is automatically produced by pydantic
+  - Adds a pseudo static typing to python classes
+- Episode Parameter Provider (EPP) - **Domain Randomization & Curriculum Learning at Environment, Platform, and Agent based on training**
+  - An important tool for RL environments is the ability to randomize as much as possible
+    - Starting conditions / goal location / etc.
+    - This leads to more general agents who are more robust to noise when solving a task
+  - Another tool sometimes used in RL is curriculum learning (CL)
+    - Starting from an easier problem and gradually making the environment match the required specifications can significantly speed up training
+  - CoRL Agents and the environment all have an epp, which provides simulator or user defined parameters to be used during a specific episode
+    - Simulator classes know what parameters they expect to setup an episode
+    - Configuration parameters to the various functors can all be provided from an EPP
+  - An EPP can also update parameters over the course of training
+    - Make a goal parameter harder based on the agents win rate
+    - Open the environment up to wider bounds once the agent initially starts to learn
+- Simulator Class - **Extensible interface for transitioning between Dubins and other simulator backends**
+  - Responsible for setting up the world for a agents to manipulate
+    - Setting up and configuring the simulation 
+    - Creating the simulation platforms
+    - Placing those platforms in the world
+  - Responsible for knowing how to advance the simulation when requested
+    - The simulation returns a simulation state when reset or advanced that rewards or done conditions can use
+    - This state contains at least both the time and the list of simulation platforms
+    - Responsible for saving any information about the current training episode
+      - Saving video/logs
+- Simulator Platforms + parts - **Extensible base interface for parts to be added to planforms with an integration focus.**
+  - Simulation platforms represent some object that can be manipulated in the simulation
+    - Car/plane/robot/etc.
+  - Have a config file to allow modes of configuration
+  - Each platform has a set of parts attached to it
+  - Parts take simulation specific code and wrap it in an interface that allows agents to read from and write to them
+    - Parts do nothing unless a user configures a connection between the agent and a part using a glue (to be explained)
+   - Parts could include things such as a throttle, a game button, a steering wheel, etc.
+   - Parts are registered to a simulator using a string `Sensor_Throttle`, `Controller_Throttle`, etc.
+- Glues - **Connecting layers to allow exposing observable state to rewards, termination/goal criteria, and agents**
+  - A stateful functor
+  - Responsible for producing actions and observations for the agent
+  - May directly read/write to parts or other glues
+  - Glues reading/writing to each other is called “wrapping”
+  - Glues implement the composable and reusable behavior useful for developers
+    - Common glues turn any sensor part into an obs and apply actions to any controller part
+    - Wrapper glues can implement behaviors such as framestacking, delta actions
+  - May not directly read from the simulation, only interface through parts
+- Rewards, Dones (Goal & Termination) - **Composable functors common interface for sharing rewards and termination criteria in a stateful manner**
+  - Composable state functors
+  - Rewards generate the current step reward for the agent
+  - Dones evaluate if the episode should stop on the current timestep
+    - These done’s can be triggered for either success or failure
+  - Both Done and Reward Functors can view the entire simulation state to reward agents
+  - Done conditions typically add to the state when they trigger to signify what type of Done they are
+    - WIN/LOSE/DRAW
+    - Rewards are processed after Done conditions during anupdate, so rewards can read these labels
+  - There can be an arbitrary number of reward or done functors for an agent
+- Agent + Experiment Class
+   - Agent Class
+      - Responsible for holding all of the Done/Reward/Glue functors for a given agent
+      - Can be many agent classes per platform
+         - When one agent class on a platform reaches a done, all on that platform do
+      - Different subclasses may process information in different ways or do different things
+   - Experiment Class
+      - Responsible for setting up an experiment and running it
+      - Configures and creates the environment
+      - Creates and configures the agent classes
+      - Use of this class allows for any arbitrary RL training framework to be used as the backend for training
+- CoRL Integration and Simulator Swapping
+   - In CoRL all simulation specific components must be registered and retrieved from a plug-in library
+   - As long as a specific simulator has all of the parts registered to it that an agent needs, CoRL can swap the simulator and parts out from under an agent seamlessly
+   - As long as the parts for the two simulators have the same properties (in terms of sensed value bounds or controller inputs) there is no difference to the agent between the two and the regular environment can be used for integration
+   - Besides integration this also allows for cross simulation evaluation or training of an agent to be resumed in another simulator
+
+
+## Benifits
+- **CoRL helps make RL environment development significantly easier**
+- **CoRL provides hyper configurable environments/agents and experiments**
+- **Instead of a new file every time a new observation is added, now just add a few lines of config**
+- **Makes it possible to reuse glues/dones/rewards between different tasks if they are general**
+- **Provides tools to use both domain randomization and curriculum learning through EPP**
+- **An integration first focus means that integrating agents to the real world or different simulators is significantly easier**
+
+
 ## Install
 ### Install the source - Miniconda - local host:
 
