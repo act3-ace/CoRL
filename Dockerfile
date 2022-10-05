@@ -9,7 +9,7 @@
 # ---------------------------------------------------------------------------
 
 ARG AGENTS_BASE_IMAGE=nvcr.io/nvidia/pytorch:22.05-py3
-ARG CODE_VERSION=4.6.1
+ARG CODE_VERSION=4.7.1
 # set pip environment variable to disable pip upgrade warning
 ARG PIP_DISABLE_PIP_VERSION_CHECK=1
 
@@ -399,7 +399,7 @@ RUN chsh -s /bin/bash
 ENV SHELL=/bin/bash
 
 # Install code-server
-ARG CODE_VERSION=4.6.1
+ARG CODE_VERSION=4.7.1
 COPY --chown=${NEW_USER} --from=vs-code-server /opt/temp/code-server_${CODE_VERSION}_amd64.deb /opt/deps/code-server_${CODE_VERSION}_amd64.deb
 RUN apt-get install -y /opt/deps/code-server_${CODE_VERSION}_amd64.deb \
     && ln -s /usr/bin/code-server /usr/local/bin/code-server
