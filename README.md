@@ -10,6 +10,56 @@ The work is released under the follow APRS approval.
 Documentation 
 - https://act3-ace.github.io/CoRL/
 
+![image](https://user-images.githubusercontent.com/102970755/193951075-be97a4ba-a3bc-49b3-b3fc-dec3bc11407c.png)
+
+- Framework Overview - Hyper configurable environment enabling rapid exploration and integration pathways
+   - **A framework for developing highly-configurable environments and agents**
+     - Develop core components in python
+     - Configure experiments/agents in json/yml
+     - Provides tooling to help validate configuration files and give useful feedback when files are misconfigured
+   - **Designed with integration in mind**
+   - **Dramatically reduce development time to put trained agents into an integration or using a different simulation** 
+     - Can work with any training framework
+     - Currently limited to Ray/RLLIB due to multi-agent requirement
+   - **Environment pre-written, users implement plugins**
+     - Simulator
+     - Platforms & Platform Parts
+     - Glues
+     - Rewards
+     - Dones
+- Validators - **Configuration guarantees for enabling validation of user configuration going into the major components** 
+  - All major CoRL python components have a validator
+  - Validators are python dataclasses implemented through the pydantic library
+  - Validators check and validate user configuration arguments going into the major components
+    - If a component successfully initializes, the validators guarantee the developer that the data listed in the validator is available to them
+    - If a component doesn’t initialize, a nice helpful error message is automatically produced by pydantic
+  - Adds a pseudo static typing to python classes
+- Episode Parameter Provider (EPP) - Domain Randomization & Curriculum Learning at Environment, Platform, and Agent based on training
+  - An important tool for RL environments is the ability to randomize as much as possible
+    - Starting conditions / goal location / etc.
+    - This leads to more general agents who are more robust to noise when solving a task
+  - Another tool sometimes used in RL is curriculum learning (CL)
+    - Starting from an easier problem and gradually making the environment match the required specifications can significantly speed up training
+  - CoRL Agents and the environment all have an epp, which provides simulator or user defined parameters to be used during a specific episode
+    - Simulator classes know what parameters they expect to setup an episode
+    - Configuration parameters to the various functors can all be provided from an EPP
+  - An EPP can also update parameters over the course of training
+    - Make a goal parameter harder based on the agents win rate
+    - Open the environment up to wider bounds once the agent initially starts to learn
+- Simulator Class - Extensible interface for transitioning between Dubins and other simulator backends
+  - Responsible for setting up the world for a agents to manipulate
+    - Setting up and configuring the simulation 
+    - Creating the simulation platforms
+    - Placing those platforms in the world
+  - Responsible for knowing how to advance the simulation when requested
+    - The simulation returns a simulation state when reset or advanced that rewards or done conditions can use
+    - This state contains at least both the time and the list of simulation platforms
+    - Responsible for saving any information about the current training episode
+      - Saving video/logs
+- Simulator Platforms + parts - Extensible base interface for parts to be added to planforms with an integration focus.
+...
+...
+
 ## Install
 ### Install the source - Miniconda - local host:
 
