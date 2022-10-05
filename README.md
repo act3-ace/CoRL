@@ -10,7 +10,7 @@ The work is released under the follow APRS approval.
 Documentation 
 - https://act3-ace.github.io/CoRL/
 
-![image](https://user-images.githubusercontent.com/102970755/193951075-be97a4ba-a3bc-49b3-b3fc-dec3bc11407c.png)
+![image](https://user-images.githubusercontent.com/102970755/193952349-108c1acd-ce58-4908-a043-28c2a53c85fa.png)
 
 - Framework Overview - Hyper configurable environment enabling rapid exploration and integration pathways
    - **A framework for developing highly-configurable environments and agents**
