@@ -338,6 +338,6 @@ nav:
 extra:
   social:
   - icon: fontawesome/brands/github
-    link: https://git.act3-ace.com
+    link: https://github.com/act3-ace/CoRL/
   - icon: fontawesome/brands/gitlab
     link: https://git.act3-ace.com/act3-rl/

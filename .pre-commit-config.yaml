@@ -1,0 +1,144 @@
+# https://github.com/apache/airflow/blob/master/.pre-commit-config.yaml
+
+default_language_version:
+  python: python3.10
+repos:
+  - repo: local
+    hooks:
+# The following hooks are from pre-commit-hooks package
+      - id: check-added-large-files
+        name: Check for added large files
+        description: Prevent giant files from being committed
+        entry: check-added-large-files
+        language: python
+      - id: check-case-conflict
+        name: Check for case conflicts
+        description: Check for files that would conflict in case-insensitive filesystems
+        entry: check-case-conflict
+        language: python
+      - id: check-json
+        name: Check JSON
+        description: This hook checks json files for parseable syntax.
+        entry: check-json
+        language: python
+        types: [ json ]
+        exclude: ".devcontainer/devcontainer.json"
+      - id: pretty-format-json
+        name: Pretty format JSON
+        description: This hook sets a standard for formatting JSON files.
+        entry: pretty-format-json
+        language: python
+        types: [ json ]
+        exclude: ".devcontainer/devcontainer.json"
+        args: [ "--no-sort-keys", "--indent", "2" ]
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+        description: Check for files that contain merge conflict strings.
+        entry: check-merge-conflict
+        language: python
+        types: [ text ]
+      - id: check-symlinks
+        name: Check for broken symlinks
+        description: Checks for symlinks which do not point to anything.
+        entry: check-symlinks
+        language: python
+        types: [ symlink ]
+      - id: check-yaml
+        name: Check Yaml
+        description: This hook checks yaml files for parseable syntax.
+        entry: check-yaml
+        language: python
+        types: [ yaml ]
+        exclude: "(^config.*|^test.*|^docs.*|mkdocs.yml$)"
+        args: [ "--allow-multiple-documents" ]
+      - id: debug-statements
+        name: Debug Statements (Python)
+        description: Check for debugger imports and py37+ `breakpoint()` calls in python source.
+        entry: debug-statement-hook
+        language: python
+        types: [ python ]
+      - id: detect-private-key
+        name: Detect Private Key
+        description: Detects the presence of private keys
+        entry: detect-private-key
+        language: python
+        types: [ text ]
+      - id: no-commit-to-branch
+        name: "Don't commit to branch"
+        entry: no-commit-to-branch
+        language: python
+        pass_filenames: false
+        always_run: true
+        args: [ '--branch', 'master', '--branch', 'develop', '--branch', 'main']
+# End hooks from pre-commit-hooks package
+      - id: bashate
+        name: bashate
+        description: This hook runs bashate for linting shell scripts
+        entry: bashate
+        language: python
+        types: [ shell ]
+        args: [ "--ignore=E003,E006,E040" ]
+        verbose: false
+      # - id: detect-secrets
+      #   name: detect-secrets
+      #   description: An enterprise friendly way of detecting and preventing secrets in code.
+      #   entry: detect-secrets
+      #   language: system
+      #   args: [ "audit", ".secrets.baseline" ]
+      - id: blacken-docs
+        name: blacken-docs
+        description: Run `black` on python code blocks in documentation files
+        entry: blacken-docs
+        language: python
+        language_version: python3
+        files: '\.(rst|md|markdown|py|tex)$'
+# Start python formatters
+      - id: isort
+        name: isort
+        files: corl
+        description: "isort: import sorter"
+        entry: python -m isort
+        language: system
+        types: [ python ]
+      - id: yapf
+        name: yapf
+        files: corl/
+        description: "YAPF: Yet Another Python Formatter"
+        entry: python -m yapf
+        language: system
+        types: [ python ]
+        args: [ "--recursive", "--parallel", "--in-place" ]
+# Start python linters
+      - id: mypy
+        name: mypy
+        files: corl
+        stages: [ commit ]
+        language: system
+        entry: python -m mypy
+        types: [ python ]
+      - id: flake8
+        description: "Flake8: Your Tool For Style Guide Enforcement"
+        name: flake8
+        files: corl
+        stages: [ commit ]
+        language: system
+        entry: python -m flake8
+        types: [ python ]
+        verbose: false
+      - id: pylint
+        name: pylint
+        files: corl
+        stages: [ commit ]
+        language: system
+        entry: python -m pylint
+        types: [ python ]
+      - id: velin
+        name: Velin
+        description: This hook attempt to reformat docstrings using numpydoc format.
+        entry: velin  # GOOD
+        language: python
+        language_version: python3
+        types: [text]
+        types_or: [python]
+        args: ["--write","--no-fixers"]
+        stages: [ commit ]

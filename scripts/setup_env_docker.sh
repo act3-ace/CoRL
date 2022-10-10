@@ -60,7 +60,7 @@ COMPOSE_FILE="$CODE_PATH"/docker-compose.yml
 
 USE_ACT3_OCI_REGISTRY=${ACT3_OCI_REGISTRY:-reg.git.act3-ace.com}
 USE_OCI_REGISTRY=${OCI_REGISTRY:-reg.git.act3-ace.com}
-USE_AGENTS_BASE_IMAGE=${AGENTS_BASE_IMAGE:-reg.git.act3-ace.com/act3-rl/agents-base/releases/pytorch-22.05:v2.3.5}
+USE_AGENTS_BASE_IMAGE=${AGENTS_BASE_IMAGE:-nvcr.io/nvidia/pytorch:22.05-py3}
 USE_DOCKER_OCI_REGISTRY=${DOCKER_OCI_REGISTRY:-reg.git.act3-ace.com/act3-rl/external-dependencies/}
 
 ENV_FILE="$CODE_PATH"/.env
@@ -90,6 +90,6 @@ ENV_FILE="$CODE_PATH"/.env
 
 } >| "${ENV_FILE}"
 
-rsync -a --delete ~/.ssh/ "$DEV_PATH"/.ssh/
+# rsync -a --delete ~/.ssh/ "$DEV_PATH"/.ssh/
 
 echo "done"
