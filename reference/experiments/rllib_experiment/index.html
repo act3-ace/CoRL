@@ -1,0 +1,5501 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The following python project creates a python interface for training Deep RL - provides the base RL functionality and APIs to enable rapid ablation testing and setup. The Core Reinforcement Learning library is intended to enable scalable deep reinforcement learning experimentation in a manner extensible to new simulations and new ways for the learning agents to interact with them. The hope is that this makes RL research easier by removing lock-in to particular simulations.">
+      
+      
+        <meta name="author" content="ACT3">
+      
+      
+        <link rel="canonical" href="https://act3-ace.github.io/CoRL/reference/experiments/rllib_experiment/">
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.1, mkdocs-material-8.5.3">
+    
+    
+      
+        <title>Rllib experiment - ACT3 RL Core - CoRL</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.7a952b86.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.cbb835fc.min.css">
+        
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../../css/style.css">
+    
+      <link rel="stylesheet" href="../../../css/material.css">
+    
+      <link rel="stylesheet" href="../../../css/mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="lime">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#corl.experiments.rllib_experiment" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="ACT3 RL Core - CoRL" class="md-header__button md-logo" aria-label="ACT3 RL Core - CoRL" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4.41 3 3 4.41 5.69 7.1A7.924 7.924 0 0 0 4 12c0 1.85.63 3.55 1.69 4.9L3 19.59 4.41 21l2.69-2.69A7.924 7.924 0 0 0 12 20c1.85 0 3.55-.63 4.9-1.69L19.59 21 21 19.59l-2.69-2.69A7.924 7.924 0 0 0 20 12c0-1.85-.63-3.55-1.69-4.9L21 4.41 19.59 3 16.9 5.69A7.924 7.924 0 0 0 12 4c-1.85 0-3.55.63-4.9 1.69L4.41 3M12 6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            ACT3 RL Core - CoRL
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Rllib experiment
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="lime"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3 3.19.09m3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95 2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31Z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5c-.84 0-1.65.15-2.39.42L12 2M3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29L3.34 7m.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14L3.36 17M20.65 7l-1.77 3.79a7.023 7.023 0 0 0-2.38-4.15l4.15.36m-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29L20.64 17M12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44L12 22Z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/act3-ace/CoRL" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    CoRL
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../.." class="md-tabs__link">
+      Introduction
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../../concepts/" class="md-tabs__link">
+      Concepts
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../../configuration/" class="md-tabs__link">
+      Configuration
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../../install/" class="md-tabs__link">
+      Install
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../../license/" class="md-tabs__link">
+      License
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../tasks/docking_1d/" class="md-tabs__link">
+        Tasks
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../SUMMARY/" class="md-tabs__link md-tabs__link--active">
+      ACT3 CORE
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../../change_log/" class="md-tabs__link">
+      Change log
+    </a>
+  </li>
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="ACT3 RL Core - CoRL" class="md-nav__button md-logo" aria-label="ACT3 RL Core - CoRL" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4.41 3 3 4.41 5.69 7.1A7.924 7.924 0 0 0 4 12c0 1.85.63 3.55 1.69 4.9L3 19.59 4.41 21l2.69-2.69A7.924 7.924 0 0 0 12 20c1.85 0 3.55-.63 4.9-1.69L19.59 21 21 19.59l-2.69-2.69A7.924 7.924 0 0 0 20 12c0-1.85-.63-3.55-1.69-4.9L21 4.41 19.59 3 16.9 5.69A7.924 7.924 0 0 0 12 4c-1.85 0-3.55.63-4.9 1.69L4.41 3M12 6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6Z"/></svg>
+
+    </a>
+    ACT3 RL Core - CoRL
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/act3-ace/CoRL" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    CoRL
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../../concepts/">Concepts</a>
+          
+            <label for="__nav_2">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Concepts" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Concepts
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../diverse-frame-rate/" class="md-nav__link">
+        Diverse frame rate
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../configuration/" class="md-nav__link">
+        Configuration
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../install/" class="md-nav__link">
+        Install
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../license/" class="md-nav__link">
+        License
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6">
+          Tasks
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Tasks" data-md-level="1">
+        <label class="md-nav__title" for="__nav_6">
+          <span class="md-nav__icon md-icon"></span>
+          Tasks
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tasks/docking_1d/" class="md-nav__link">
+        Docking 1D
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" checked>
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../SUMMARY/">ACT3 CORE</a>
+          
+            <label for="__nav_7">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="ACT3 CORE" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          ACT3 CORE
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../__init__/" class="md-nav__link">
+          init  
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../train_rl/" class="md-nav__link">
+        Train rl
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_3" type="checkbox" id="__nav_7_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_3">
+          Evaluation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Evaluation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_3">
+          <span class="md-nav__icon md-icon"></span>
+          Evaluation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/cli_generate_metrics.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/cli_visualize.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/default_config_updates.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/episode_artifact.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/eval_logger_name.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/evaluation_outcome.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/scene_processors.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/serialize_platforms.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_3_10" type="checkbox" id="__nav_7_3_10" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_3_10">
+          Launchers
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Launchers" data-md-level="3">
+        <label class="md-nav__title" for="__nav_7_3_10">
+          <span class="md-nav__icon md-icon"></span>
+          Launchers
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/launchers/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/launchers/evaluate_from_config.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_3_11" type="checkbox" id="__nav_7_3_11" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_3_11">
+          Loaders
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Loaders" data-md-level="3">
+        <label class="md-nav__title" for="__nav_7_3_11">
+          <span class="md-nav__icon md-icon"></span>
+          Loaders
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/loader/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/loader/check_point_file.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/loader/heuristic.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/loader/i_agent_loader.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/loader/weight_file.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_3_12" type="checkbox" id="__nav_7_3_12" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_3_12">
+          Metrics
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Metrics" data-md-level="3">
+        <label class="md-nav__title" for="__nav_7_3_12">
+          <span class="md-nav__icon md-icon"></span>
+          Metrics
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/alerts.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/generator.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/metric.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/processors.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/scenario_alert_generators.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/scenario_metric_generators.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/scopes.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_3_12_9" type="checkbox" id="__nav_7_3_12_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_3_12_9">
+          Aggregators
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Aggregators" data-md-level="4">
+        <label class="md-nav__title" for="__nav_7_3_12_9">
+          <span class="md-nav__icon md-icon"></span>
+          Aggregators
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/aggregators/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/aggregators/accumulate.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/aggregators/average.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/aggregators/criteria_rate.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/aggregators/sum.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_3_12_10" type="checkbox" id="__nav_7_3_12_10" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_3_12_10">
+          Generators
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Generators" data-md-level="4">
+        <label class="md-nav__title" for="__nav_7_3_12_10">
+          <span class="md-nav__icon md-icon"></span>
+          Generators
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/generators/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/generators/dones.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/generators/rewards.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/generators/meta/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/generators/meta/episode_length.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/generators/meta/runtime.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_3_12_11" type="checkbox" id="__nav_7_3_12_11" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_3_12_11">
+          Types
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Types" data-md-level="4">
+        <label class="md-nav__title" for="__nav_7_3_12_11">
+          <span class="md-nav__icon md-icon"></span>
+          Types
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/types/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/types/nonterminals/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/types/nonterminals/dict.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/types/nonterminals/timed_value.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/types/nonterminals/vector.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/types/terminals/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/types/terminals/discrete.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/types/terminals/rate.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/types/terminals/real.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/types/terminals/string.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/metrics/types/terminals/void.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_3_12_12" type="checkbox" id="__nav_7_3_12_12" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_3_12_12">
+          Recording
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Recording" data-md-level="4">
+        <label class="md-nav__title" for="__nav_7_3_12_12">
+          <span class="md-nav__icon md-icon"></span>
+          Recording
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/recording/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/recording/folder.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/recording/i_recorder.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_3_12_13" type="checkbox" id="__nav_7_3_12_13" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_3_12_13">
+          Runners
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Runners" data-md-level="4">
+        <label class="md-nav__title" for="__nav_7_3_12_13">
+          <span class="md-nav__icon md-icon"></span>
+          Runners
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/iterate_test_cases.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/task.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/teams.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/engine/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/engine/rllib/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/engine/rllib/default_evaluation_callbacks.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/engine/rllib/eval_config_updates.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/engine/rllib/rllib_trainer.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/plugins/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/plugins/config_updater.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/plugins/platform_serializer.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/plugins/plugins.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/test_cases/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/test_cases/config_parser.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/test_cases/pandas.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/section_factories/test_cases/test_case_generator.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_3_12_14" type="checkbox" id="__nav_7_3_12_14" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_3_12_14">
+          Util
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Util" data-md-level="4">
+        <label class="md-nav__title" for="__nav_7_3_12_14">
+          <span class="md-nav__icon md-icon"></span>
+          Util
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/util/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/util/condition.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_3_12_15" type="checkbox" id="__nav_7_3_12_15" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_3_12_15">
+          Visualization
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Visualization" data-md-level="4">
+        <label class="md-nav__title" for="__nav_7_3_12_15">
+          <span class="md-nav__icon md-icon"></span>
+          Visualization
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/visualization/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/visualization/print.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/visualization/visualization.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../agents/__init__/">Agents</a>
+          
+            <label for="__nav_7_4">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Agents" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Agents
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../agents/base_agent/" class="md-nav__link">
+        Base agent
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../agents/noop_agent.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../agents/random_action_agent.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../dones/__init__/">Dones</a>
+          
+            <label for="__nav_7_5">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Dones" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Dones
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dones/done_func_base/" class="md-nav__link">
+        Done func base
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dones/done_func_multi_wrapper/" class="md-nav__link">
+        Done func multi wrapper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dones/done_func_wrapper/" class="md-nav__link">
+        Done func wrapper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dones/episode_length_done/" class="md-nav__link">
+        Episode length done
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dones/openai_gym_done/" class="md-nav__link">
+        Openai gym done
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dones/sensor_bounds_check_done/" class="md-nav__link">
+        Sensor bounds check done
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dones/done_func_dict_wrapper/" class="md-nav__link">
+        Done func dict wrapper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5_8" type="checkbox" id="__nav_7_5_8" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../dones/docking_1d/__init__/">Docking 1D</a>
+          
+            <label for="__nav_7_5_8">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Docking 1D" data-md-level="3">
+        <label class="md-nav__title" for="__nav_7_5_8">
+          <span class="md-nav__icon md-icon"></span>
+          Docking 1D
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dones/docking_1d/dones/" class="md-nav__link">
+        Dones
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_6" type="checkbox" id="__nav_7_6" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../models/__init__/">Models</a>
+          
+            <label for="__nav_7_6">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Models" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_6">
+          <span class="md-nav__icon md-icon"></span>
+          Models
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/frame_stacking/" class="md-nav__link">
+        Frame stacking
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/torch_frame_stack/" class="md-nav__link">
+        Torch frame stack
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_7" type="checkbox" id="__nav_7_7" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../environment/__init__/">Environment</a>
+          
+            <label for="__nav_7_7">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Environment" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_7">
+          <span class="md-nav__icon md-icon"></span>
+          Environment
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment/default_env_rllib_callbacks/" class="md-nav__link">
+        Default env rllib callbacks
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment/gym_env/" class="md-nav__link">
+        Gym env
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment/multi_agent_env/" class="md-nav__link">
+        Multi agent env
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment/utils/__init__/" class="md-nav__link">
+          init  
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment/utils/env_creation/" class="md-nav__link">
+        Env creation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment/utils/obs_buffer/" class="md-nav__link">
+        Obs buffer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment/utils/space_sort/" class="md-nav__link">
+        Space sort
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../episode_parameter_providers/__init__/">Episode Parameter Provider</a>
+          
+            <label for="__nav_7_8">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Episode Parameter Provider" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Episode Parameter Provider
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../episode_parameter_providers/adr.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../episode_parameter_providers/core/" class="md-nav__link">
+        Core
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../episode_parameter_providers/remote/" class="md-nav__link">
+        Remote
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../episode_parameter_providers/simple/" class="md-nav__link">
+        Simple
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../episode_parameter_providers/tabular_parameter_provider.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_9" type="checkbox" id="__nav_7_9" checked>
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../__init__/">Experiments</a>
+          
+            <label for="__nav_7_9">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Experiments" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_9">
+          <span class="md-nav__icon md-icon"></span>
+          Experiments
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../base_experiment/" class="md-nav__link">
+        Base experiment
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Rllib experiment
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Rllib experiment
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment" class="md-nav__link">
+    corl.experiments.rllib_experiment
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperiment" class="md-nav__link">
+    RllibExperiment
+  </a>
+  
+    <nav class="md-nav" aria-label="RllibExperiment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperiment.get_policy_validator" class="md-nav__link">
+    get_policy_validator
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperiment.get_validator" class="md-nav__link">
+    get_validator
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperiment.get_callbacks" class="md-nav__link">
+    get_callbacks()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperiment.run_experiment" class="md-nav__link">
+    run_experiment()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperimentValidator" class="md-nav__link">
+    RllibExperimentValidator
+  </a>
+  
+    <nav class="md-nav" aria-label="RllibExperimentValidator">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperimentValidator.apply_patches_configs" class="md-nav__link">
+    apply_patches_configs()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperimentValidator.apply_patches_rllib_configs" class="md-nav__link">
+    apply_patches_rllib_configs()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperimentValidator.no_horizon" class="md-nav__link">
+    no_horizon()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibPolicyValidator" class="md-nav__link">
+    RllibPolicyValidator
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_10" type="checkbox" id="__nav_7_10" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../glues/__init__/">Glues</a>
+          
+            <label for="__nav_7_10">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Glues" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_10">
+          <span class="md-nav__icon md-icon"></span>
+          Glues
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/base_glue/" class="md-nav__link">
+        Base glue
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/base_multi_wrapper/" class="md-nav__link">
+        Base multi wrapper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/base_wrapper/" class="md-nav__link">
+        Base wrapper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/base_dict_wrapper/" class="md-nav__link">
+        Base dict wrapper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_10_5" type="checkbox" id="__nav_7_10_5" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../glues/common/__init__/">Common</a>
+          
+            <label for="__nav_7_10_5">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Common" data-md-level="3">
+        <label class="md-nav__title" for="__nav_7_10_5">
+          <span class="md-nav__icon md-icon"></span>
+          Common
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/common/observe_part_validity/" class="md-nav__link">
+        Observe part validity
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/common/arithmetic_multi_glue/" class="md-nav__link">
+        Arithmetic multi glue
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/common/controller_glue/" class="md-nav__link">
+        Controller glue
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/common/observe_sensor/" class="md-nav__link">
+        Observe sensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/common/observe_sensor_repeated/" class="md-nav__link">
+        Observe sensor repeated
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/common/target_value/" class="md-nav__link">
+        Target value
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/common/target_value_difference/" class="md-nav__link">
+        Target value difference
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/common/projected_quantity/" class="md-nav__link">
+        Projected quantity
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_10_6" type="checkbox" id="__nav_7_10_6" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../glues/controller_wrappers/__init__/">Controller Wrappers</a>
+          
+            <label for="__nav_7_10_6">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Controller Wrappers" data-md-level="3">
+        <label class="md-nav__title" for="__nav_7_10_6">
+          <span class="md-nav__icon md-icon"></span>
+          Controller Wrappers
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/controller_wrappers/obs_relative_delta_controller_dict/" class="md-nav__link">
+        Obs relative delta controller dict
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/controller_wrappers/delta_controller/" class="md-nav__link">
+        Delta controller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glues/controller_wrappers/obs_relative_delta_controller/" class="md-nav__link">
+        Obs relative delta controller
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_11" type="checkbox" id="__nav_7_11" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../libraries/__init__/">Libraries</a>
+          
+            <label for="__nav_7_11">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Libraries" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_11">
+          <span class="md-nav__icon md-icon"></span>
+          Libraries
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/cleanup/" class="md-nav__link">
+        Cleanup
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/collection_utils/" class="md-nav__link">
+        Collection utils
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/env_common/" class="md-nav__link">
+        Env common
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/env_func_base/" class="md-nav__link">
+        Env func base
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/env_space_util/" class="md-nav__link">
+        Env space util
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/environment_dict/" class="md-nav__link">
+        Environment dict
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/factory/" class="md-nav__link">
+        Factory
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/functor/" class="md-nav__link">
+        Functor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/nan_check/" class="md-nav__link">
+        Nan check
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/observation_extractor/" class="md-nav__link">
+        Observation extractor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/observation_util/" class="md-nav__link">
+        Observation util
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/parameters/" class="md-nav__link">
+        Parameters
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/plugin_library/" class="md-nav__link">
+        Plugin library
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/property/" class="md-nav__link">
+        Property
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/state_dict/" class="md-nav__link">
+        State dict
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/units/" class="md-nav__link">
+        Units
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/hparam_search_util/" class="md-nav__link">
+        Hparam search util
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/rllib_setup_util/" class="md-nav__link">
+        Rllib setup util
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_12" type="checkbox" id="__nav_7_12" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_12">
+          Parts
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Parts" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_12">
+          <span class="md-nav__icon md-icon"></span>
+          Parts
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../parts/__init__.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../parts/memory_store.md" class="md-nav__link">
+        None
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_13" type="checkbox" id="__nav_7_13" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../parsers/__init__/">Parsers</a>
+          
+            <label for="__nav_7_13">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Parsers" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_13">
+          <span class="md-nav__icon md-icon"></span>
+          Parsers
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../parsers/yaml_loader/" class="md-nav__link">
+        Yaml loader
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_14" type="checkbox" id="__nav_7_14" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../policies/__init__/">Policies</a>
+          
+            <label for="__nav_7_14">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Policies" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_14">
+          <span class="md-nav__icon md-icon"></span>
+          Policies
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../policies/base_policy/" class="md-nav__link">
+        Base policy
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../policies/random_action/" class="md-nav__link">
+        Random action
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../policies/scripted_action/" class="md-nav__link">
+        Scripted action
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../policies/custom_policy/" class="md-nav__link">
+        Custom policy
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_15" type="checkbox" id="__nav_7_15" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../rewards/__init__/">Rewards</a>
+          
+            <label for="__nav_7_15">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Rewards" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_15">
+          <span class="md-nav__icon md-icon"></span>
+          Rewards
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rewards/base_measurement_operation/" class="md-nav__link">
+        Base measurement operation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rewards/episode_done/" class="md-nav__link">
+        Episode done
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rewards/exponential_decay_from_target_value/" class="md-nav__link">
+        Exponential decay from target value
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rewards/openai_gym_reward/" class="md-nav__link">
+        Openai gym reward
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rewards/reward_func_base/" class="md-nav__link">
+        Reward func base
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rewards/reward_func_multi_wrapper/" class="md-nav__link">
+        Reward func multi wrapper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rewards/reward_func_wrapper/" class="md-nav__link">
+        Reward func wrapper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rewards/multi_measurement_operation/" class="md-nav__link">
+        Multi measurement operation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rewards/reward_func_dict_wrapper/" class="md-nav__link">
+        Reward func dict wrapper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_15_10" type="checkbox" id="__nav_7_15_10" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../rewards/docking_1d/__init__/">Docking 1D</a>
+          
+            <label for="__nav_7_15_10">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Docking 1D" data-md-level="3">
+        <label class="md-nav__title" for="__nav_7_15_10">
+          <span class="md-nav__icon md-icon"></span>
+          Docking 1D
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rewards/docking_1d/docking_distance_change_reward/" class="md-nav__link">
+        Docking distance change reward
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rewards/docking_1d/docking_reward/" class="md-nav__link">
+        Docking reward
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_16" type="checkbox" id="__nav_7_16" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../simulators/__init__/">Simulators</a>
+          
+            <label for="__nav_7_16">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Simulators" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_16">
+          <span class="md-nav__icon md-icon"></span>
+          Simulators
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/base_available_platforms/" class="md-nav__link">
+        Base available platforms
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/base_parts/" class="md-nav__link">
+        Base parts
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/base_platform/" class="md-nav__link">
+        Base platform
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/base_properties/" class="md-nav__link">
+        Base properties
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/base_simulator/" class="md-nav__link">
+        Base simulator
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/common_platform_utils/" class="md-nav__link">
+        Common platform utils
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_16_7" type="checkbox" id="__nav_7_16_7" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../simulators/openai_gym/__init__/">OpenAI Gym</a>
+          
+            <label for="__nav_7_16_7">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="OpenAI Gym" data-md-level="3">
+        <label class="md-nav__title" for="__nav_7_16_7">
+          <span class="md-nav__icon md-icon"></span>
+          OpenAI Gym
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/openai_gym/gym_available_platforms/" class="md-nav__link">
+        Gym available platforms
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/openai_gym/gym_controllers/" class="md-nav__link">
+        Gym controllers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/openai_gym/gym_sensors/" class="md-nav__link">
+        Gym sensors
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/openai_gym/gym_simulator/" class="md-nav__link">
+        Gym simulator
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_16_8" type="checkbox" id="__nav_7_16_8" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../simulators/six_dof/__init__/">Six DOF</a>
+          
+            <label for="__nav_7_16_8">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Six DOF" data-md-level="3">
+        <label class="md-nav__title" for="__nav_7_16_8">
+          <span class="md-nav__icon md-icon"></span>
+          Six DOF
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/six_dof/base_six_dof_controllers/" class="md-nav__link">
+        Base six dof controllers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/six_dof/base_six_dof_platform/" class="md-nav__link">
+        Base six dof platform
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/six_dof/base_six_dof_properties/" class="md-nav__link">
+        Base six dof properties
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_16_9" type="checkbox" id="__nav_7_16_9" >
+      
+      
+      
+      
+        
+        
+        <div class="md-nav__link md-nav__link--index ">
+          <a href="../../simulators/docking_1d/__init__/">Docking 1D</a>
+          
+            <label for="__nav_7_16_9">
+              <span class="md-nav__icon md-icon"></span>
+            </label>
+          
+        </div>
+      
+      <nav class="md-nav" aria-label="Docking 1D" data-md-level="3">
+        <label class="md-nav__title" for="__nav_7_16_9">
+          <span class="md-nav__icon md-icon"></span>
+          Docking 1D
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/docking_1d/available_platforms/" class="md-nav__link">
+        Available platforms
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/docking_1d/controllers/" class="md-nav__link">
+        Controllers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/docking_1d/entities/" class="md-nav__link">
+        Entities
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/docking_1d/platform/" class="md-nav__link">
+        Platform
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/docking_1d/properties/" class="md-nav__link">
+        Properties
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/docking_1d/sensors/" class="md-nav__link">
+        Sensors
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../simulators/docking_1d/simulator/" class="md-nav__link">
+        Simulator
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../change_log/" class="md-nav__link">
+        Change log
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment" class="md-nav__link">
+    corl.experiments.rllib_experiment
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperiment" class="md-nav__link">
+    RllibExperiment
+  </a>
+  
+    <nav class="md-nav" aria-label="RllibExperiment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperiment.get_policy_validator" class="md-nav__link">
+    get_policy_validator
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperiment.get_validator" class="md-nav__link">
+    get_validator
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperiment.get_callbacks" class="md-nav__link">
+    get_callbacks()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperiment.run_experiment" class="md-nav__link">
+    run_experiment()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperimentValidator" class="md-nav__link">
+    RllibExperimentValidator
+  </a>
+  
+    <nav class="md-nav" aria-label="RllibExperimentValidator">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperimentValidator.apply_patches_configs" class="md-nav__link">
+    apply_patches_configs()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperimentValidator.apply_patches_rllib_configs" class="md-nav__link">
+    apply_patches_rllib_configs()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibExperimentValidator.no_horizon" class="md-nav__link">
+    no_horizon()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#corl.experiments.rllib_experiment.RllibPolicyValidator" class="md-nav__link">
+    RllibPolicyValidator
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  <a href="https://github.com/act3-ace/CoRL/blob/main/docs/corl/experiments/rllib_experiment.py" title="Edit this page" class="md-content__button md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+  <h1>Rllib experiment</h1>
+
+<div class="doc doc-object doc-module">
+
+<a id="corl.experiments.rllib_experiment"></a>
+    <div class="doc doc-contents first">
+
+      <hr />
+<p>Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+Reinforcement Learning (RL) Core.</p>
+<p>This is a US Government Work not subject to copyright protection in the US.</p>
+<p>The use, dissemination or disclosure of data in this file is subject to
+limitation or restriction. See accompanying README and LICENSE for details.</p>
+<hr />
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="corl.experiments.rllib_experiment.RllibExperiment" class="doc doc-heading">
+        <code>
+RllibExperiment            (<a class="autorefs autorefs-internal" title="corl.experiments.base_experiment.BaseExperiment" href="../base_experiment/#corl.experiments.base_experiment.BaseExperiment">BaseExperiment</a>)
+        </code>
+
+
+
+<a href="#corl.experiments.rllib_experiment.RllibExperiment" class="headerlink" title="Permanent link">¤</a></h2>
+
+    <div class="doc doc-contents ">
+
+      <p>The Rllib Experiment is an experiment for running
+multiagent configurable environments with patchable settings</p>
+
+        <details class="quote">
+          <summary>Source code in <code>corl/experiments/rllib_experiment.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">RllibExperiment</span><span class="p">(</span><span class="n">BaseExperiment</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The Rllib Experiment is an experiment for running</span>
+<span class="sd">    multiagent configurable environments with patchable settings</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">:</span> <span class="n">RllibExperimentValidator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">RllibExperiment</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">get_validator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Type</span><span class="p">[</span><span class="n">RllibExperimentValidator</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">RllibExperimentValidator</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">get_policy_validator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Type</span><span class="p">[</span><span class="n">RllibPolicyValidator</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Return validator&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">RllibPolicyValidator</span>
+
+    <span class="k">def</span> <span class="nf">run_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="n">rllib_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_select_rllib_config</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">compute_platform</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">compute_platform</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;ray&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_ray_config_for_ray_platform</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_trial_creator</span><span class="p">()</span>
+
+        <span class="c1"># This needs to be before the ray cluster is initialized</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">ray_config</span><span class="p">[</span><span class="s1">&#39;local_mode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">ray</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">ray_config</span><span class="p">)</span>
+
+        <span class="n">ray_resources</span> <span class="o">=</span> <span class="n">ray</span><span class="o">.</span><span class="n">available_resources</span><span class="p">()</span>
+
+        <span class="n">auto_configure_rllib_config</span><span class="p">(</span><span class="n">rllib_config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">auto_rllib_config_setup</span><span class="p">,</span> <span class="n">ray_resources</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;agents&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;agent_platforms&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_agents</span><span class="p">(</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">platform_config</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">agent_config</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;horizon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rllib_config</span><span class="p">[</span><span class="s2">&quot;horizon&quot;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;output_path&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">[</span><span class="s2">&quot;local_dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span>
+
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;TrialName&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">other_platform</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;other_platforms&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_other_platforms</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">other_platform</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">ray_config</span><span class="p">[</span><span class="s1">&#39;local_mode&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s1">&#39;episode_parameter_provider&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RemoteEpisodeParameterProvider</span><span class="o">.</span><span class="n">wrap_epp_factory</span><span class="p">(</span>
+                <span class="n">Factory</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s1">&#39;episode_parameter_provider&#39;</span><span class="p">]),</span>
+                <span class="n">actor_name</span><span class="o">=</span><span class="n">ACT3MultiAgentEnv</span><span class="o">.</span><span class="n">episode_parameter_provider_name</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">agent_name</span><span class="p">,</span> <span class="n">agent_configs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s1">&#39;agents&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">agent_configs</span><span class="o">.</span><span class="n">class_config</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;episode_parameter_provider&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RemoteEpisodeParameterProvider</span><span class="o">.</span><span class="n">wrap_epp_factory</span><span class="p">(</span>
+                    <span class="n">Factory</span><span class="p">(</span><span class="o">**</span><span class="n">agent_configs</span><span class="o">.</span><span class="n">class_config</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;episode_parameter_provider&#39;</span><span class="p">]),</span> <span class="n">agent_name</span>
+                <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s1">&#39;epp_registry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ACT3MultiAgentEnvValidator</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">)</span><span class="o">.</span><span class="n">epp_registry</span>
+
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">ACT3MultiAgentEnv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">)</span>
+        <span class="n">tmp_as</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">action_space</span>
+        <span class="n">tmp_os</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">observation_space</span>
+        <span class="n">tmp_ac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s1">&#39;agents&#39;</span><span class="p">]</span>
+
+        <span class="n">policies</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">policy_name</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">tmp_ac</span><span class="p">[</span><span class="n">policy_name</span><span class="p">]</span><span class="o">.</span><span class="n">policy_config</span><span class="p">[</span><span class="s2">&quot;policy_class&quot;</span><span class="p">],</span>
+                <span class="n">policy_obs</span><span class="p">,</span>
+                <span class="n">tmp_as</span><span class="p">[</span><span class="n">policy_name</span><span class="p">],</span>
+                <span class="n">tmp_ac</span><span class="p">[</span><span class="n">policy_name</span><span class="p">]</span><span class="o">.</span><span class="n">policy_config</span><span class="p">[</span><span class="s2">&quot;config&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">policy_name</span><span class="p">,</span>
+            <span class="n">policy_obs</span> <span class="ow">in</span> <span class="n">tmp_os</span><span class="o">.</span><span class="n">spaces</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">tmp_ac</span><span class="p">[</span><span class="n">policy_name</span><span class="p">]</span>
+        <span class="p">}</span>
+
+        <span class="n">train_policies</span> <span class="o">=</span> <span class="p">[</span><span class="n">policy_name</span> <span class="k">for</span> <span class="n">policy_name</span> <span class="ow">in</span> <span class="n">policies</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">tmp_ac</span><span class="p">[</span><span class="n">policy_name</span><span class="p">]</span><span class="o">.</span><span class="n">policy_config</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">]]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_rllib_config</span><span class="p">(</span><span class="n">rllib_config</span><span class="p">,</span> <span class="n">train_policies</span><span class="p">,</span> <span class="n">policies</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_enable_episode_parameter_provider_checkpointing</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">profile</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;stop&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">[</span><span class="s2">&quot;stop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">[</span><span class="s2">&quot;stop&quot;</span><span class="p">][</span><span class="s2">&quot;training_iteration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">profile_iterations</span>
+
+        <span class="n">search_class</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hparam_search_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hparam_search_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">search_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hparam_search_class</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hparam_search_config</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">search_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hparam_search_class</span><span class="p">()</span>
+            <span class="n">search_class</span><span class="o">.</span><span class="n">add_algorithm_hparams</span><span class="p">(</span><span class="n">rllib_config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">)</span>
+
+        <span class="n">tune</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">rllib_config</span><span class="p">,</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_update_rllib_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rllib_config</span><span class="p">,</span> <span class="n">train_policies</span><span class="p">,</span> <span class="n">policies</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update several rllib config fields</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">rllib_config</span><span class="p">[</span><span class="s2">&quot;multiagent&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;policies&quot;</span><span class="p">:</span> <span class="n">policies</span><span class="p">,</span> <span class="s2">&quot;policy_mapping_fn&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">agent_id</span><span class="p">:</span> <span class="n">agent_id</span><span class="p">,</span> <span class="s2">&quot;policies_to_train&quot;</span><span class="p">:</span> <span class="n">train_policies</span>
+        <span class="p">}</span>
+
+        <span class="n">rllib_config</span><span class="p">[</span><span class="s2">&quot;env&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ACT3MultiAgentEnv</span>
+        <span class="n">callback_list</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_callbacks</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">extra_callbacks</span><span class="p">:</span>
+            <span class="n">callback_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">extra_callbacks</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">rllib_config</span><span class="p">[</span><span class="s2">&quot;callbacks&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">MultiCallbacks</span><span class="p">(</span><span class="n">callback_list</span><span class="p">)</span>
+        <span class="n">rllib_config</span><span class="p">[</span><span class="s2">&quot;env_config&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="n">rllib_config</span><span class="p">[</span><span class="s2">&quot;env_config&quot;</span><span class="p">][</span><span class="s2">&quot;output_date_string&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">_%H%M%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">rllib_config</span><span class="p">[</span><span class="s2">&quot;create_env_on_driver&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">rllib_config</span><span class="p">[</span><span class="s2">&quot;batch_mode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;complete_episodes&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_git_hashes_to_config</span><span class="p">(</span><span class="n">rllib_config</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+            <span class="n">rllib_config</span><span class="p">[</span><span class="s1">&#39;num_workers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">_add_git_hashes_to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rllib_config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;adds git hashes (or package version information if git information</span>
+<span class="sd">        is unavailable) of key modules to rllib_config[&quot;env_config&quot;][&quot;git_hash&quot;].</span>
+<span class="sd">        Key modules are the following:</span>
+<span class="sd">          - corl,</span>
+<span class="sd">          - whatever cwd is set to at the time of the function call</span>
+<span class="sd">            (notionally /opt/project /)</span>
+<span class="sd">          - any other modules listed in rllib_config[&quot;env_config&quot;][&quot;plugin_paths&quot;]</span>
+
+<span class="sd">        This information is not actually used by ACT3MultiAgentEnv;</span>
+<span class="sd">        however, putting it in the env_config means that this</span>
+<span class="sd">        information is saved to the params.pkl and thus is available</span>
+<span class="sd">        for later inspection while seeking to understand the</span>
+<span class="sd">        performance of a trained model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># pattern used below to find root repository paths</span>
+            <span class="n">repo_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;(?P&lt;repopath&gt;.*)\/__init__.py&quot;</span>
+            <span class="n">rp</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">repo_pattern</span><span class="p">)</span>
+
+            <span class="n">corl_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;corl.*&quot;</span>
+            <span class="n">cp0</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">corl_pattern</span><span class="p">)</span>
+            <span class="n">rllib_config</span><span class="p">[</span><span class="s2">&quot;env_config&quot;</span><span class="p">][</span><span class="s2">&quot;git_hash&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+            <span class="c1"># store hash on cwd</span>
+            <span class="n">cwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">githash</span> <span class="o">=</span> <span class="n">git</span><span class="o">.</span><span class="n">Repo</span><span class="p">(</span><span class="n">cwd</span><span class="p">,</span> <span class="n">search_parent_directories</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">hexsha</span>
+                <span class="n">rllib_config</span><span class="p">[</span><span class="s2">&quot;env_config&quot;</span><span class="p">][</span><span class="s2">&quot;git_hash&quot;</span><span class="p">][</span><span class="s2">&quot;cwd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">githash</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cwd hash: </span><span class="si">{</span><span class="n">githash</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">git</span><span class="o">.</span><span class="n">InvalidGitRepositoryError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;cwd is not a git repo</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># go ahead and strip out corl related things from plugin_path</span>
+            <span class="n">plugpath</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">rllib_config</span><span class="p">[</span><span class="s1">&#39;env_config&#39;</span><span class="p">][</span><span class="s1">&#39;plugin_paths&#39;</span><span class="p">]:</span>
+                <span class="n">match0</span> <span class="o">=</span> <span class="n">cp0</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">match0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">plugpath</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+            <span class="n">plugpath</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;corl&#39;</span><span class="p">)</span>
+
+            <span class="c1"># add git hashes to env_config dictionary</span>
+            <span class="k">for</span> <span class="n">module0</span> <span class="ow">in</span> <span class="n">plugpath</span><span class="p">:</span>
+                <span class="n">env_hash_key</span> <span class="o">=</span> <span class="n">module0</span>
+                <span class="n">module1</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">module0</span><span class="p">)</span>
+                <span class="n">modulefile</span> <span class="o">=</span> <span class="n">module1</span><span class="o">.</span><span class="vm">__file__</span>
+                <span class="k">if</span> <span class="n">modulefile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">match0</span> <span class="o">=</span> <span class="n">rp</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">modulefile</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">match0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">repo_path</span> <span class="o">=</span> <span class="n">match0</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;repopath&#39;</span><span class="p">)</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">githash</span> <span class="o">=</span> <span class="n">git</span><span class="o">.</span><span class="n">Repo</span><span class="p">(</span><span class="n">repo_path</span><span class="p">,</span> <span class="n">search_parent_directories</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">hexsha</span>
+                            <span class="n">rllib_config</span><span class="p">[</span><span class="s2">&quot;env_config&quot;</span><span class="p">][</span><span class="s2">&quot;git_hash&quot;</span><span class="p">][</span><span class="n">env_hash_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">githash</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">module0</span><span class="si">}</span><span class="s2"> hash: </span><span class="si">{</span><span class="n">githash</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="n">git</span><span class="o">.</span><span class="n">InvalidGitRepositoryError</span><span class="p">:</span>
+                            <span class="c1"># possibly installed in image but not a git repo</span>
+                            <span class="c1"># look for version number</span>
+                            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module1</span><span class="p">,</span> <span class="s1">&#39;version&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module1</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="s1">&#39;__version__&#39;</span><span class="p">):</span>
+                                <span class="n">githash</span> <span class="o">=</span> <span class="n">module1</span><span class="o">.</span><span class="n">version</span><span class="o">.</span><span class="n">__version__</span>
+                                <span class="n">rllib_config</span><span class="p">[</span><span class="s2">&quot;env_config&quot;</span><span class="p">][</span><span class="s2">&quot;git_hash&quot;</span><span class="p">][</span><span class="n">env_hash_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">githash</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">module0</span><span class="si">}</span><span class="s2"> hash: </span><span class="si">{</span><span class="n">githash</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;module: </span><span class="si">{</span><span class="n">module0</span><span class="si">}</span><span class="s2">, repopath: </span><span class="si">{</span><span class="n">repo_path</span><span class="si">}</span><span class="s2">&quot;</span>
+                                                      <span class="s2">&quot;is invalid git repo</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">))</span>
+                                <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;module: </span><span class="si">{</span><span class="n">module0</span><span class="si">}</span><span class="s2">, repopath: </span><span class="si">{</span><span class="n">repo_path</span><span class="si">}</span><span class="s2">&quot;</span>
+                                                  <span class="s2">&quot;is invalid git repo</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Unable to add the gitlab hash to experiment!!!&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_callbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Type</span><span class="p">[</span><span class="n">EnvironmentDefaultCallbacks</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Get the environment callbacks&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">EnvironmentDefaultCallbacks</span>
+
+    <span class="k">def</span> <span class="nf">_select_rllib_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">platform</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Extract the rllib config for the proper computational platform</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        platform : typing.Optional[str]</span>
+<span class="sd">            Specification of the computational platform to use, such as &quot;local&quot;, &quot;hpc&quot;, etc.  This must be present in the rllib_configs.</span>
+<span class="sd">            If None, the rllib_configs must only have a single entry.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        typing.Dict[str, typing.Any]</span>
+<span class="sd">            Rllib configuration for the desired computational platform.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        RuntimeError</span>
+<span class="sd">            The requested computational platform does not exist or None was used when multiple platforms were defined.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">platform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">rllib_configs</span><span class="p">[</span><span class="n">platform</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">rllib_configs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">rllib_configs</span><span class="p">[</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">rllib_configs</span><span class="p">))]</span>
+
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Invalid rllib_config for platform &quot;</span><span class="si">{</span><span class="n">platform</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_update_ray_config_for_ray_platform</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Update the ray configuration for ray platforms</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">ray_config</span><span class="p">[</span><span class="s1">&#39;address&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;auto&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">ray_config</span><span class="p">[</span><span class="s1">&#39;log_to_driver&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_enable_episode_parameter_provider_checkpointing</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="n">base_trainer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">[</span><span class="s2">&quot;run_or_experiment&quot;</span><span class="p">]</span>
+
+        <span class="n">trainer_class</span> <span class="o">=</span> <span class="n">get_trainable_cls</span><span class="p">(</span><span class="n">base_trainer</span><span class="p">)</span>
+
+        <span class="k">class</span> <span class="nc">EpisodeParameterProviderSavingTrainer</span><span class="p">(</span><span class="n">trainer_class</span><span class="p">):</span>  <span class="c1"># type: ignore[valid-type, misc]</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Tune Trainer that adds capability to restore</span>
+<span class="sd">            progress of the EpisodeParameterProvider on restoring training</span>
+<span class="sd">            progress</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="k">def</span> <span class="nf">save_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checkpoint_path</span><span class="p">):</span>
+                <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                adds additional checkpoint saving functionality</span>
+<span class="sd">                by also saving any episode parameter providers</span>
+<span class="sd">                currently running</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">)</span>
+
+                <span class="n">checkpoint_folder</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">)</span>
+
+                <span class="c1"># Environment</span>
+                <span class="n">epp_name</span> <span class="o">=</span> <span class="n">ACT3MultiAgentEnv</span><span class="o">.</span><span class="n">episode_parameter_provider_name</span>
+                <span class="n">env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">workers</span><span class="o">.</span><span class="n">local_worker</span><span class="p">()</span><span class="o">.</span><span class="n">env</span>
+                <span class="n">epp</span><span class="p">:</span> <span class="n">EpisodeParameterProvider</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">epp</span>
+                <span class="n">epp</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">(</span><span class="n">checkpoint_folder</span> <span class="o">/</span> <span class="n">epp_name</span><span class="p">)</span>
+
+                <span class="c1"># Agents</span>
+                <span class="k">for</span> <span class="n">agent_name</span><span class="p">,</span> <span class="n">agent_configs</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">agent_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">epp</span> <span class="o">=</span> <span class="n">agent_configs</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">epp</span>
+                    <span class="n">epp</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">(</span><span class="n">checkpoint_folder</span> <span class="o">/</span> <span class="n">agent_name</span><span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">tmp</span>
+
+            <span class="k">def</span> <span class="nf">load_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checkpoint_path</span><span class="p">):</span>
+                <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                adds additional checkpoint loading functionality</span>
+<span class="sd">                by also loading any episode parameter providers</span>
+<span class="sd">                with the checkpoint</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+                <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">load_checkpoint</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">)</span>
+
+                <span class="n">checkpoint_folder</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
+
+                <span class="c1"># Environment</span>
+                <span class="n">epp_name</span> <span class="o">=</span> <span class="n">ACT3MultiAgentEnv</span><span class="o">.</span><span class="n">episode_parameter_provider_name</span>
+                <span class="n">env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">workers</span><span class="o">.</span><span class="n">local_worker</span><span class="p">()</span><span class="o">.</span><span class="n">env</span>
+                <span class="n">epp</span><span class="p">:</span> <span class="n">EpisodeParameterProvider</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">epp</span>
+                <span class="n">epp</span><span class="o">.</span><span class="n">load_checkpoint</span><span class="p">(</span><span class="n">checkpoint_folder</span> <span class="o">/</span> <span class="n">epp_name</span><span class="p">)</span>
+
+                <span class="c1"># Agents</span>
+                <span class="k">for</span> <span class="n">agent_name</span><span class="p">,</span> <span class="n">agent_configs</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">agent_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">epp</span> <span class="o">=</span> <span class="n">agent_configs</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">epp</span>
+                    <span class="n">epp</span><span class="o">.</span><span class="n">load_checkpoint</span><span class="p">(</span><span class="n">checkpoint_folder</span> <span class="o">/</span> <span class="n">agent_name</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">[</span><span class="s2">&quot;run_or_experiment&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">EpisodeParameterProviderSavingTrainer</span>
+
+    <span class="k">def</span> <span class="nf">_add_trial_creator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Updates the trial name based on the HPC Job Number and the trial name in the configuration</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;trial_name_creator&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trial_creator_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+
+                <span class="k">def</span> <span class="nf">trial_name_prefix</span><span class="p">(</span><span class="n">trial</span><span class="p">):</span>
+                    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                    Args:</span>
+<span class="sd">                        trial (Trial): A generated trial object.</span>
+
+<span class="sd">                    Returns:</span>
+<span class="sd">                        trial_name (str): String representation of Trial prefixed</span>
+<span class="sd">                            by the contents of the environment variable:</span>
+<span class="sd">                            TRIAL_NAME_PREFIX</span>
+<span class="sd">                            Or the prefix &#39;RUN&#39; if none is set.</span>
+<span class="sd">                    &quot;&quot;&quot;</span>
+                    <span class="n">trial_prefix</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;PBS_JOBID&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;TRIAL_NAME_PREFIX&#39;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+                    <span class="n">trial_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+                    <span class="k">if</span> <span class="s2">&quot;TrialName&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="n">trial_prefix</span><span class="p">:</span>
+                            <span class="n">trial_name</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;TrialName&quot;</span><span class="p">]</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">trial_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;TrialName&quot;</span><span class="p">]</span>
+                    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">trial_prefix</span><span class="si">}{</span><span class="n">trial_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">trial</span><span class="si">}</span><span class="s2">&quot;</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">[</span><span class="s2">&quot;trial_name_creator&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">trial_name_prefix</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">[</span><span class="s2">&quot;trial_name_creator&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">trial_creator_function</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="corl.experiments.rllib_experiment.RllibExperiment.get_policy_validator" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_policy_validator</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">corl</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">rllib_experiment</span><span class="o">.</span><span class="n">RllibPolicyValidator</span><span class="p">]</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-property"><code>property</code></small>
+      <small class="doc doc-property doc-property-readonly"><code>readonly</code></small>
+  </span>
+
+<a href="#corl.experiments.rllib_experiment.RllibExperiment.get_policy_validator" class="headerlink" title="Permanent link">¤</a></h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Return validator</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="corl.experiments.rllib_experiment.RllibExperiment.get_validator" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_validator</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">corl</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">rllib_experiment</span><span class="o">.</span><span class="n">RllibExperimentValidator</span><span class="p">]</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-property"><code>property</code></small>
+      <small class="doc doc-property doc-property-readonly"><code>readonly</code></small>
+  </span>
+
+<a href="#corl.experiments.rllib_experiment.RllibExperiment.get_validator" class="headerlink" title="Permanent link">¤</a></h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Get the validator for this experiment class,
+the kwargs sent to the experiment class will
+be validated using this object and add a self.config
+attr to the experiment class</p>
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="corl.experiments.rllib_experiment.RllibExperiment.get_callbacks" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_callbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+<a href="#corl.experiments.rllib_experiment.RllibExperiment.get_callbacks" class="headerlink" title="Permanent link">¤</a></h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Get the environment callbacks</p>
+
+        <details class="quote">
+          <summary>Source code in <code>corl/experiments/rllib_experiment.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_callbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Type</span><span class="p">[</span><span class="n">EnvironmentDefaultCallbacks</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Get the environment callbacks&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">EnvironmentDefaultCallbacks</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="corl.experiments.rllib_experiment.RllibExperiment.run_experiment" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">run_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span></code>
+
+
+<a href="#corl.experiments.rllib_experiment.RllibExperiment.run_experiment" class="headerlink" title="Permanent link">¤</a></h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Runs the experiment associated with this experiment class</p>
+
+        <details class="quote">
+          <summary>Source code in <code>corl/experiments/rllib_experiment.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">run_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+    <span class="n">rllib_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_select_rllib_config</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">compute_platform</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">compute_platform</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;ray&#39;</span><span class="p">]:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_ray_config_for_ray_platform</span><span class="p">()</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_add_trial_creator</span><span class="p">()</span>
+
+    <span class="c1"># This needs to be before the ray cluster is initialized</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">ray_config</span><span class="p">[</span><span class="s1">&#39;local_mode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">ray</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">ray_config</span><span class="p">)</span>
+
+    <span class="n">ray_resources</span> <span class="o">=</span> <span class="n">ray</span><span class="o">.</span><span class="n">available_resources</span><span class="p">()</span>
+
+    <span class="n">auto_configure_rllib_config</span><span class="p">(</span><span class="n">rllib_config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">auto_rllib_config_setup</span><span class="p">,</span> <span class="n">ray_resources</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;agents&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;agent_platforms&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_agents</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">platform_config</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">agent_config</span>
+    <span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;horizon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rllib_config</span><span class="p">[</span><span class="s2">&quot;horizon&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;output_path&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">[</span><span class="s2">&quot;local_dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;TrialName&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">other_platform</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s2">&quot;other_platforms&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_other_platforms</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">other_platform</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">ray_config</span><span class="p">[</span><span class="s1">&#39;local_mode&#39;</span><span class="p">]:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s1">&#39;episode_parameter_provider&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RemoteEpisodeParameterProvider</span><span class="o">.</span><span class="n">wrap_epp_factory</span><span class="p">(</span>
+            <span class="n">Factory</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s1">&#39;episode_parameter_provider&#39;</span><span class="p">]),</span>
+            <span class="n">actor_name</span><span class="o">=</span><span class="n">ACT3MultiAgentEnv</span><span class="o">.</span><span class="n">episode_parameter_provider_name</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">agent_name</span><span class="p">,</span> <span class="n">agent_configs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s1">&#39;agents&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">agent_configs</span><span class="o">.</span><span class="n">class_config</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;episode_parameter_provider&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RemoteEpisodeParameterProvider</span><span class="o">.</span><span class="n">wrap_epp_factory</span><span class="p">(</span>
+                <span class="n">Factory</span><span class="p">(</span><span class="o">**</span><span class="n">agent_configs</span><span class="o">.</span><span class="n">class_config</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;episode_parameter_provider&#39;</span><span class="p">]),</span> <span class="n">agent_name</span>
+            <span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s1">&#39;epp_registry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ACT3MultiAgentEnvValidator</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">)</span><span class="o">.</span><span class="n">epp_registry</span>
+
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">ACT3MultiAgentEnv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">)</span>
+    <span class="n">tmp_as</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">action_space</span>
+    <span class="n">tmp_os</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">observation_space</span>
+    <span class="n">tmp_ac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">env_config</span><span class="p">[</span><span class="s1">&#39;agents&#39;</span><span class="p">]</span>
+
+    <span class="n">policies</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">policy_name</span><span class="p">:</span> <span class="p">(</span>
+            <span class="n">tmp_ac</span><span class="p">[</span><span class="n">policy_name</span><span class="p">]</span><span class="o">.</span><span class="n">policy_config</span><span class="p">[</span><span class="s2">&quot;policy_class&quot;</span><span class="p">],</span>
+            <span class="n">policy_obs</span><span class="p">,</span>
+            <span class="n">tmp_as</span><span class="p">[</span><span class="n">policy_name</span><span class="p">],</span>
+            <span class="n">tmp_ac</span><span class="p">[</span><span class="n">policy_name</span><span class="p">]</span><span class="o">.</span><span class="n">policy_config</span><span class="p">[</span><span class="s2">&quot;config&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">policy_name</span><span class="p">,</span>
+        <span class="n">policy_obs</span> <span class="ow">in</span> <span class="n">tmp_os</span><span class="o">.</span><span class="n">spaces</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">tmp_ac</span><span class="p">[</span><span class="n">policy_name</span><span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="n">train_policies</span> <span class="o">=</span> <span class="p">[</span><span class="n">policy_name</span> <span class="k">for</span> <span class="n">policy_name</span> <span class="ow">in</span> <span class="n">policies</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">tmp_ac</span><span class="p">[</span><span class="n">policy_name</span><span class="p">]</span><span class="o">.</span><span class="n">policy_config</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">]]</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_update_rllib_config</span><span class="p">(</span><span class="n">rllib_config</span><span class="p">,</span> <span class="n">train_policies</span><span class="p">,</span> <span class="n">policies</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_enable_episode_parameter_provider_checkpointing</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">profile</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;stop&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">[</span><span class="s2">&quot;stop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">[</span><span class="s2">&quot;stop&quot;</span><span class="p">][</span><span class="s2">&quot;training_iteration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">profile_iterations</span>
+
+    <span class="n">search_class</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hparam_search_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hparam_search_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">search_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hparam_search_class</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hparam_search_config</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">search_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hparam_search_class</span><span class="p">()</span>
+        <span class="n">search_class</span><span class="o">.</span><span class="n">add_algorithm_hparams</span><span class="p">(</span><span class="n">rllib_config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">)</span>
+
+    <span class="n">tune</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">rllib_config</span><span class="p">,</span>
+        <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tune_config</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="corl.experiments.rllib_experiment.RllibExperimentValidator" class="doc doc-heading">
+        <code>
+RllibExperimentValidator            (<a class="autorefs autorefs-internal" title="corl.experiments.base_experiment.BaseExperimentValidator" href="../base_experiment/#corl.experiments.base_experiment.BaseExperimentValidator">BaseExperimentValidator</a>)
+        </code>
+
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
+  </span>
+
+<a href="#corl.experiments.rllib_experiment.RllibExperimentValidator" class="headerlink" title="Permanent link">¤</a></h2>
+
+    <div class="doc doc-contents ">
+
+      <p>ray_config: dictionary to be fed into ray init, validated by ray init call
+env_config: environment configuration, validated by environment class</p>
+<div class="admonition rllib_configs">
+<p class="admonition-title">a mapping of compute platforms to rllib configs, see apply_patches_rllib_configs<div class="codehilite"><pre><span></span><code><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="nv">information</span><span class="w"> </span><span class="nv">on</span><span class="w"> </span><span class="nv">the</span><span class="w"> </span><span class="nv">typing</span><span class="w"></span>
+</code></pre></div>
+
+</p>
+</div>
+<p>tune_config: kwarg arguments to be sent to tune for this experiment
+extra_callbacks: extra rllib callbacks that will be added to the callback list</p>
+<div class="admonition trial_creator_function">
+<p class="admonition-title">this function will overwrite the default trial string creator<div class="codehilite"><pre><span></span><code>            and allow more fine tune trial name creators
+</code></pre></div>
+
+</p>
+</div>
+
+        <details class="quote">
+          <summary>Source code in <code>corl/experiments/rllib_experiment.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">RllibExperimentValidator</span><span class="p">(</span><span class="n">BaseExperimentValidator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ray_config: dictionary to be fed into ray init, validated by ray init call</span>
+<span class="sd">    env_config: environment configuration, validated by environment class</span>
+<span class="sd">    rllib_configs: a mapping of compute platforms to rllib configs, see apply_patches_rllib_configs</span>
+<span class="sd">                    for information on the typing</span>
+<span class="sd">    tune_config: kwarg arguments to be sent to tune for this experiment</span>
+<span class="sd">    extra_callbacks: extra rllib callbacks that will be added to the callback list</span>
+<span class="sd">    trial_creator_function: this function will overwrite the default trial string creator</span>
+<span class="sd">                            and allow more fine tune trial name creators</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ray_config</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">]</span>
+    <span class="n">env_config</span><span class="p">:</span> <span class="n">EnvContext</span>
+    <span class="n">rllib_configs</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">]]</span>
+    <span class="n">tune_config</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">]</span>
+    <span class="n">trainable_config</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">typing</span><span class="o">.</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">]]</span>
+    <span class="n">auto_rllib_config_setup</span><span class="p">:</span> <span class="n">AutoRllibConfigSetup</span> <span class="o">=</span> <span class="n">AutoRllibConfigSetup</span><span class="p">()</span>
+    <span class="n">hparam_search_class</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">PyObject</span><span class="p">]</span>
+    <span class="n">hparam_search_config</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">typing</span><span class="o">.</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">]]</span>
+    <span class="n">extra_callbacks</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">typing</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="n">PyObject</span><span class="p">]]</span>
+    <span class="n">trial_creator_function</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">PyObject</span><span class="p">]</span>
+
+    <span class="nd">@validator</span><span class="p">(</span><span class="s1">&#39;rllib_configs&#39;</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">apply_patches_rllib_configs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>  <span class="c1"># pylint: disable=no-self-argument, no-self-use</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The dictionary of rllib configs may come in as a dictionary of</span>
+<span class="sd">        lists of dictionaries, this function is responsible for collapsing</span>
+<span class="sd">        the list down to a typing.Dict[str, typing.Dict[str, typing.Any]]</span>
+<span class="sd">        instead of</span>
+<span class="sd">        typing.Dict[str, typing.Union[typing.List[typing.Dict[str, typing.Any]], typing.Dict[str, typing.Any]]]</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: [description]</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            [type] -- [description]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;rllib_configs are expected to be a dict of keys to different compute configs&quot;</span><span class="p">)</span>
+        <span class="n">rllib_configs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">rllib_configs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">apply_patches</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">rllib_configs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="n">rllib_configs</span>
+
+    <span class="nd">@validator</span><span class="p">(</span><span class="s1">&#39;ray_config&#39;</span><span class="p">,</span> <span class="s1">&#39;tune_config&#39;</span><span class="p">,</span> <span class="s1">&#39;trainable_config&#39;</span><span class="p">,</span> <span class="s1">&#39;env_config&#39;</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">apply_patches_configs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>  <span class="c1"># pylint: disable=no-self-argument, no-self-use</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        reduces a field from</span>
+<span class="sd">        typing.Union[typing.List[typing.Dict[str, typing.Any]], typing.Dict[str, typing.Any]]]</span>
+<span class="sd">        to</span>
+<span class="sd">        typing.Dict[str, typing.Any]</span>
+
+<span class="sd">        by patching the first dictionary in the list with each patch afterwards</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            [type] -- [description]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">apply_patches</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@validator</span><span class="p">(</span><span class="s1">&#39;env_config&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">no_horizon</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Ensure that the horizon is not specified in the env_config.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;horizon&#39;</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot specify the horizon in the env_config&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="corl.experiments.rllib_experiment.RllibExperimentValidator.apply_patches_configs" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">apply_patches_configs</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#corl.experiments.rllib_experiment.RllibExperimentValidator.apply_patches_configs" class="headerlink" title="Permanent link">¤</a></h3>
+
+    <div class="doc doc-contents ">
+
+      <p>reduces a field from
+typing.Union[typing.List[typing.Dict[str, typing.Any]], typing.Dict[str, typing.Any]]]
+to
+typing.Dict[str, typing.Any]</p>
+<p>by patching the first dictionary in the list with each patch afterwards</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td></td>
+      <td><p>[type] -- [description]</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>corl/experiments/rllib_experiment.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s1">&#39;ray_config&#39;</span><span class="p">,</span> <span class="s1">&#39;tune_config&#39;</span><span class="p">,</span> <span class="s1">&#39;trainable_config&#39;</span><span class="p">,</span> <span class="s1">&#39;env_config&#39;</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">apply_patches_configs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>  <span class="c1"># pylint: disable=no-self-argument, no-self-use</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    reduces a field from</span>
+<span class="sd">    typing.Union[typing.List[typing.Dict[str, typing.Any]], typing.Dict[str, typing.Any]]]</span>
+<span class="sd">    to</span>
+<span class="sd">    typing.Dict[str, typing.Any]</span>
+
+<span class="sd">    by patching the first dictionary in the list with each patch afterwards</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        [type] -- [description]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">apply_patches</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">v</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="corl.experiments.rllib_experiment.RllibExperimentValidator.apply_patches_rllib_configs" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">apply_patches_rllib_configs</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#corl.experiments.rllib_experiment.RllibExperimentValidator.apply_patches_rllib_configs" class="headerlink" title="Permanent link">¤</a></h3>
+
+    <div class="doc doc-contents ">
+
+      <p>The dictionary of rllib configs may come in as a dictionary of
+lists of dictionaries, this function is responsible for collapsing
+the list down to a typing.Dict[str, typing.Dict[str, typing.Any]]
+instead of
+typing.Dict[str, typing.Union[typing.List[typing.Dict[str, typing.Any]], typing.Dict[str, typing.Any]]]</p>
+
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>RuntimeError</code></td>
+        <td><p>[description]</p></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td></td>
+      <td><p>[type] -- [description]</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>corl/experiments/rllib_experiment.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s1">&#39;rllib_configs&#39;</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">apply_patches_rllib_configs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>  <span class="c1"># pylint: disable=no-self-argument, no-self-use</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The dictionary of rllib configs may come in as a dictionary of</span>
+<span class="sd">    lists of dictionaries, this function is responsible for collapsing</span>
+<span class="sd">    the list down to a typing.Dict[str, typing.Dict[str, typing.Any]]</span>
+<span class="sd">    instead of</span>
+<span class="sd">    typing.Dict[str, typing.Union[typing.List[typing.Dict[str, typing.Any]], typing.Dict[str, typing.Any]]]</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RuntimeError: [description]</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        [type] -- [description]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;rllib_configs are expected to be a dict of keys to different compute configs&quot;</span><span class="p">)</span>
+    <span class="n">rllib_configs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">rllib_configs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">apply_patches</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">rllib_configs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">rllib_configs</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="corl.experiments.rllib_experiment.RllibExperimentValidator.no_horizon" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">no_horizon</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#corl.experiments.rllib_experiment.RllibExperimentValidator.no_horizon" class="headerlink" title="Permanent link">¤</a></h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Ensure that the horizon is not specified in the env_config.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>corl/experiments/rllib_experiment.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s1">&#39;env_config&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">no_horizon</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ensure that the horizon is not specified in the env_config.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s1">&#39;horizon&#39;</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot specify the horizon in the env_config&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">v</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="corl.experiments.rllib_experiment.RllibPolicyValidator" class="doc doc-heading">
+        <code>
+RllibPolicyValidator            (<a class="autorefs autorefs-internal" title="corl.policies.base_policy.BasePolicyValidator" href="../../policies/base_policy/#corl.policies.base_policy.BasePolicyValidator">BasePolicyValidator</a>)
+        </code>
+
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
+  </span>
+
+<a href="#corl.experiments.rllib_experiment.RllibPolicyValidator" class="headerlink" title="Permanent link">¤</a></h2>
+
+    <div class="doc doc-contents ">
+
+      <p>policy_class: callable policy class None will use default from trainer
+train: should this policy be trained</p>
+
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>RuntimeError</code></td>
+        <td><p>[description]</p></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td></td>
+      <td><p>[type] -- [description]</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>corl/experiments/rllib_experiment.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">RllibPolicyValidator</span><span class="p">(</span><span class="n">BasePolicyValidator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    policy_class: callable policy class None will use default from trainer</span>
+<span class="sd">    train: should this policy be trained</span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        BaseModel {[type]} -- [description]</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RuntimeError: [description]</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        [type] -- [description]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">policy_class</span><span class="p">:</span> <span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="n">PyObject</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">train</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="../base_experiment/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Base experiment" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Base experiment
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../../glues/__init__/" class="md-footer__link md-footer__link--next" aria-label="Next: Glues" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Glues
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+      
+      
+    
+    <a href="https://github.com/act3-ace/CoRL/" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+    
+    
+      
+      
+    
+    <a href="https://git.act3-ace.com/act3-rl/" target="_blank" rel="noopener" title="git.act3-ace.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="m503.5 204.6-.7-1.8-69.7-181.78c-1.4-3.57-3.9-6.59-7.2-8.64-2.4-1.55-5.1-2.515-8-2.81-2.9-.295-5.7.083-8.4 1.11-2.7 1.02-5.1 2.66-7.1 4.78-1.9 2.12-3.3 4.67-4.1 7.44l-47 144H160.8l-47.1-144c-.8-2.77-2.2-5.31-4.1-7.43-2-2.12-4.4-3.75-7.1-4.77a18.1 18.1 0 0 0-8.38-1.113 18.4 18.4 0 0 0-8.04 2.793 18.09 18.09 0 0 0-7.16 8.64L9.267 202.8l-.724 1.8a129.57 129.57 0 0 0-3.52 82c7.747 26.9 24.047 50.7 46.447 67.6l.27.2.59.4 105.97 79.5 52.6 39.7 32 24.2c3.7 1.9 8.3 4.3 13 4.3 4.7 0 9.3-2.4 13-4.3l32-24.2 52.6-39.7 106.7-79.9.3-.3c22.4-16.9 38.7-40.6 45.6-67.5 8.6-27 7.4-55.8-2.6-82z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.top"], "search": "../../../assets/javascripts/workers/search.5bf1dace.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.37e9125f.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@8.4.2/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>
