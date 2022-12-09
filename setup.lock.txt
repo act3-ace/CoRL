@@ -33,7 +33,7 @@ black==22.6.0
 blacken-docs==1.12.1
 blessed==1.19.1
 cachetools==5.2.0
-certifi==2022.6.15
+certifi==2022.12.7
 cfgv==3.3.1
 chardet==4.0.0
 charset-normalizer==2.1.0
