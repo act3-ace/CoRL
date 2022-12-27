@@ -164,7 +164,7 @@ scikit-image==0.19.3
 scipy==1.9.0
 seaborn==0.11.2
 setproctitle==1.2.2
-setuptools==63.3.0
+setuptools==65.5.1
 six==1.16.0
 smart-open==6.0.0
 smmap==5.0.0
