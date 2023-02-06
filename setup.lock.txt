@@ -109,7 +109,7 @@ numpy==1.22.2
 numpy-ringbuffer==0.2.1
 numpydoc==1.4.0
 nvidia-ml-py==11.495.46
-oauthlib==3.2.0
+oauthlib==3.2.2
 opencensus==0.10.0
 opencensus-context==0.1.2
 opentelemetry-api==1.1.0
