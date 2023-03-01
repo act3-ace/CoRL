@@ -102,7 +102,7 @@ Documentation
    - Besides integration this also allows for cross simulation evaluation or training of an agent to be resumed in another simulator
 
 
-## Benifits
+## Benefits
 - **CoRL helps make RL environment development significantly easier**
 - **CoRL provides hyper configurable environments/agents and experiments**
 - **Instead of a new file every time a new observation is added, now just add a few lines of config**
