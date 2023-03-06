@@ -253,6 +253,6 @@ Initial contributors include scientists and engineers associated with the [Air F
     - terry.wilson.11@us.af.mil (AFRL ACT3)
     - bejamin.heiner@us.af.mil (AFRL ACT3)
     - kerianne.hobbs@us.af.mil (AFRL ACT3)
-    - 
+
     
 # Notices and Warnings
