@@ -221,14 +221,5 @@ Initial contributors include scientists and engineers associated with the [Air F
     - terry.wilson.11@us.af.mil (AFRL ACT3)
     - bejamin.heiner@us.af.mil (AFRL ACT3)
     - kerianne.hobbs@us.af.mil (AFRL ACT3)
-# Designation Indicator
-
-- Controlled by: Air Force Research Laboratory (AFRL)
-- Controlled by: AFRL Autonomy Capability Team (ACT3)
-- LDC/Distribution Statement: DIST-A
-- POCs:
-    - terry.wilson.11@us.af.mil (AFRL ACT3)
-    - bejamin.heiner@us.af.mil (AFRL ACT3)
-    - kerianne.hobbs@us.af.mil (AFRL ACT3)
     
 # Notices and Warnings
