@@ -188,22 +188,6 @@ The following project support development via Docker containers in VSCode. This 
     python -m corl.train_rl --cfg config/experiments/cartpole_v1.yml
 ```
 
-# Contributors
-
-- [Air Force Research Laboratory (AFRL)](https://www.afrl.af.mil/)
-  - [AFRL Autonomy Capability Team (ACT3)](https://www.afrl.af.mil/ACT3/)
-    - Autonomous Air Combat Operations (AACO) Team 
-      - Training Team
-          - Bejamin Heiner (AI Behavior Training Lead)
-          - Cameron Long (ML Training)
-          - Steve Fierro (ML Training / System Integration)
-          - Brian Stieber (ML Training)
-          - Joshua Blackburn (ML Training / System Integration)
-          - Madison Blake (ML Infrastructure and Evaluation)
-    
-- [AFRL AEROSPACE SYSTEMS DIRECTORATE (RQ)](https://www.afrl.af.mil/RQ/) 
-   - RQQA - Autonomous Controls Branch
-      - Justin Merrick (6.1 / 6.2 Research)
 # Initial Contributors
 
 Initial contributors include scientists and engineers associated with the [Air Force Research Laboratory (AFRL)](https://www.afrl.af.mil/), [Autonomy Capability Team 3 (ACT3)](https://www.afrl.af.mil/ACT3/), and the [Aerospace Systems Directorate (RQ)](https://www.afrl.af.mil/RQ/): 
