@@ -1,13 +1,12 @@
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
+-------------------------------------------------------------------------------
+The Autonomous Capabilities Team (ACT3) Deep Reinforcement Learning (D-RL) Environment
 
 This is a US Government Work not subject to copyright protection in the US.
 
 The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 Module containing unit dimensions and functions to convert between units
 """
@@ -106,7 +105,7 @@ class Acceleration(enum.Enum):
     meter_per_sec_2 = (0.51444563, ["m/s^2"])
     feet_per_sec_2 = (1.68780986, ["ft/s^2"])
     standard_gravity = (0.05245885496, ["g", "G", "gravity", "standard_gravity"])
-    DEFAULT = knots_per_sec
+    DEFAULT = standard_gravity
 
 
 class Weight(enum.Enum):
@@ -308,6 +307,8 @@ class ValueWithUnits(BaseModel):
         if units is None or self.units is None:
             raise RuntimeError(f'Incompatible units involving None: {units} <> {self.units}')
         if units == self.units:
+            return self.value
+        if isinstance(self.value, str):
             return self.value
         assert isinstance(self.value, (int, float))
         return Convert(value=self.value, from_unit=self.units, to_unit=units)

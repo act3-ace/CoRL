@@ -42,7 +42,7 @@ class ObserveSensorRepeatedValidator(BaseAgentPlatformGlueValidator):
     enable_clip: bool = False
 
     @validator('output_units', always=True, pre=True)
-    def validate_output_units(cls, v, values):  # pylint: disable=no-self-argument, no-self-use
+    def validate_output_units(cls, v, values):  # pylint: disable=no-self-argument
         """output_units validator"""
         sensor_obj = get_sensor_by_name(values['platform'], values['sensor'])
         child_space = sensor_obj.measurement_properties.child_space
@@ -151,7 +151,7 @@ class ObserveSensorRepeated(BaseAgentPlatformGlue):
 
     # TODO: Assumes self._sensor.measurement_properties has attribute child_space
     @lru_cache(maxsize=1)
-    def observation_space(self) -> gym.spaces.Space:
+    def observation_space(self):
         """Observation Space
         """
 
@@ -181,7 +181,7 @@ class ObserveSensorRepeated(BaseAgentPlatformGlue):
         return d
 
     # TODO: Assumes self._sensor.measurement_properties has child_space attribute
-    def get_observation(self) -> OrderedDict:
+    def get_observation(self, other_obs: OrderedDict, obs_space, obs_units) -> OrderedDict:
         """Observation Values
         """
         # NOTE: do not attempt to optimize this function by modifying data in place
@@ -221,12 +221,12 @@ class ObserveSensorRepeated(BaseAgentPlatformGlue):
         return d
 
     @lru_cache(maxsize=1)
-    def action_space(self) -> gym.spaces.Space:
+    def action_space(self):
         """No Actions
         """
         return None
 
-    def apply_action(self, action: EnvSpaceUtil.sample_type, observation: EnvSpaceUtil.sample_type):
+    def apply_action(self, action: EnvSpaceUtil.sample_type, observation: EnvSpaceUtil.sample_type, action_space, obs_space, obs_units):
         """No Actions
         """
         return None

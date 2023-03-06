@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -48,8 +46,11 @@ class ProjectedQuantity(BaseDictWrapperGlue):
         return "Projected_" + wrapped_name
 
     @lru_cache(maxsize=1)
-    def observation_space(self) -> gym.spaces.Space:
-        wrapped_space = list(self.glues()["quantity"].observation_space().spaces.values())[0]
+    def observation_space(self):
+        tmp = self.glues()["quantity"].observation_space()
+        if not isinstance(tmp, gym.spaces.Dict):
+            raise RuntimeError("projected_quantity glue recieved an invalid observation from the glue it is wrapping")
+        wrapped_space = list(tmp.spaces.values())[0]
         max_wrapped_obs = np.amax(np.array([np.abs(wrapped_space.low), np.abs(wrapped_space.high)]))
 
         d = gym.spaces.dict.Dict()
@@ -70,10 +71,13 @@ class ProjectedQuantity(BaseDictWrapperGlue):
             d.spaces[self.Fields.PROJECTED_QUANTITY] = quantity_glue.observation_units()
         return d
 
-    def get_observation(self) -> typing.OrderedDict[str, np.ndarray]:
+    def get_observation(self, other_obs: OrderedDict, obs_space, obs_units) -> typing.OrderedDict[str, np.ndarray]:
         d = OrderedDict()
 
-        observations = {k: list(v.get_observation().values())[0] for k, v in self.glues().items()}  # type: ignore[union-attr]
+        observations = {
+            k: list(v.get_observation(other_obs, obs_space, obs_units).values())[0]  # type: ignore
+            for k, v in self.glues().items()
+        }  # type: ignore[union-attr]
 
         projected_value = observations.pop('quantity')
         projected_value *= np.prod(np.cos(list(observations.values())))
@@ -85,5 +89,5 @@ class ProjectedQuantity(BaseDictWrapperGlue):
     def action_space(self):
         ...
 
-    def apply_action(self, action, observation):
+    def apply_action(self, action, observation, action_space, obs_space, obs_units):
         ...

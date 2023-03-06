@@ -1,0 +1,65 @@
+world:
+  -
+    name: WallTime(Sec)
+    functor: corl.evaluation.metrics.generators.meta.runtime.Runtime
+    config:
+      description: calculated runtime of test case rollout
+  -
+    name: AverageWallTime
+    functor: corl.evaluation.metrics.aggregators.average.Average
+    config:
+      description: calculated average wall time over all test case rollouts 
+      metrics_to_use: WallTime(Sec)
+      scope: null
+
+  -
+    name: EpisodeLength(Steps)
+    functor: corl.evaluation.metrics.generators.meta.episode_length.EpisodeLength_Steps
+    config:
+      description: episode length of test case rollout in number of steps 
+
+  -
+    name: rate_of_runs_lt_5steps
+    functor: corl.evaluation.metrics.aggregators.criteria_rate.CriteriaRate
+    config:
+      description: alert metric to see if any episode length is less than 5 steps
+      metrics_to_use: EpisodeLength(Steps)
+      scope:
+          type: corl.evaluation.metrics.scopes.from_string
+          config: {name: "evaluation"}
+      condition:
+        operator: <
+        lhs: 5
+
+agent:
+  __default__:
+    -
+      name: Result
+      functor: corl.evaluation.metrics.generators.dones.StatusCode
+      config: 
+        description: was docking performed successfully or not
+        done_condition: DockingDoneFunction
+        
+    -
+      name: Dones
+      functor: corl.evaluation.metrics.generators.dones.DonesVec
+      config:
+        description: dones triggered at end of each rollout
+    -
+      name: TotalReward
+      functor: corl.evaluation.metrics.generators.rewards.TotalReward
+      config: 
+        description: total reward calculated from test case rollout
+
+    -
+      name: CompletionRate
+      functor: corl.evaluation.metrics.aggregators.criteria_rate.CriteriaRate
+      config:
+        description: out of the number of test case rollouts how many resulted in successful docking 
+        metrics_to_use: Result
+        scope: null
+        condition:
+          operator: ==
+          lhs:
+            functor: corl.dones.done_func_base.DoneStatusCodes
+            config: {value: 1} # 1 is win

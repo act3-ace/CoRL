@@ -1,8 +1,6 @@
 # pylint: disable=no-member
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -31,12 +29,10 @@ code_logger = logging.getLogger("code_timing")
 class ControllerGlueValidator(BaseAgentPlatformGlueValidator):
     """
     controller: Which controller to get from parent platform
-    minimum: temporary value to override the minumum for this glue
-    maximum: temporary value to override the minimum for this glue
-    index: if you are using more than one of the same controller,
-            use this to access which index to use
+    remove_invalid: removed the invalid field from the obs space of this glue
     """
     controller: str
+    remove_invalid: bool = False
 
 
 class ControllerGlue(BaseAgentControllerGlue):
@@ -70,9 +66,9 @@ class ControllerGlue(BaseAgentControllerGlue):
         return ControllerGlueValidator
 
     @lru_cache(maxsize=1)
-    def action_space(self) -> gym.spaces.Space:
+    def action_space(self):
         """
-        Build the action space for the controller, etc.
+        Build the action space for the controller, weapons, etc.
         """
         action_space_dict = {}
         if isinstance(self._control_properties, list):
@@ -83,8 +79,10 @@ class ControllerGlue(BaseAgentControllerGlue):
 
         return gym.spaces.Dict(action_space_dict)
 
-    def apply_action(self, action: EnvSpaceUtil.sample_type, observation: EnvSpaceUtil.sample_type) -> None:
-        """Apply the action for the controller, etc.
+    def apply_action(
+        self, action: EnvSpaceUtil.sample_type, observation: EnvSpaceUtil.sample_type, action_space, obs_space, obs_units
+    ) -> None:
+        """Apply the action for the controller, weapons, etc.
 
         Parameters
         ----------
@@ -108,19 +106,20 @@ class ControllerGlue(BaseAgentControllerGlue):
         return control_dict
 
     @lru_cache(maxsize=1)
-    def observation_space(self) -> gym.spaces.Space:
+    def observation_space(self):
         obs_space = gym.spaces.dict.Dict()
 
-        obs_space.spaces['invalid'] = gym.spaces.Discrete(2)
+        if not self.config.remove_invalid:
+            obs_space.spaces['invalid'] = gym.spaces.Discrete(2)
         obs_space.spaces['control'] = self.action_space()[self._key]
 
         return obs_space
 
-    def get_observation(self) -> OrderedDict:
+    def get_observation(self, other_obs: OrderedDict, obs_space, obs_units) -> OrderedDict:
         obs_dict = OrderedDict()
-
-        obs_dict['invalid'] = 1 if self._agent_removed else 0
-        obs_dict['invalid'] = 1 if obs_dict['invalid'] or not self.controller.valid else 0
+        if not self.config.remove_invalid:
+            obs_dict['invalid'] = 1 if self._agent_removed else 0
+            obs_dict['invalid'] = 1 if obs_dict['invalid'] or not self.controller.valid else 0
         obs_dict['control'] = self.get_applied_control()[self._key]
 
         return obs_dict

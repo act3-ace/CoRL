@@ -66,14 +66,14 @@ class ObservePartValidity(BaseAgentPlatformGlue):
         return d
 
     @lru_cache(maxsize=1)
-    def observation_space(self) -> gym.spaces.Space:
+    def observation_space(self):
         """Observation Space
         """
         d = gym.spaces.dict.Dict()
         d.spaces[self.Fields.VALIDITY_OBSERVATION] = gym.spaces.Discrete(2)
         return d
 
-    def get_observation(self) -> OrderedDict:
+    def get_observation(self, other_obs: OrderedDict, obs_space, obs_units):
         """Observation Values
         """
         d = OrderedDict()

@@ -16,8 +16,6 @@ horizon: 180
 # === Execution ===
 rollout_fragment_length: 180
 train_batch_size: 12000  # set to num_workers * rollout_fragment_length
-sgd_minibatch_size: 1200
-batch_mode: complete_episodes
 
 # === Resources ===
 num_workers: 6
@@ -32,6 +30,9 @@ num_gpus: 0
 
 # === PPO ===
 num_sgd_iter: 30
+sgd_minibatch_size: 1200
+batch_mode: complete_episodes
 
 # === Other ===
 seed: 1
+framework: torch

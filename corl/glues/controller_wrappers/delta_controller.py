@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -90,19 +88,22 @@ class DeltaAction(BaseWrapperGlue):
             return None
         return wrapped_glue_name + "Delta"
 
-    def get_observation(self) -> EnvSpaceUtil.sample_type:
+    def get_observation(self, other_obs: OrderedDict, obs_space, obs_units) -> EnvSpaceUtil.sample_type:
         """Get observation"""
-        return {"absolute": self.glue().get_observation(), "delta": self.saved_action_deltas}
+        return {"absolute": self.glue().get_observation(other_obs, obs_space, obs_units), "delta": self.saved_action_deltas}
 
     @lru_cache()
-    def observation_space(self) -> gym.spaces.Space:
+    def observation_space(self):
         """Observation space"""
-        return gym.spaces.Dict({"absolute": self.glue().observation_space(), "delta": self.action_space()})
+        tmp = self.glue().observation_space()
+        if not tmp:
+            raise RuntimeError("delta_controller was given a glue to wrap that has no observation space")
+        return gym.spaces.Dict({"absolute": tmp, "delta": self.action_space()})
 
     @lru_cache()
-    def action_space(self) -> gym.spaces.Space:
+    def action_space(self):
         """
-        Build the action space for the controller, etc.
+        Build the action space for the controller, weapons, etc.
         """
 
         # get the action space from the parent
@@ -112,7 +113,7 @@ class DeltaAction(BaseWrapperGlue):
         self._logger.debug(f"action_space: {original_action_space}")
 
         # zero mean the space so we can scale it easier
-        zero_mean_space = EnvSpaceUtil.zero_mean_space(original_action_space)
+        zero_mean_space: gym.spaces.Dict = EnvSpaceUtil.zero_mean_space(original_action_space)
 
         # scale the size of the unbiased space
         for space_name, space in zero_mean_space.items():
@@ -120,9 +121,11 @@ class DeltaAction(BaseWrapperGlue):
 
         return zero_mean_space
 
-    def apply_action(self, action: EnvSpaceUtil.sample_type, observation: EnvSpaceUtil.sample_type) -> None:
+    def apply_action(
+        self, action: EnvSpaceUtil.sample_type, observation: EnvSpaceUtil.sample_type, action_space, obs_space, obs_units
+    ) -> None:
         """
-        Apply the action for the controller, etc.
+        Apply the action for the controller, weapons, etc.
         """
 
         self._logger.debug(f"apply_action: {action}")
@@ -142,7 +145,7 @@ class DeltaAction(BaseWrapperGlue):
 
         self.saved_action_deltas = action
 
-        inner_glue.apply_action(absolute_action, observation)
+        inner_glue.apply_action(absolute_action, observation, action_space, obs_space, obs_units)
 
     def get_info_dict(self):
         """

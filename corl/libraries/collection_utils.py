@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 

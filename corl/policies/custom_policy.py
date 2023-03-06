@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -17,25 +15,25 @@ from abc import abstractmethod
 
 import flatten_dict
 import gym
-import numpy as np
+import numpy as np  # pylint: disable=W0611 # noqa: F401
 from pydantic import validator
 from ray.rllib.evaluation import Episode
 from ray.rllib.policy import Policy
 from ray.rllib.policy.sample_batch import SampleBatch
+from ray.rllib.utils.numpy import convert_to_numpy
 from ray.rllib.utils.typing import TensorStructType, TensorType
 
 from corl.libraries.env_space_util import EnvSpaceUtil
 from corl.policies.base_policy import BasePolicyValidator
-from corl.rewards.base_measurement_operation import ObservationExtractorValidator
 
 
 class CustomPolicyValidator(BasePolicyValidator):
     """Base validator for the CustomPolicy"""
 
+    reset_time = 0
+
     act_space: gym.Space
     obs_space: gym.Space
-
-    time_extractor: ObservationExtractorValidator
 
     # rllib assumes that actions have been normalized and calls 'unsquash_action' prior to sending it to the environment:
     # https://github.com/ray-project/ray/blob/c78bd809ce4b2ec0e48c77aa461684ee1e6f259b/rllib/evaluation/sampler.py#L1241
@@ -48,27 +46,14 @@ class CustomPolicyValidator(BasePolicyValidator):
         arbitrary_types_allowed = True
 
     @validator('act_space')
-    def validate_act_space(cls, v):  # pylint: disable=no-self-argument, no-self-use
+    def validate_act_space(cls, v):  # pylint: disable=no-self-argument
         """validate that it's an instance of an gym.Space"""
         assert isinstance(v, gym.Space)
         # TODO Issue warning if the action space is normalized
         return v
 
-    @validator('time_extractor', always=True)
-    def validate_extractor(cls, v, values):  # pylint: disable=no-self-argument, no-self-use
-        """Ensures the time_extractor can actually extract data from the space and that it's not normalized"""
-        try:
-            time_space = v.construct_extractors().space(values['obs_space'].original_space)
-            if isinstance(time_space, gym.spaces.Box):
-                assert np.isinf(time_space.high[v.indices[0]]), "time_space must not be normalized"
-
-        except Exception as e:
-            raise RuntimeError(f"Failed to extract time using {v} from {values['obs_space'].original_space}") from e
-
-        return v
-
     @validator('controllers', pre=True, always=True)
-    def validate_controllers(cls, v, values):  # pylint: disable=no-self-argument, no-self-use
+    def validate_controllers(cls, v, values):  # pylint: disable=no-self-argument
         """validate that the controllers match the action_space"""
         tuple_list = []
         for iterable in v:
@@ -93,7 +78,6 @@ class CustomPolicy(Policy):  # pylint: disable=abstract-method
 
         Policy.__init__(self, observation_space, action_space, config)
 
-        self.time_extractor = self.validated_config.time_extractor.construct_extractors()
         self._reset()
 
     @property
@@ -109,7 +93,6 @@ class CustomPolicy(Policy):  # pylint: disable=abstract-method
     def _reset(self):
         """This must be overriden in order to reset the state between runs
         """
-        ...
 
     def learn_on_batch(self, samples):
         return {}
@@ -167,17 +150,20 @@ class CustomPolicy(Policy):  # pylint: disable=abstract-method
         agent_id: str = [
             aid for aid in episode._agent_to_index if episode._agent_to_index[aid] == agent_index  # pylint: disable=protected-access
         ][0]
+        agent_platform = agent_id.split("_")[0]
+        platform_obs_agents = [agent_name for agent_name in episode.get_agents() if agent_name.startswith(agent_platform)]
+        platform_obs = {agent_name: episode.last_raw_obs_for(agent_name) for agent_name in platform_obs_agents}
 
         obs_batch = input_dict[SampleBatch.OBS]
         info = episode.last_info_for(agent_id)
-        if info is None:
+        if not info:
             info = {}
-
-        if 'platform_obs' in info:
-            sim_time = self.time_extractor.value(info['platform_obs'][agent_id], full_extraction=True)
-        else:
+            # corl env always sets info, so this is only true on a reset
+            # this will need changing in the future
             self._reset()
-            sim_time = -1
+            sim_time = self.validated_config.reset_time
+        else:
+            sim_time = info["env"]["sim_time"]
 
         state_batches = [s for k, s in input_dict.items() if k[:9] == "state_in_"]
         return self.compute_actions(
@@ -193,6 +179,7 @@ class CustomPolicy(Policy):  # pylint: disable=abstract-method
             agent_id=agent_id,
             info=info,
             episode=episode,
+            platform_obs=platform_obs,
             **kwargs,
         )
 
@@ -220,14 +207,23 @@ class CustomPolicy(Policy):  # pylint: disable=abstract-method
             **kwargs
         )
         if self.validated_config.normalize_controls:
-            for i, action in enumerate(actions):
-                actions[i] = EnvSpaceUtil.scale_sample_from_space(self.validated_config.act_space, action)
+            if isinstance(actions, list):
+                for i, action in enumerate(actions):
+                    actions[i] = EnvSpaceUtil.scale_sample_from_space(self.validated_config.act_space, action)
+
+        # NOTE: ray/rllib is inconsistent in applying these modifications to the returned actions (between training and the
+        # Algorithm.compute_single_action fn) so we do it explicitly here to ensure that the behavior is consistent between them.
+        actions = convert_to_numpy(actions)
+        if isinstance(actions, list):
+            actions = np.array(actions)
+
         return actions, state_outs, info
 
     @abstractmethod
     def custom_compute_actions(
         self,
         obs_batch: typing.Union[typing.List[TensorStructType], TensorStructType],
+        platform_obs: typing.Dict[str, typing.Dict],
         state_batches: typing.Optional[typing.List[TensorType]] = None,
         prev_action_batch: typing.Union[typing.List[TensorStructType], TensorStructType] = None,
         prev_reward_batch: typing.Union[typing.List[TensorStructType], TensorStructType] = None,

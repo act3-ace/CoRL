@@ -16,11 +16,11 @@ from corl.parsers.yaml_loader import load_file
 
 def test_basic_agent_parse():
     # This test goes straight from yml to an agent class object
-    config = load_file("config/agents/openai_gym/openai_gym_agent.yml")
+    config = load_file("config/tasks/openai_gym/agents/openai_gym_agent.yml")
 
     parsed_agent = AgentParseBase(**config)
-    agent_class = parsed_agent.agent(**parsed_agent.config, agent_name='foobar', platform_name='blue0')
+    agent_class = parsed_agent.agent(**parsed_agent.config, agent_name='foobar', platform_names=['blue0'])
 
 
 def test_basic_platform_parse():
-    config = load_file("config/platforms/gym_platform.yml")
+    config = load_file("config/tasks/openai_gym/platforms/gym_platform.yml")

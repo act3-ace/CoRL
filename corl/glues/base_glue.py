@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -23,15 +21,15 @@ decide to modify the controls exposed to the policy to only include what you
 want actually controlled.
 
 Deciding on how to combine actions is much more important when there are
-multiple actions like with movement. These connections also apply
+multiple actions like with movement and weapons. These connections also apply
 to observations for instance with multiple observations like platform state
 and sensor observations. How the actions and observations are "glued" together
 is specific to the task and thus require an implementation of the base class.
 
 The glue you use must match the actual agent in the environment or be robust
 enough to handle that agent. For example if there are different controllers
-than expected do you throw an error or just reduce the action space.
-A good practice is to assert the control, or sensor is a type or a
+or weapons than expected do you throw an error or just reduce the action space.
+A good practice is to assert the control, weapon, or sensor is a type or a
 subclass of a type to guarantee it has the functionality you expect.
 
 The glue classes are modular in that you can use multiple glue classes per
@@ -42,6 +40,7 @@ the stick and a pitch rate controller, the resulting behavior is not
 straightforward and may cause your backend to throw an error.
 """
 import abc
+import copy
 import enum
 import logging
 import typing
@@ -49,9 +48,12 @@ from collections import OrderedDict
 from functools import lru_cache
 
 import gym
-from pydantic import BaseModel
+from pydantic import BaseModel, PyObject
+from ray.rllib.utils.spaces.repeated import Repeated
 
 from corl.libraries.env_space_util import EnvSpaceUtil
+from corl.libraries.normalization import LinearNormalizer, Normalizer
+from corl.rewards.base_measurement_operation import ExtractorSet, ObservationExtractorValidator
 from corl.simulators.base_platform import BasePlatform
 
 
@@ -69,8 +71,8 @@ class BaseAgentGlueNormalizationValidator(BaseModel):
     maximum: the maximum value this glue's output will be normalized to
     """
     enabled: bool = True
-    minimum: float = -1.0
-    maximum: float = 1.0
+    normalizer: PyObject = LinearNormalizer
+    config: typing.Dict = {}
 
 
 class BaseAgentGlueValidator(BaseModel):
@@ -79,12 +81,18 @@ class BaseAgentGlueValidator(BaseModel):
     agent_name: the name of the agent who owns this glue
     seed: temporary - assume this will be removed
     normalization: how to handle obs normalization, see BaseAgentGlueNormalizationValidator
+    training_export_behavior: if this glues output should be included in the obs provided to policy
+    clip_to_space: if this glues output should be clipped to match the obs space
+    extractors: A dict of extractors to initialize for use with the topologically sorted
+                    obs dictionary
     """
     name: typing.Optional[str]
     agent_name: str
     seed: typing.Optional[int]
     normalization: BaseAgentGlueNormalizationValidator = BaseAgentGlueNormalizationValidator()
     training_export_behavior: TrainingExportBehavior = TrainingExportBehavior.INCLUDE
+    clip_to_space: bool = False
+    extractors: typing.Dict[str, ObservationExtractorValidator] = {}
 
 
 class BaseAgentGlue(abc.ABC):
@@ -108,7 +116,12 @@ class BaseAgentGlue(abc.ABC):
             The configuration parameters of this glue class
         """
         self.config: BaseAgentGlueValidator = self.get_validator(**kwargs)
+        self._normalizer: Normalizer = self.config.normalization.normalizer(**self.config.normalization.config)
         self._agent_removed = False
+        # construct extractors
+        self.extractors: typing.Dict[str, ExtractorSet] = {}
+        for key, extractor in self.config.extractors.items():
+            self.extractors[key] = extractor.construct_extractors()
 
     @property
     def get_validator(self) -> typing.Type[BaseAgentGlueValidator]:
@@ -124,22 +137,20 @@ class BaseAgentGlue(abc.ABC):
     def get_unique_name(self) -> str:
         """Provies a unique name of the glue to differiciate it from other glues.
         """
-        ...
 
     @lru_cache(maxsize=1)
-    def action_space(self) -> gym.spaces.Space:
+    def action_space(self) -> gym.spaces.Dict:
         """
-        Build the action space for the controller, etc. that defines the action given to apply_action
+        Build the action space for the controller, weapons, etc. that defines the action given to apply_action
 
         Returns
         -------
         gym.spaces.Space
             The gym Space that defines the action given to the apply_action function
         """
-        ...
 
     @lru_cache(maxsize=1)
-    def normalized_action_space(self) -> typing.Optional[gym.spaces.Space]:
+    def normalized_action_space(self) -> typing.Optional[gym.spaces.Dict]:
         """
         Normalizes an action space from this glue to some normalized bounds.
         There is not rules on what "normal" is.
@@ -155,21 +166,23 @@ class BaseAgentGlue(abc.ABC):
             The scaled action space
         """
         action_space = self.action_space()
-        if action_space and self.config.normalization.enabled:
-            return EnvSpaceUtil.normalize_space(
-                space=action_space, out_min=self.config.normalization.minimum, out_max=self.config.normalization.maximum
-            )
         if action_space:
+            if self.config.normalization.enabled:
+                tmp = self._normalizer.normalize_space(space=action_space)
+                return tmp
             return action_space
         return None
 
     def apply_action(
         self,
         action: EnvSpaceUtil.sample_type,  # pylint: disable=unused-argument
-        observation: EnvSpaceUtil.sample_type  # pylint: disable=unused-argument
+        observation: EnvSpaceUtil.sample_type,  # pylint: disable=unused-argument
+        action_space: OrderedDict,
+        obs_space: OrderedDict,
+        obs_units: OrderedDict,
     ) -> None:
         """
-        Apply the action for the controller, etc.
+        Apply the action for the controller, weapons, etc.
 
         Parameters
         ----------
@@ -177,8 +190,13 @@ class BaseAgentGlue(abc.ABC):
             The action for the class to apply to the platform
         observation
             The current observations before appling the action
+        action_space: OrderedDict
+            The action space for this agent
+        obs_space: OrderedDict
+            The observation space for this agent
+        obs_units:
+            The observation units for this agent
         """
-        ...
 
     def unnormalize_action(self, action: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
         """
@@ -197,31 +215,24 @@ class BaseAgentGlue(abc.ABC):
         EnvSpaceUtil.sample_type:
             the unnormalized action
         """
+        ret: EnvSpaceUtil.sample_type = action
         if self.config.normalization.enabled:
-            ret = EnvSpaceUtil.unscale_sample_from_space(
-                space=self.action_space(),
-                space_sample=action,
-                out_min=self.config.normalization.minimum,
-                out_max=self.config.normalization.maximum
-            )
-        else:
-            ret = action
+            ret = self._normalizer.unnormalize_sample(space=self.action_space(), sample=action)
         return ret
 
     @lru_cache(maxsize=1)
-    def observation_space(self) -> gym.spaces.Space:
+    def observation_space(self) -> typing.Optional[gym.spaces.Dict]:
         """
-        Build the observation space for the platform using the state of the platform, controller, sensors, etc.
+        Build the observation space for the platform using the state of the platform, controller, weapons, sensors, etc.
 
         Returns
         -------
         gym.spaces.Space
             The gym space that defines the returned space from the get_observation function
         """
-        ...
 
     @lru_cache(maxsize=1)
-    def normalized_observation_space(self) -> typing.Optional[gym.spaces.Space]:
+    def normalized_observation_space(self) -> typing.Optional[gym.spaces.Dict]:
         """
         Normalizes an observation space from this glue to some normalized bounds.
         There is not rules on what "normal" is.
@@ -237,24 +248,36 @@ class BaseAgentGlue(abc.ABC):
             The scaled observation space
         """
         observation_space = self.observation_space()
-        if observation_space and self.config.normalization.enabled:
-            return EnvSpaceUtil.normalize_space(
-                space=observation_space, out_min=self.config.normalization.minimum, out_max=self.config.normalization.maximum
-            )
         if observation_space:
+            if self.config.normalization.enabled:
+                tmp = self._normalizer.normalize_space(space=observation_space)
+                if not isinstance(tmp, gym.spaces.Dict):
+                    raise RuntimeError(
+                        f"{self.get_unique_name()} tried to return something other than a dict observation_space, "
+                        "this is currently not supported."
+                    )
+                return tmp
             return observation_space
         return None
 
-    def get_observation(self) -> EnvSpaceUtil.sample_type:
+    def get_observation(self, other_obs: OrderedDict, obs_space: OrderedDict, obs_units: OrderedDict) -> EnvSpaceUtil.sample_type:
         """
         Get the actual observation for the platform using the state of the platform, controller, sensors, etc.
+
+        Parameters
+        ----------
+        other_obs: OrderedDict
+            The observation dict containing any observations this glue may depend on
+        obs_space: OrderedDict
+            The observation space for this agent
+        obs_units:
+            The obserbation units for this agent
 
         Returns
         -------
         EnvSpaceUtil.sample_type
             The actual observation for this platform from this glue class
         """
-        ...
 
     def normalize_observation(self, observation: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
         """
@@ -274,12 +297,12 @@ class BaseAgentGlue(abc.ABC):
         if not self.config.normalization.enabled:
             ret = observation
         else:
-            ret = EnvSpaceUtil.scale_sample_from_space(
-                space=self.observation_space(),
-                space_sample=observation,
-                out_min=self.config.normalization.minimum,
-                out_max=self.config.normalization.maximum,
-            )
+            obs_space = self.observation_space()
+
+            if isinstance(obs_space, gym.spaces.Dict) and any(isinstance(obs_space[key], Repeated) for key in obs_space.keys()):
+                ret = self._normalizer.normalize_sample(space=obs_space, sample=copy.deepcopy(observation))
+            elif obs_space:
+                ret = self._normalizer.normalize_sample(space=obs_space, sample=observation)
         return ret
 
     def get_info_dict(self) -> EnvSpaceUtil.sample_type:
@@ -291,7 +314,6 @@ class BaseAgentGlue(abc.ABC):
         EnvSpaceUtil.sample_type
             The actual info dict object for this platform from this glue class
         """
-        ...
 
     def agent_removed(self) -> bool:
         """
@@ -353,4 +375,3 @@ class BaseAgentControllerGlue(BaseAgentPlatformGlue, abc.ABC):
         OrderedDict
             The currently applied controls
         """
-        ...

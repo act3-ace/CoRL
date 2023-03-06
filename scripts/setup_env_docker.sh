@@ -20,7 +20,7 @@ set -o errexit -o pipefail -o noclobber -o nounset
 # parse arguments below
 DOCKER_CONTAINER=""
 VDL_USER=""
-CONTAINER_USER="act3rl"
+CONTAINER_USER="act3"
 BRANCH="master"
 DOCKER_ONLY=0
 DATE="$(date +"%m-%d-%y:%H%M")"
@@ -60,8 +60,6 @@ COMPOSE_FILE="$CODE_PATH"/docker-compose.yml
 
 USE_ACT3_OCI_REGISTRY=${ACT3_OCI_REGISTRY:-reg.git.act3-ace.com}
 USE_OCI_REGISTRY=${OCI_REGISTRY:-reg.git.act3-ace.com}
-USE_AGENTS_BASE_IMAGE=${AGENTS_BASE_IMAGE:-nvcr.io/nvidia/pytorch:22.05-py3}
-USE_DOCKER_OCI_REGISTRY=${DOCKER_OCI_REGISTRY:-reg.git.act3-ace.com/act3-rl/external-dependencies/}
 
 ENV_FILE="$CODE_PATH"/.env
 {
@@ -84,12 +82,10 @@ ENV_FILE="$CODE_PATH"/.env
   echo "DOCKER_BUILDKIT=1"
   echo "DOCKER_CLI_EXPERIMENTAL=enabled"
   echo "ACT3_OCI_REGISTRY=${USE_ACT3_OCI_REGISTRY}"
-  echo "AGENTS_BASE_IMAGE=${USE_AGENTS_BASE_IMAGE}"
   echo "OCI_REGISTRY=${USE_OCI_REGISTRY}"
-  echo "DOCKER_OCI_REGISTRY=${USE_DOCKER_OCI_REGISTRY}"
 
 } >| "${ENV_FILE}"
 
-# rsync -a --delete ~/.ssh/ "$DEV_PATH"/.ssh/
+rsync -a --delete ~/.ssh/ "$DEV_PATH"/.ssh/
 
 echo "done"

@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -37,7 +35,7 @@ class ScriptedActionPolicyValidator(CustomPolicyValidator):
         arbitrary_types_allowed = True
 
     @validator('control_times')
-    def sort_control_times(cls, v):  # pylint: disable=no-self-argument, no-self-use
+    def sort_control_times(cls, v):  # pylint: disable=no-self-argument
         """Ensures that control_times are in order"""
         assert v == sorted(v), "control_times must be in order"
         return v
@@ -84,7 +82,7 @@ class ScriptedActionPolicyValidator(CustomPolicyValidator):
         return converted_control_list
 
     @validator('control_values', pre=True, always=True)
-    def validate_control_values(cls, controls_list, values):  # pylint: disable=no-self-argument, no-self-use
+    def validate_control_values(cls, controls_list, values):  # pylint: disable=no-self-argument
         """validate that control_values match the controllers"""
         if 'controllers' not in values or 'control_times' not in values:
             raise ValueError(f'Could not run "validate_control_values" because previous items failed: {values}')
@@ -97,7 +95,7 @@ class ScriptedActionPolicyValidator(CustomPolicyValidator):
     def validate_missing_action_policy(cls, missing_action_policy, values):
         """validates the missing action policy"""
         if missing_action_policy == 'repeat_last_action':
-            assert values['control_times'][0] == 0, "missing control_time for t=0"
+            assert values['control_times'][0] == values['reset_time'], f"missing control_time for t={values['reset_time']}"
         return missing_action_policy
 
     @validator('default_action', pre=True)
@@ -138,11 +136,16 @@ class ScriptedActionPolicy(CustomPolicy):  # pylint: disable=abstract-method
     def _reset(self):
         super()._reset()
         self._input_index = 0
-        self._last_action = EnvSpaceUtil.get_zero_sample_from_space(self.validated_config.act_space)
+
+        if self.validated_config.default_action is not None:
+            self._last_action = self.validated_config.default_action
+        else:
+            self._last_action = EnvSpaceUtil.get_mean_sample_from_space(self.validated_config.act_space)
 
     def custom_compute_actions(
         self,
         obs_batch,
+        platform_obs,
         state_batches=None,
         prev_action_batch=None,
         prev_reward_batch=None,

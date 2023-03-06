@@ -15,65 +15,119 @@ import pytest
 import ray
 import yaml
 
-from corl.train_rl import MainUtilACT3Core
+from corl.train_rl import parse_corl_args
 from corl.parsers.yaml_loader import load_file
 from corl.experiments.base_experiment import ExperimentParse
 
 
+ppo_rllib_config = {
+    'horizon': 10,
+    'rollout_fragment_length': 10,
+    'train_batch_size': 10,
+    'sgd_minibatch_size': 10,
+    'num_workers': 1,
+    'num_cpus_per_worker': 1,
+    'num_envs_per_worker': 1,
+    'num_cpus_for_driver': 1,
+    'num_gpus_per_worker': 0,
+    'num_gpus': 0,
+    'num_sgd_iter': 30,
+    'seed': 1
+}
+
+sac_rllib_config = {
+    'horizon': 10,
+    'rollout_fragment_length': 10,
+    'train_batch_size': 10,
+    'num_workers': 1,
+    'num_cpus_per_worker': 1,
+    'num_envs_per_worker': 1,
+    'num_cpus_for_driver': 1,
+    'num_gpus_per_worker': 0,
+    'num_gpus': 0,
+    'seed': 1
+}
+
 # Adjustments to the configuration files used in this test to match the current baseline is authorized, provided you make a post on
-# * with notifications to * and * that the change was made.
-# All other changes, such as commenting out tests or disabling inference or evaluation requires coordination on the
-# channel of * with notifications to * and *.
+# MatterMost aaco-ai-agents with notifications to joblackburn and bheiner that the change was made.
+# All other changes, such as commenting out tests or disabling inference or evaluation requires coordination on the aaco-ai-agents
+# channel of MatterMost with notifications to joblackburn and bheiner.
 # This should always be committed as False; however, if you need to debug this unit test, set it temporarily to True
 # @pytest.mark.ray_debug_mode(False)
 @pytest.mark.parametrize(
-    'experiment_config',
+    'experiment_config, test_rllib_config',
     [
         pytest.param(
-            'config/experiments/cartpole_v1.yml',
+            'config/tasks/openai_gym/experiments/cartpole_v1.yml',
+            ppo_rllib_config,
             id='cartpole-v1'
         ),
         pytest.param(
-            'config/experiments/cartpole_v1_repeated_obs.yml',
+            'config/tasks/openai_gym/experiments/cartpole_v1_repeated_obs.yml',
+            ppo_rllib_config,
             id='cartpole-v1-repeated'
         ),
         pytest.param(
-            'config/experiments/cartpole_v1_with_wrapper.yml',
+            'config/tasks/openai_gym/experiments/cartpole_v1_with_wrapper.yml',
+            ppo_rllib_config,
             id='cartpole-v1-with_wrapper'
         ),
         pytest.param(
-            'config/experiments/cartpole_v1_random.yml',
+            'config/tasks/openai_gym/experiments/cartpole_v1_random.yml',
+            ppo_rllib_config,
             id='cartpole-v1-random'
         ),
         pytest.param(
-            'config/experiments/cartpole_v1_scripted.yml',
+            'config/tasks/openai_gym/experiments/cartpole_v1_scripted.yml',
+            ppo_rllib_config,
             id='cartpole-v1-scripted'
         ),
 
         pytest.param(
-            'config/experiments/cartpole_v1_noop_ctrl.yml',
+            'config/tasks/openai_gym/experiments/cartpole_v1_noop_ctrl.yml',
+            ppo_rllib_config,
             id='cartpole-v1-noop_ctrl'
         ),
         pytest.param(
-            'config/experiments/cartpole_v1_with_duplicate_parts.yml',
+            'config/tasks/openai_gym/experiments/cartpole_v1_with_duplicate_parts.yml',
+            ppo_rllib_config,
             id='cartpole_v1_with_duplicate_parts'
         ),
         pytest.param(
-            'config/experiments/cartpole_v1_dict_wrapper.yml',
+            'config/tasks/openai_gym/experiments/cartpole_v1_dict_wrapper.yml',
+            ppo_rllib_config,
             id='cartpole-v1-dict_wrapper'
         ),
         pytest.param(
-            'config/experiments/docking_1d.yml',
+            'config/tasks/docking_1d/experiments/docking_1d.yml',
+            ppo_rllib_config,
             id='docking-1d'
         ),
         pytest.param(
-            'config/experiments/pendulum_v1.yml',
+            'config/tasks/openai_gym/experiments/pendulum_v1.yml',
+            ppo_rllib_config,
             id='pendulum-v1'
+        ),
+        pytest.param(
+            'config/tasks/pong/experiments/pong.yml',
+            ppo_rllib_config,
+            id='pong ppo'
+        ),
+        pytest.param(
+            'config/tasks/pong/experiments/pong_commander.yml',
+            ppo_rllib_config,
+            id='pong commander ppo'
+        ),
+        pytest.param(
+            'config/tasks/pong/experiments/pong_sac.yml',
+            sac_rllib_config,
+            id='pong sac'
         ),
     ],
 )
 def test_tasks(
     experiment_config,
+    test_rllib_config,
     tmp_path,
     self_managed_ray,
 ):
@@ -83,30 +137,14 @@ def test_tasks(
     # else:
     #     ray_config['ignore_reinit_error'] = True
 
-    args = MainUtilACT3Core.parse_args(["--cfg", experiment_config])
+    args = parse_corl_args(["--cfg", experiment_config])
     config = load_file(config_filename=args.config)
 
     # print(config)
     experiment_parse = ExperimentParse(**config)
     experiment_class = experiment_parse.experiment_class(**experiment_parse.config)
 
-    replace_hpc_dict = {
-        'horizon': 10,
-        'rollout_fragment_length': 10,
-        'train_batch_size': 10,
-        'sgd_minibatch_size': 10,
-        'batch_mode': 'complete_episodes',
-        'num_workers': 1,
-        'num_cpus_per_worker': 1,
-        'num_envs_per_worker': 1,
-        'num_cpus_for_driver': 1,
-        'num_gpus_per_worker': 0,
-        'num_gpus': 0,
-        'num_sgd_iter': 30,
-        'seed': 1
-    }
-
-    experiment_class.config.rllib_configs["local"] = replace_hpc_dict
+    experiment_class.config.rllib_configs["local"].update(test_rllib_config)
     if "model" in experiment_class.config.rllib_configs["local"]:
         experiment_class.config.rllib_configs["local"]["model"].reset()
 
@@ -125,6 +163,6 @@ def test_tasks(
 
 
     # Determine filename of the checkpoint
-    checkpoint_glob = list(tmp_path.glob('training/**/checkpoint-1'))
+    checkpoint_glob = list(tmp_path.glob('training/**/checkpoint_000001'))
     assert len(checkpoint_glob) == 1
     checkpoint = checkpoint_glob[0]

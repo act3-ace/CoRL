@@ -1,13 +1,12 @@
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
+-------------------------------------------------------------------------------
+The Autonomous Capabilities Team (ACT3) Deep Reinforcement Learning (D-RL) Environment
 
 This is a US Government Work not subject to copyright protection in the US.
 
 The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 """
 import abc
 import random
@@ -19,7 +18,7 @@ from ray import tune
 
 
 class ParametersPPO:
-    """Utility functions for processing hparam searches in the framework for PPO algorithm
+    """Utility functions for processing hparam searches in the AACO framework for PPO algorithm
     https://github.com/ray-project/ray/blob/00922817b66ee14ba215972a98f416f3d6fef1ba/rllib/agents/ppo/ppo.py
     https://medium.com/aureliantactics/ppo-hyperparameters-and-ranges-6fc2d29bccbe
     https://blog.openai.com/openai-five/
@@ -405,7 +404,6 @@ class BaseHparamSearchValidator(BaseModel):
     """
     Base Validator to subclass for Experiments subclassing BaseExperiment
     """
-    ...
 
 
 class BaseHparamSearch(abc.ABC):
@@ -440,7 +438,6 @@ class BaseHparamSearch(abc.ABC):
         tune_config : dict
             The tune config
         """
-        ...
 
 
 class HparamSearchValidator_Shared(BaseHparamSearchValidator):

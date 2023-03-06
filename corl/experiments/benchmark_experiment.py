@@ -37,7 +37,7 @@ class BenchmarkExperimentValidator(BaseExperimentValidator):
     env_config: environment configuration, validated by environment class
     rllib_configs: a dictionary
     Arguments:
-        BaseModel {[type]} -- [description]
+        BaseModel: [description]
 
     Raises:
         RuntimeError: [description]
@@ -52,7 +52,7 @@ class BenchmarkExperimentValidator(BaseExperimentValidator):
     trainable_config: typing.Optional[typing.Dict[str, typing.Any]]
 
     @validator('rllib_configs', pre=True)
-    def apply_patches_rllib_configs(cls, v):  # pylint: disable=no-self-argument, no-self-use
+    def apply_patches_rllib_configs(cls, v):  # pylint: disable=no-self-argument
         """
         The dictionary of rllib configs may come in as a dictionary of
         lists of dictionaries, this function is responsible for collapsing
@@ -77,7 +77,7 @@ class BenchmarkExperimentValidator(BaseExperimentValidator):
         return rllib_configs
 
     @validator('ray_config', 'tune_config', 'trainable_config', 'env_config', pre=True)
-    def apply_patches_configs(cls, v):  # pylint: disable=no-self-argument, no-self-use
+    def apply_patches_configs(cls, v):  # pylint: disable=no-self-argument
         """
         reduces a field from
         typing.Union[typing.List[typing.Dict[str, typing.Any]], typing.Dict[str, typing.Any]]]
@@ -106,7 +106,7 @@ class RllibPolicyValidator(BasePolicyValidator):
     policy_class: callable policy class None will use default from trainer
     train: should this policy be trained
     Arguments:
-        BaseModel {[type]} -- [description]
+        BaseModel: [description]
 
     Raises:
         RuntimeError: [description]
@@ -158,9 +158,6 @@ class BenchmarkExperiment(BaseExperiment):
 
         self.config.env_config["horizon"] = rllib_config["horizon"]
 
-        if args.other_platform:
-            self.config.env_config["other_platforms"] = self.create_other_platforms(args.other_platform)
-
         if not self.config.ray_config['local_mode']:
             self.config.env_config['episode_parameter_provider'] = RemoteEpisodeParameterProvider.wrap_epp_factory(
                 Factory(**self.config.env_config['episode_parameter_provider']),
@@ -190,7 +187,7 @@ class BenchmarkExperiment(BaseExperiment):
         #     multi_actions_list = None
         total_timesteps = 0
 
-        for ep in range(10):
+        for ep in range(100):
             st = time.time()
             # obs = env.reset()
             env.reset()

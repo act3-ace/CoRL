@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -52,7 +50,7 @@ class ArithmeticMultiGlue(BaseMultiWrapperGlue):
         self.field_names = []
         for glue in self.glues():
             space = glue.observation_space()
-            if len(space.spaces) > 1:
+            if (not isinstance(space, gym.spaces.Dict)) or len(space.spaces) > 1:
                 raise RuntimeError("ArithmeticMultiGlue can only wrap a glue with one output")
             self.field_names.append(list(space.spaces.keys())[0])
 
@@ -99,15 +97,17 @@ class ArithmeticMultiGlue(BaseMultiWrapperGlue):
         )
         return d
 
-    def get_observation(self):
+    def get_observation(self, other_obs: OrderedDict, obs_space, obs_units):
         d = OrderedDict()
-        tmp_output = [glue.get_observation()[field_name] for glue, field_name in zip(self.glues(), self.field_names)]
+        tmp_output = [
+            glue.get_observation(other_obs, obs_space, obs_units)[field_name] for glue, field_name in zip(self.glues(), self.field_names)
+        ]
         d[self.Fields.RESULT] = np.array([self.operator(tmp_output)], dtype=np.float32)
         return d
 
     @lru_cache(maxsize=1)
-    def action_space(self) -> gym.spaces.Space:
+    def action_space(self):
         return None
 
-    def apply_action(self, action, observation):
+    def apply_action(self, action, observation, action_space, obs_space, obs_units):
         return None

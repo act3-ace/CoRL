@@ -18,7 +18,6 @@ import numpy as np
 
 from corl.libraries.environment_dict import RewardDict
 from corl.rewards.base_measurement_operation import BaseMeasurementOperation, BaseMeasurementOperationValidator
-from corl.simulators.common_platform_utils import get_platform_by_name
 
 
 class ExponentialDecayFromTargetValueValidator(BaseMeasurementOperationValidator):
@@ -71,8 +70,10 @@ class ExponentialDecayFromTargetValue(BaseMeasurementOperation):
         reward = RewardDict()
         reward[self.config.agent_name] = 0
 
-        obs = self.extractor.value(next_observation[self.config.agent_name],
-                                   get_platform_by_name(next_state, self.config.agent_name))[self.config.index]
+        if self.config.agent_name not in next_observation:
+            return reward
+
+        obs = self.extractor.value(next_observation[self.config.agent_name])[self.config.index]
 
         def get_wrap_diff(A, B):
             """Returns the min diff angle

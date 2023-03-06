@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -19,10 +17,8 @@ import gym
 from pydantic import BaseModel, PyObject
 
 from corl.libraries.plugin_library import PluginLibrary
-from corl.libraries.state_dict import StateDict
-from corl.simulators.base_parts import BaseController, BaseSensor, MutuallyExclusiveParts
 from corl.simulators.base_platform import BasePlatform, BasePlatformValidator
-from corl.simulators.base_simulator import AgentConfig, BaseSimulator, BaseSimulatorValidator
+from corl.simulators.base_simulator import AgentConfig, BaseSimulator, BaseSimulatorState, BaseSimulatorValidator
 
 
 class GymPlatformValidator(BasePlatformValidator):
@@ -51,7 +47,7 @@ class GymAgentConfig(AgentConfig):
                     of a BasePart, and then the second element is a configuration dictionary for that part
 
     Arguments:
-        BaseModel {[type]} -- [description]
+        BaseModel: [description]
     """
     platform_config: GymPlatformConfig
 
@@ -64,10 +60,6 @@ class OpenAiGymPlatform(BasePlatform):
     """
 
     def __init__(self, **kwargs):
-        kwargs["exclusive_part_dict"] = {
-            BaseController: MutuallyExclusiveParts({"main_controller"}), BaseSensor: MutuallyExclusiveParts({"state_sensor"})
-        }
-
         # hack to get this working until platforms are fixed
         self.config: GymPlatformValidator = self.get_validator(**kwargs)
         self._platform = self.config.platform
@@ -170,6 +162,19 @@ class OpenAIGymSimulatorValidator(BaseSimulatorValidator):  # pylint: disable=to
     wrappers: typing.List[PyObject] = []
 
 
+class OpenAiSimulatorState(BaseSimulatorState):
+    """
+    obs: the current obs for each named gym env
+    rewards: the current reward for each named gym env
+    dones: the current done for each named gym env
+    info: the current info for each named gym env
+    """
+    obs: typing.Dict[str, typing.Any] = {}
+    rewards: typing.Dict[str, typing.Any] = {}
+    dones: typing.Dict[str, typing.Any] = {}
+    info: typing.Dict[str, typing.Any] = {}
+
+
 class OpenAIGymSimulator(BaseSimulator):
     """
     Simulator backend for running openai Gyms
@@ -183,7 +188,7 @@ class OpenAIGymSimulator(BaseSimulator):
     def __init__(self, **kwargs) -> None:
         self.config: OpenAIGymSimulatorValidator
         super().__init__(**kwargs)
-        self._state = StateDict()
+        self._state: OpenAiSimulatorState
         self.gym_env_dict = {}
         for agent_name in self.config.agent_configs:
             env = gym.make(self.config.gym_env, **self.config.gym_configs)
@@ -191,7 +196,7 @@ class OpenAIGymSimulator(BaseSimulator):
                 env = wrapper_cls(env)
             self.gym_env_dict[agent_name] = env
             self.gym_env_dict[agent_name].seed(self.config.seed)
-        self.sim_platforms: typing.List = []
+        self.sim_platforms: typing.Dict = {}
         self._time = 0.0
 
     def get_platforms(self):
@@ -199,17 +204,14 @@ class OpenAIGymSimulator(BaseSimulator):
         gets the current state of the simulation and makes the sim platforms
 
         Returns:
-            typing.List[OpenAiGymPlatform] -- the list of openai gym platforms
+            typing.Dict[str, OpenAiGymPlatform] -- the dict of openai gym platforms
         """
-        sim_platforms = []
+        sim_platforms = {}
         for agent_name, agent_env in self.gym_env_dict.items():
-            sim_platforms.append(
-                self.config.agent_configs[agent_name].platform_config.platform_class(
-                    platform_name=agent_name,
-                    platform=agent_env,
-                    parts_list=self.config.agent_configs[agent_name].parts_list,
-                    disable_exclusivity_check=self.config.disable_exclusivity_check,
-                )
+            sim_platforms[agent_name] = self.config.agent_configs[agent_name].platform_config.platform_class(
+                platform_name=agent_name,
+                platform=agent_env,
+                parts_list=self.config.agent_configs[agent_name].parts_list,
             )
         return sim_platforms
 
@@ -217,27 +219,23 @@ class OpenAIGymSimulator(BaseSimulator):
         """
         Update and caches all the measurements of all the sensors on each platform
         """
-        for plat in self.sim_platforms:
-            for sensor in plat.sensors:
+        for plat in self.sim_platforms.values():
+            for sensor in plat.sensors.values():
                 sensor.calculate_and_cache_measurement(state=self._state)
 
     def reset(self, config):
         self._time = 0.0
-        self._state.clear()
-        self._state.obs = {}
-        self._state.rewards = {}
-        self._state.dones = {}
-        self._state.info = {}
+        self.sim_platforms = self.get_platforms()
+        self._state = OpenAiSimulatorState(sim_platforms=self.sim_platforms, sim_time=self._time)
+
         for agent_name, agent_env in self.gym_env_dict.items():
             self._state.obs[agent_name] = agent_env.reset()
 
-        self.sim_platforms = self.get_platforms()
         self.update_sensor_measurements()
         return self._state
 
     def step(self):
-        for sim_platform in self.sim_platforms:
-            agent_name = sim_platform.name
+        for agent_name, sim_platform in self.sim_platforms.items():
             if sim_platform.operable:
                 tmp = self.gym_env_dict[agent_name].step(sim_platform.get_applied_action())
                 self._state.obs[agent_name] = tmp[0]
@@ -249,6 +247,7 @@ class OpenAIGymSimulator(BaseSimulator):
 
         self.update_sensor_measurements()
         self._time += 1
+        self._state.sim_time = self._time
         return self._state
 
     @property
@@ -256,7 +255,7 @@ class OpenAIGymSimulator(BaseSimulator):
         return self._time
 
     @property
-    def platforms(self) -> typing.List:
+    def platforms(self):
         return self.sim_platforms
 
     def mark_episode_done(self, done_info, episode_state):
@@ -293,7 +292,7 @@ if __name__ == "__main__":
 
     tmp_sim = OpenAIGymSimulator(**tmp_config)
     sim_state = tmp_sim.reset(None)
-    print(tmp_sim.platforms[0].name, tmp_sim.platforms[0].action_space)
-    print(tmp_sim.platforms[0].observation_space)
+    print(tmp_sim.platforms["blue0"].name, tmp_sim.platforms[0].action_space)
+    print(tmp_sim.platforms["blue0"].observation_space)
     step_result = tmp_sim.step()
-    print(tmp_sim.platforms[0].sensors[0].get_measurement())
+    print(list(tmp_sim.platforms["blue0"].sensors.values())[0].get_measurement())

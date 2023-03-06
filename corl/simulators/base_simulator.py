@@ -11,14 +11,14 @@ limitation or restriction. See accompanying README and LICENSE for details.
 """
 
 import typing
-from abc import ABC, abstractmethod, abstractproperty
-from collections import OrderedDict
+from abc import ABC, abstractmethod
 
 from pydantic import BaseModel, PyObject, ValidationError, parse_obj_as, validate_arguments
 
 from corl.libraries.factory import Factory
-from corl.libraries.state_dict import StateDict
 from corl.libraries.units import ValueWithUnits
+from corl.simulators.base_platform import BasePlatform
+from corl.simulators.base_simulator_state import BaseSimulatorState
 
 
 class AgentConfig(BaseModel):
@@ -29,7 +29,7 @@ class AgentConfig(BaseModel):
                     of a BasePart, and then the second element is a configuration dictionary for that part
 
     Arguments:
-        BaseModel {[type]} -- [description]
+        BaseModel: [description]
     """
     platform_config: typing.Union[typing.Dict[str, typing.Any], BaseModel]
     parts_list: typing.List[typing.Tuple[PyObject, typing.Dict[str, typing.Any]]]
@@ -40,18 +40,11 @@ class BaseSimulatorValidator(BaseModel):
     worker_index: what worker this simulator class is running on < used for render
     vector_index: what vector index this simulator class is running on < used for render
     agent_configs: the mapping of agent names to a dict describing the platform
-    disable_exclusivity_check: this bool should be used to tell downstream platforms that
-                                the user wishes to disable any mutually exclusive parts checking
-                                on a platform
-
-                                this should pretty much only be used for behavior tree type
-                                agents
     frame_rate: the rate the simulator should run at (in Hz)
     """
     worker_index: int = 0
     vector_index: int = 0
     agent_configs: typing.Mapping[str, AgentConfig]
-    disable_exclusivity_check: bool = False
     frame_rate: float = 1.0
 
 
@@ -141,7 +134,7 @@ class BaseSimulator(ABC):
         return self.config.frame_rate
 
     @abstractmethod
-    def reset(self, config: typing.Dict[str, typing.Any]) -> StateDict:
+    def reset(self, config: typing.Dict[str, typing.Any]) -> BaseSimulatorState:
         """
         reset resets the simulation and sets up a new episode
 
@@ -150,23 +143,20 @@ class BaseSimulator(ABC):
                     validate and use to setup this episode
 
         Returns:
-            StateDict -- The simulation state, has a .sim_platforms attr
-                        to access the platforms made by the simulation
+            BaseSimulatorState -- The simulation state
         """
-        ...
 
     @abstractmethod
-    def step(self) -> StateDict:
+    def step(self) -> BaseSimulatorState:
         """
         advances the simulation platforms and returns the state
 
         Returns:
-            StateDict -- The state after the simulation updates, has a
-                        .sim_platforms attr to access the platforms made by the simulation
+            BaseSimulatorState -- The state after the simulation updates
         """
-        ...
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def sim_time(self) -> float:
         """
         returns the time
@@ -174,20 +164,19 @@ class BaseSimulator(ABC):
         Returns:
             float - time
         """
-        ...
 
-    @abstractproperty
-    def platforms(self) -> typing.List:
+    @property
+    @abstractmethod
+    def platforms(self) -> typing.Dict[str, BasePlatform]:
         """
-        returns a list of platforms in the simulation
+        returns a dict of platforms in the simulation
 
         Returns:
-            list of platforms
+            dict of platforms mapped platform_name -> platform
         """
-        ...
 
     @abstractmethod
-    def mark_episode_done(self, done_info: OrderedDict, episode_state: OrderedDict):
+    def mark_episode_done(self, done_info: typing.Dict, episode_state: typing.Dict):
         """
         Takes in the done_info specifying how the episode completed
         and does any book keeping around ending an episode
@@ -196,7 +185,6 @@ class BaseSimulator(ABC):
             done_info {OrderedDict} -- The Dict describing which Done conditions ended an episode
             episode_state {OrderedDict} -- The episode state at the end of the simulation
         """
-        ...
 
     @abstractmethod
     def save_episode_information(self, dones, rewards, observations):
@@ -205,21 +193,18 @@ class BaseSimulator(ABC):
         based on the environment
 
         Arguments:
-            dones {[type]} -- the current done info of the step
-            rewards {[type]} -- the reward info for this step
-            observations {[type]} -- the observations for this step
+            dones: the current done info of the step
+            rewards: the reward info for this step
+            observations: the observations for this step
         """
-        ...
 
     def render(self, state, mode="human"):  # pylint: disable=unused-argument
         """
         allows you to do something to render your simulation
         you are responsible for checking which worker/vector index you are on
         """
-        ...
 
     def delete_platform(self, name):  # pylint: disable=unused-argument
         """
         provides a way to delete a platform from the simulation
         """
-        ...

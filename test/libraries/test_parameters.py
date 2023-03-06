@@ -1,14 +1,12 @@
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
+-------------------------------------------------------------------------------
+The Autonomous Capabilities Team (ACT3) Deep Reinforcement Learning (D-RL) Environment
 
 This is a US Government Work not subject to copyright protection in the US.
 
 The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
-
+-------------------------------------------------------------------------------
 """
 import numpy as np
 import pytest
@@ -83,12 +81,12 @@ def test_constant():
     rng = np.random.default_rng(seed=0)
 
     p = parameters.ConstantParameter(**data['config'])
-    assert p.get_value(rng).value == data['config']['value']
+    assert p.get_value(rng, {}).value == data['config']['value']
     assert len(p.updaters) == 0
 
     p2 = parameters.Factory(**data).build()
     assert type(p2) == parameters.ConstantParameter
-    assert p2.get_value(rng).value == data['config']['value']
+    assert p2.get_value(rng, {}).value == data['config']['value']
     assert len(p2.updaters) == 0
 
 
@@ -108,12 +106,12 @@ def test_uniform():
     rng2 = np.random.default_rng(seed=2)
 
     p = parameters.UniformParameter(**data['config'])
-    assert p.get_value(rng).value == pytest.approx(245.23224268498632)
+    assert p.get_value(rng, {}).value == pytest.approx(245.23224268498632)
     assert len(p.updaters) == 0
 
     p2 = parameters.Factory(**data).build()
     assert type(p2) == parameters.UniformParameter
-    assert p2.get_value(rng2).value == pytest.approx(245.23224268498632)
+    assert p2.get_value(rng2, {}).value == pytest.approx(245.23224268498632)
     assert len(p2.updaters) == 0
 
 
@@ -151,7 +149,7 @@ def test_uniform_updater():
 
     p = parameters.Factory(**data).build()
     assert type(p) == parameters.UniformParameter
-    assert p.get_value(rng).value == pytest.approx(245.23224268498632)
+    assert p.get_value(rng, {}).value == pytest.approx(245.23224268498632)
     assert len(p.updaters) == 2
     assert 'low' in p.updaters
     assert 'high' in p.updaters
@@ -161,7 +159,7 @@ def test_uniform_updater():
     p.updaters['high']()
     assert p.config.low == pytest.approx(data['config']['low'] + data['config']['update']['low']['config']['step'])
     assert p.config.high == pytest.approx(data['config']['high'] + data['config']['update']['high']['config']['step'])
-    assert p.get_value(rng).value == pytest.approx(241.93964573656493)
+    assert p.get_value(rng, {}).value == pytest.approx(241.93964573656493)
     for _ in range(5):
         p.updaters['low'](reverse=True)
     assert p.config.low <= p.config.high
@@ -187,12 +185,12 @@ def test_truncated_normal():
     rng2 = np.random.default_rng(seed=3)
 
     p = parameters.TruncatedNormalParameter(**data['config'])
-    assert p.get_value(rng).value == pytest.approx(14917.173138115373)
+    assert p.get_value(rng, {}).value == pytest.approx(14917.173138115373)
     assert len(p.updaters) == 0
 
     p2 = parameters.Factory(**data).build()
     assert type(p2) == parameters.TruncatedNormalParameter
-    assert p2.get_value(rng2).value == pytest.approx(14917.173138115373)
+    assert p2.get_value(rng2, {}).value == pytest.approx(14917.173138115373)
     assert len(p2.updaters) == 0
 
 
@@ -231,7 +229,7 @@ def test_truncated_normal_updater():
 
     p = parameters.Factory(**data).build()
     assert type(p) == parameters.TruncatedNormalParameter
-    assert p.get_value(rng).value == pytest.approx(14917.173138115373)
+    assert p.get_value(rng, {}).value == pytest.approx(14917.173138115373)
     assert len(p.updaters) == 2
     assert 'std' in p.updaters
     assert 'half_width_factor' in p.updaters
@@ -242,7 +240,7 @@ def test_truncated_normal_updater():
     assert p.config.std == pytest.approx(data['config']['std'] + data['config']['update']['std']['config']['step'])
     assert p.config.half_width_factor == pytest.approx(
         data['config']['half_width_factor'] + data['config']['update']['half_width_factor']['config']['step'])
-    assert p.get_value(rng).value == pytest.approx(14884.753545294836)
+    assert p.get_value(rng, {}).value == pytest.approx(14884.753545294836)
     for _ in range(12):
         p.updaters['std'](reverse=True)
     assert p.config.std >= 0
@@ -265,12 +263,12 @@ def test_choices_numeric():
     rng = np.random.default_rng(seed=0)
 
     p = parameters.ChoiceParameter(**data['config'])
-    assert p.get_value(rng).value == 20000
+    assert p.get_value(rng, {}).value == 20000
     assert len(p.updaters) == 0
 
     p2 = parameters.Factory(**data).build()
     assert type(p2) == parameters.ChoiceParameter
-    assert p2.get_value(rng).value == 15000
+    assert p2.get_value(rng, {}).value == 15000
     assert len(p2.updaters) == 0
 
 
@@ -288,12 +286,12 @@ def test_choices_string():
     rng = np.random.default_rng(seed=0)
 
     p = parameters.ChoiceParameter(**data['config'])
-    assert p.get_value(rng).value == 'baz'
+    assert p.get_value(rng, {}).value == 'baz'
     assert len(p.updaters) == 0
 
     p2 = parameters.Factory(**data).build()
     assert type(p2) == parameters.ChoiceParameter
-    assert p2.get_value(rng).value == 'bar'
+    assert p2.get_value(rng, {}).value == 'bar'
     assert len(p2.updaters) == 0
 
 
@@ -310,7 +308,7 @@ class RayTestClass:
         return self.parameters[i]
 
     def get_value(self, i, rng):
-        return self.parameters[i].get_value(rng).value
+        return self.parameters[i].get_value(rng, {}).value
 
     def hyperparameters(self, i):
         return self.parameters[i].updaters.keys()

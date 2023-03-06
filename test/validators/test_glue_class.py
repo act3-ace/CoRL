@@ -22,13 +22,13 @@ class TestGlue(BaseAgentGlue):
     def action_space(self) -> gym.spaces.Space:
         raise Exception("Unimplemented")
 
-    def apply_action(self, action: typing.Union[np.ndarray, typing.Tuple, typing.Dict], observation: typing.Union[np.ndarray, typing.Tuple, typing.Dict]) -> None:
+    def apply_action(self, action: typing.Union[np.ndarray, typing.Tuple, typing.Dict], observation: typing.Union[np.ndarray, typing.Tuple, typing.Dict], action_space, observation_space, observation_units) -> None:
         raise Exception("Unimplemented")
 
     def observation_space(self) -> gym.spaces.Space:
         raise Exception("Unimplemented")
 
-    def get_observation(self) -> typing.Union[np.ndarray, typing.Tuple, typing.Dict]:
+    def get_observation(self, other_obs, obs_space, obs_units) -> typing.Union[np.ndarray, typing.Tuple, typing.Dict]:
         raise Exception("Unimplemented")
 
     def get_unique_name(self) -> str:

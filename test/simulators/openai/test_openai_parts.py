@@ -16,5 +16,5 @@ def test_openai_controller_prop():
 
     openai_platform = OpenAiGymPlatform(platform_name="blue0", platform=base_environment, parts_list=base_platform_parts)
 
-    assert openai_platform.controllers[0].control_properties.create_space() == base_action_space
-    assert openai_platform.sensors[0].measurement_properties.create_space() == base_obs_space
+    assert list(openai_platform.controllers.values())[0].control_properties.create_space() == base_action_space
+    assert list(openai_platform.sensors.values())[0].measurement_properties.create_space() == base_obs_space

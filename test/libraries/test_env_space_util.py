@@ -9,13 +9,14 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
-
+from collections import OrderedDict
 import gym
 import numpy as np
+import copy
 import pytest
 from gym import spaces
 
-from corl.libraries.env_space_util import EnvSpaceUtil
+from corl.libraries.env_space_util import EnvSpaceUtil, SingleLayerDict, convert_gym_space, convert_sample
 
 gym_default_observation_space = spaces.Dict(
     {
@@ -64,6 +65,21 @@ gym_space_dict_of_boxes = gym.spaces.Dict(
         ]): gym.spaces.Box(low=np.array([1, -10]), high=np.array([10, 1])),
     }
 )
+
+def _check_nested_dict_keys(expected, actual):
+    """Recursive function that checks the order of all keys and nested keys of a dict"""
+    if isinstance(expected, (dict, OrderedDict)) and isinstance(actual, (dict, OrderedDict)):
+        keys_expected = list(expected.keys())
+        keys_actual = list(actual.keys())
+        np.testing.assert_equal(
+            actual=keys_actual, desired=keys_expected,
+            err_msg=f'Order of the keys have changed. {keys_expected} != {keys_actual}')
+
+        values_expected = [value for value in expected.values() if isinstance(value, (dict, OrderedDict))]
+        values_actual = [value for value in actual.values() if isinstance(value, (dict, OrderedDict))]
+        np.testing.assert_equal(len(values_expected), len(values_actual))
+        for nested_dict_expected, nested_dict_actual in zip(values_expected, values_actual):
+            _check_nested_dict_keys(nested_dict_expected, nested_dict_actual)
 
 
 def test_observation_pass_fail():
@@ -202,96 +218,6 @@ def test_clip_space_sample():
     ))
 
 
-def test_turn_box_into_tuple_of_discretes():
-    observation_space = gym_default_observation_space
-    num_actions = 11
-    discrete_only_space = EnvSpaceUtil.turn_box_into_tuple_of_discretes(observation_space, num_actions=num_actions)
-    assert isinstance(discrete_only_space["sensors"]["position"], gym.spaces.Tuple)
-
-    assert np.allclose(len(discrete_only_space["sensors"]["position"]), 3)
-
-    for i in discrete_only_space["sensors"]["position"].spaces:
-        assert np.allclose(i.n, np.array([num_actions]))
-
-    # if isinstance(
-    #     discrete_only_space["inner_state"]["job_status"]["progress"],
-    #     gym.spaces.MultiDiscrete,
-    # ):
-    #     assert np.allclose(
-    #         discrete_only_space["inner_state"]["job_status"]["progress"].nvec,
-    #         np.array([num_actions]),
-    #     )
-
-
-def test_turn_box_into_tuple_of_discretes_but_really_discrete():
-
-    observation_space = gym_space_dict_of_boxes
-    num_actions = 11
-    discrete_only_space = EnvSpaceUtil.turn_box_into_tuple_of_discretes(observation_space, num_actions=num_actions)
-    for key, dos in discrete_only_space.spaces.items():
-        for space in dos:
-            assert isinstance(space, gym.spaces.Discrete)
-            assert space.n == num_actions
-
-    observation_space = gym_space_dict_of_boxes
-    num_actions = {
-        tuple([
-            "control1",
-        ]): (11, ),
-        tuple([
-            "control2",
-        ]): (17, ),
-        tuple([
-            "control3",
-        ]): (13, ),
-        tuple([
-            "control4",
-            "control5",
-        ]): (9, 7)
-    }
-    discrete_only_space = EnvSpaceUtil.turn_box_into_tuple_of_discretes(observation_space, num_actions=num_actions)
-    for key, dos in discrete_only_space.spaces.items():
-        for idx, space in enumerate(dos):
-            assert isinstance(space, gym.spaces.Discrete)
-            assert space.n == num_actions[key][idx]
-
-
-def test_turn_discrete_action_back_to_cont():
-    observation_space = gym.spaces.Box(low=np.asarray([1, 1, 1, 1]), high=np.asarray([10, 10, 10, 10]))
-    num_actions = 11
-    discrete_only_space = EnvSpaceUtil.turn_box_into_tuple_of_discretes(observation_space, num_actions=num_actions)
-
-    space_sample = discrete_only_space.sample()
-    cont_space = EnvSpaceUtil.turn_discrete_action_back_to_cont(
-        original_space=observation_space,
-        discrete_only_space=discrete_only_space,
-        space_sample=space_sample,
-    )
-
-    # EnvSpaceUtil.deep_sanity_check_space_sample(observation_space, cont_space)
-    # assert observation_space.contains(cont_space)
-    # assert isinstance(cont_space["sensors"]["position"], np.ndarray)
-    # assert (cont_space["sensors"]["position"].shape == observation_space["sensors"]["position"].shape)
-
-
-def test_turn_discrete_action_back_to_cont_but_really_discrete():
-    observation_space = gym_default_observation_space
-    num_actions = 11
-    discrete_only_space = EnvSpaceUtil.turn_box_into_tuple_of_discretes(observation_space, num_actions=num_actions)
-
-    space_sample = discrete_only_space.sample()
-    cont_space = EnvSpaceUtil.turn_discrete_action_back_to_cont(
-        original_space=observation_space,
-        discrete_only_space=discrete_only_space,
-        space_sample=space_sample,
-    )
-
-    # EnvSpaceUtil.deep_sanity_check_space_sample(observation_space, cont_space)
-    # assert observation_space.contains(cont_space)
-    # assert isinstance(cont_space[0], np.ndarray)
-    # assert cont_space[0].shape[0] == 1
-
-
 def test_scale_sample_from_space():
     observation_space = gym_default_observation_space
     obs_sample = observation_space.sample()
@@ -406,83 +332,92 @@ def test_observation_multibinary_as_np_integer():
         print(exec_info)
 
 
-def test_turn_orig_space_box_to_cont_sample_powerspace():
-    #######
-    # Assure the symmetry check is working
-    disc_space = gym.spaces.Discrete(11)  #discrete space
-    flag = 0
-    try:
-        cont_space = gym.spaces.Box(0, 1, shape=[1])  #continuous space
-        spaces_likes = (cont_space, disc_space, 1, 2)
-        # This should raise a RuntimeError because the cont_space isn't symmetric
-        EnvSpaceUtil.turn_orig_space_box_to_cont_sample_powerspace(spaces_likes)
-    except:
-        flag += 1
-    try:
-        cont_space = gym.spaces.Box(0, 0, shape=[1])  #continuous space
-        spaces_likes = (cont_space, disc_space, 1, 2)
-        # This should raise a RuntimeError because the box high and low are same
-        EnvSpaceUtil.turn_orig_space_box_to_cont_sample_powerspace(spaces_likes)
-    except:
-        flag += 1
-    try:
-        cont_space = gym.spaces.Box(1, -1, shape=[1])  #continuous space
-        spaces_likes = (cont_space, disc_space, 1, 2)
-        # This should raise a RuntimeError because the box high is less than low
-        EnvSpaceUtil.turn_orig_space_box_to_cont_sample_powerspace(spaces_likes)
-    except:
-        flag += 1
-    assert flag == 3
+@pytest.mark.parametrize(
+    "input_space, output_type, valid",
+    [
+        pytest.param(gym_default_observation_space, SingleLayerDict, True, id='MultiNestedDict -> SingleLayerDict'),
+        pytest.param(spaces.Dict({'parent_key': spaces.Dict({'child_key': spaces.Discrete(3)})}), spaces.Discrete, True, id='NestDictSingleDiscrete -> Discrete'),
+        pytest.param(gym_default_observation_space, spaces.Box, True, id='MultiNestedDict -> Box'),
+        pytest.param(gym_space_dict_of_boxes, spaces.Box, True, id='DictOfBoxes -> Box'),
+        pytest.param(spaces.MultiDiscrete([3,10]), spaces.Box, True, id='MultiDiscrete -> Box'),
+        pytest.param(spaces.Tuple((spaces.Discrete(3), spaces.Discrete(10))), spaces.Box, True, id='Tuple -> Box'),
+        pytest.param(spaces.MultiBinary([3,2]), spaces.Box, True, id='MultiBinary -> Box'),
+        pytest.param(spaces.Dict({'key_1':spaces.Discrete(3), 'key_2': spaces.Discrete(10)}), spaces.Discrete, False, id='DictMultiDiscrete -> Discrete'),
+        pytest.param(spaces.Dict({'key': spaces.Tuple((spaces.Discrete(3), spaces.Discrete(10)))}), spaces.Discrete, False, id='TupleMultiDiscrete -> Discrete'),
+        pytest.param(spaces.Dict({'key': spaces.Box(low=-100, high=100, shape=(3,))}), spaces.Discrete, False, id='Box -> Discrete'),
+        pytest.param(spaces.Dict({'key': spaces.MultiDiscrete([3,2])}), spaces.Discrete, False, id='MultiDiscrete -> Discrete'),
+        pytest.param(spaces.Dict({'key': spaces.MultiBinary([3,2])}), spaces.Discrete, False, id='MultiBinary -> Discrete')
+    ],
+)
+def test_convert_gym_space_output_type(input_space, output_type, valid):
+    """
+    Test converting gym spaces
+    """
+    if valid:
+        output = convert_gym_space(input_space=input_space, output_type=output_type)
+        assert isinstance(output, output_type)
+    else:
+        with pytest.raises(ValueError) as exec_info:
+            convert_gym_space(input_space=input_space, output_type=output_type)
+        print(exec_info)
 
-    #######
-    # Assure that spaces > 1d work
-    multi_disc_space = gym.spaces.Tuple((gym.spaces.Discrete(11), gym.spaces.Discrete(17)))
-    cont_space = gym.spaces.Box(np.asarray([-1, -2]), np.asarray([1, 2]), dtype=np.float32)
-    spaces_likes = (cont_space, multi_disc_space, (1, 0), (2, 3))
-    EnvSpaceUtil.turn_orig_space_box_to_cont_sample_powerspace(spaces_likes)
+@pytest.mark.parametrize(
+    "input_space, output_type",
+    [
+        pytest.param(spaces.Dict({'parent_key': spaces.Dict({'child_key': spaces.Discrete(10)})}), spaces.Discrete, id='DictSingleDiscrete -> Discrete'),
+        pytest.param(spaces.Dict({'parent_key': spaces.Dict({'child_key': spaces.Discrete(10)})}), SingleLayerDict, id='DictSingleDiscrete -> SingleLayerDict'),
+        pytest.param(spaces.Dict({'key': spaces.Box(low=-5, high=5, shape=(3,), dtype=int)}), spaces.Box, id='DictSingleBox -> spaces.Box'),
+        pytest.param(spaces.Dict(
+            {'parent_key':
+                spaces.Dict({
+                    'child_key_2':
+                        spaces.Dict({
+                            'grandchild_key_b': spaces.Discrete(20),
+                            'grandchild_key_c': spaces.Discrete(200),
+                            'grandchild_key_a': spaces.Discrete(2)}),
+                    'child_key_1':
+                        spaces.Dict({
+                            'grandchild_key_bb': spaces.Discrete(20),
+                            'grandchild_key_cc': spaces.Discrete(200),
+                            'grandchild_key_aa': spaces.Discrete(2)})}
+                         )}),
+            SingleLayerDict, id='DictNestedDiscretes -> SingleLayerDict')
+    ],
+)
+def test_convert_sample(input_space, output_type):
+    """Test converting samples"""
+    output_space = convert_gym_space(input_space=input_space, output_type=output_type)
 
-    multi_disc_space = gym.spaces.Tuple((gym.spaces.Discrete(11), gym.spaces.Discrete(17)))
-    cont_space = gym.spaces.Box(-1, 1, shape=(2, ))
-    spaces_likes = (cont_space, multi_disc_space, (1, 0), (2, 3))
-    EnvSpaceUtil.turn_orig_space_box_to_cont_sample_powerspace(spaces_likes)
+    sample = input_space.sample()
 
-    #######
-    # Assure this works for even ints, e.g. 2
-    n = 11
-    power = 2
-    disc_space = gym.spaces.Discrete(n)  #discrete space
-    cont_space = gym.spaces.Box(-5, 5, shape=[1])  #continuous space
-    outactions = []
-    for i in range(n):
-        spaces_likes = (cont_space, disc_space, i, power)
-        outactions.append(EnvSpaceUtil.turn_orig_space_box_to_cont_sample_powerspace(spaces_likes)[0])
-    assert np.allclose(
-        outactions, [-5.0, -3.1999998, -1.7999998, -0.79999995, -0.19999994, 0.0, 0.20000005, 0.7999998, 1.8000004, 3.1999998, 5.0]
-    )
-    #######
-    # Assure this works for even ints, e.g. 2
-    n = 11
-    power = 3
-    disc_space = gym.spaces.Discrete(n)  #discrete space
-    cont_space = gym.spaces.Box(-5, 5, shape=[1])  #continuous space
-    outactions = []
-    for i in range(n):
-        spaces_likes = (cont_space, disc_space, i, power)
-        outactions.append(EnvSpaceUtil.turn_orig_space_box_to_cont_sample_powerspace(spaces_likes)[0])
-    assert np.allclose(
-        outactions, [-5.0, -2.5599997, -1.0799997, -0.31999996, -0.039999977, 0.0, 0.040000018, 0.3199998, 1.0800005, 2.5599997, 5.0]
-    )
-    #######
-    # Assure this works for non-ints, e.g. 1.5
-    n = 11
-    power = 1.5
-    disc_space = gym.spaces.Discrete(n)  #discrete space
-    cont_space = gym.spaces.Box(-5, 5, shape=[1])  #continuous space
-    outactions = []
-    for i in range(n):
-        spaces_likes = (cont_space, disc_space, i, power)
-        outactions.append(EnvSpaceUtil.turn_orig_space_box_to_cont_sample_powerspace(spaces_likes)[0])
-    assert np.allclose(
-        outactions,
-        [-5.0000005, -3.577709, -2.3237903, -1.2649109, -0.44721362, 0.0, 0.44721392, 1.2649112, 2.3237903, 3.577709, 5.0000005]
-    )
+    converted_sample = convert_sample(sample=sample, sample_space=input_space, output_space=output_space)
+    assert output_space.contains(converted_sample)
+
+    reverted_sample = convert_sample(sample=converted_sample, sample_space=output_space, output_space=input_space)
+
+    assert input_space.contains(reverted_sample)
+    # Fails when the values are not equal.
+    # Passes when OrderedDicts are in different order as long as the key and values are the same.
+    np.testing.assert_equal(reverted_sample, sample)
+
+    # Will fail if the keys of the dictionaries differ.
+    _check_nested_dict_keys(expected=sample, actual=reverted_sample)
+
+@pytest.mark.parametrize(
+    "dict_1, dict_2, should_fail",
+    [
+        pytest.param({3: {4:5, 1:2}, 4:4}, OrderedDict({3: OrderedDict({4:5, 1:2}), 4:4}), False, id='SameOrder-DifferentDictType-1'),
+        pytest.param({3: {4:5, 1:2}, 4:4}, OrderedDict({3: {4:5, 1:2}, 4:4}), False, id='SameOrder-DifferentDictType-2'),
+        pytest.param({3: {4:5, 1:2}, 4:4}, {3: OrderedDict({4:5, 1:2}), 4:4}, False, id='SameOrder-DifferentDictType-3'),
+        pytest.param({3: {4:5, 1:2}, 4:4}, {3: {1:2, 4:5}, 4:4}, True, id='DifferentOrder-PythonDicts'),
+        pytest.param(OrderedDict({3: {4:5, 1:2}, 4:4}), OrderedDict({3: {1:2, 4:5}, 4:4}), True, id='DifferentOrder-OrderedDicts'),
+    ],
+)
+def test_check_nested_dict_keys(dict_1, dict_2, should_fail):
+    """Test the helper function"""
+    if should_fail:
+        with pytest.raises(AssertionError) as exec_info:
+            _check_nested_dict_keys(dict_1, dict_2)
+        print(exec_info)
+    else:
+        _check_nested_dict_keys(dict_1, dict_2)

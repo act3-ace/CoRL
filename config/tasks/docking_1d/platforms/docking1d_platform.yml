@@ -1,0 +1,6 @@
+# This config defines, by name, the Platform Type of the agent. See examples/docking_1d/available_platforms.py
+
+
+{
+  name: DOCKING1D
+}

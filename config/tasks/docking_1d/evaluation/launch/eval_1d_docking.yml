@@ -1,0 +1,39 @@
+teams:
+  platform_config:
+    - name: blue0
+      config: config/tasks/docking_1d/platforms/docking1d_platform.yml
+  agent_config:
+    - name: blue0_ctrl
+      config: config/tasks/docking_1d/agents/docking1d_agent.yml
+      platforms: ["blue0"]
+      policy: config/policy/ppo/default_config.yml
+      agent_loader:
+        class_path: corl.evaluation.loader.check_point_file.CheckpointFile
+        init_args:
+          checkpoint_filename: <CHECKPOINT_LOCATION>
+
+task:
+    config_yaml_file: config/tasks/docking_1d/tasks/docking1d_task.yml
+
+test_cases:
+  test_case_manager:
+    class_path: corl.evaluation.runners.section_factories.test_cases.tabular_strategy.TabularStrategy
+    config:
+      data: config/tasks/docking_1d/evaluation/test_cases_config/docking1d_tests.yml
+      source_form: FILE_YAML_CONFIGURATION
+      randomize: False
+
+plugins:
+    platform_serialization:
+        class_path: corl.evaluation.serialize_platforms.serialize_Docking_1d    
+
+engine:
+    rllib:
+        callbacks: []
+        workers: 0
+
+recorders:
+- class_path: corl.evaluation.recording.folder.Folder
+  init_args:
+    dir: <SAVE-LOCATION>
+    append_timestamp: False

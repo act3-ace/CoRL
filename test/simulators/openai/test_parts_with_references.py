@@ -124,16 +124,16 @@ def test_valid():
     agent_parse_base = AgentParseBase(agent=TrainableBaseAgent, config=config)
 
     agent_class = agent_parse_base.agent(
-        **agent_parse_base.config, agent_name='foobar', platform_name=agent_id
+        **agent_parse_base.config, agent_name='foobar', platform_names=[agent_id]
     )
-    parts = agent_class.get_platform_parts(OpenAIGymSimulator, OpenAIGymAvailablePlatformTypes.MAIN)
+    parts = agent_class.get_platform_parts(OpenAIGymSimulator, {agent_id: OpenAIGymAvailablePlatformTypes.MAIN})
 
     agent_configs = {
         agent_id: {
             'platform_config': {
                 'platform_class': 'corl.simulators.openai_gym.gym_simulator.OpenAiGymPlatform'
             },
-            'parts_list': parts
+            'parts_list': parts[agent_id]
         }
     }
 
@@ -149,8 +149,8 @@ def test_valid():
     # the necessary constructor.
     simulator.reset(sim_reset_config)
 
-    assert simulator.sim_platforms[0].controllers[0].config.param_controller == controller_arg_value
-    assert simulator.sim_platforms[0].sensors[0].config.param_sensor == sensor_arg_value
+    assert list(simulator.sim_platforms[agent_id].controllers.values())[0].config.param_controller == controller_arg_value
+    assert list(simulator.sim_platforms[agent_id].sensors.values())[0].config.param_sensor == sensor_arg_value
 
 
 def test_missing_reference():
@@ -217,11 +217,11 @@ def test_missing_reference():
     agent_parse_base = AgentParseBase(agent=TrainableBaseAgent, config=config)
 
     agent_class = agent_parse_base.agent(
-        **agent_parse_base.config, agent_name='foobar', platform_name=agent_id
+        **agent_parse_base.config, agent_name='foobar', platform_names=[agent_id]
     )
 
     with pytest.raises(RuntimeError):
-        parts = agent_class.get_platform_parts(OpenAIGymSimulator, OpenAIGymAvailablePlatformTypes.MAIN)
+        parts = agent_class.get_platform_parts(OpenAIGymSimulator, {agent_id: OpenAIGymAvailablePlatformTypes.MAIN})
 
 
 def test_parameter():
@@ -296,8 +296,8 @@ def test_parameter():
     agent_parse_base = AgentParseBase(agent=TrainableBaseAgent, config=config)
 
     agent_class = agent_parse_base.agent(
-        **agent_parse_base.config, agent_name='foobar', platform_name=agent_id
+        **agent_parse_base.config, agent_name='foobar', platform_names=[agent_id]
     )
 
     with pytest.raises(TypeError):
-        parts = agent_class.get_platform_parts(OpenAIGymSimulator, OpenAIGymAvailablePlatformTypes.MAIN)
+        parts = agent_class.get_platform_parts(OpenAIGymSimulator, {agent_id: OpenAIGymAvailablePlatformTypes.MAIN})

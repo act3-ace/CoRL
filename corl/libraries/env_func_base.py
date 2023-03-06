@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -29,10 +27,9 @@ class EnvFuncBase:
     """ base definition for env functions
     """
 
-    def reset(self):  # pylint: disable=no-self-use
+    def reset(self):
         """ Base reset function for items such as rewards and dones
         """
-        ...
 
     @property
     def name(self) -> str:

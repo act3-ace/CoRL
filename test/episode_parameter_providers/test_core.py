@@ -42,9 +42,9 @@ def test_simple(is_remote, tmp_path):
             params, _ = epp.get_params(rng)
             assert len(params) == 2
             assert ('param1',) in params
-            assert params[('param1',)].get_value(rng) == ValueWithUnits(value=3, units=None)
+            assert params[('param1',)].get_value(rng, {}) == ValueWithUnits(value=3, units=None)
             assert ('group', 'param2') in params
-            assert params[('group', 'param2')].get_value(rng) == ValueWithUnits(value=5, units=None)
+            assert params[('group', 'param2')].get_value(rng, {}) == ValueWithUnits(value=5, units=None)
 
         assert epp.compute_metrics() == {}
         epp.update({}, rng)
@@ -80,7 +80,7 @@ class IncrementingConstant(EpisodeParameterProvider):
             name: ConstantParameter(
                 name=name[-1],
                 units=self.config.parameters[name].config.units,
-                value=seed_param.get_value(rng).value + self._value)
+                value=seed_param.get_value(rng, {}).value + self._value)
             for name, seed_param in self.config.parameters.items()
         }, episode_id_out
 
@@ -130,9 +130,9 @@ def test_extensive(is_remote, tmp_path):
             params, episode_id = epp.get_params(rng)
             assert len(params) == 2
             assert ('param1',) in params
-            assert params[('param1',)].get_value(rng) == ValueWithUnits(value=3 + value, units=None)
+            assert params[('param1',)].get_value(rng, {}) == ValueWithUnits(value=3 + value, units=None)
             assert ('group', 'param2') in params
-            assert params[('group', 'param2')].get_value(rng) == ValueWithUnits(value=5 + value, units=None)
+            assert params[('group', 'param2')].get_value(rng, {}) == ValueWithUnits(value=5 + value, units=None)
             assert episode_id == index
             index += 1
 
@@ -164,7 +164,7 @@ def test_extensive(is_remote, tmp_path):
 
     assert params1.keys() == params2.keys()
     for k in params1.keys():
-        assert params1[k].get_value(rng1) == params2[k].get_value(rng2)
+        assert params1[k].get_value(rng1, {}) == params2[k].get_value(rng2, {})
 
     epp.update({}, rng1)
     epp2.update({}, rng2)
@@ -174,4 +174,4 @@ def test_extensive(is_remote, tmp_path):
 
     assert params1.keys() == params2.keys()
     for k in params1.keys():
-        assert params1[k].get_value(rng1) == params2[k].get_value(rng2)
+        assert params1[k].get_value(rng1, {}) == params2[k].get_value(rng2, {})

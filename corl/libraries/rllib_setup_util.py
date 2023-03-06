@@ -3,7 +3,7 @@
 import typing
 
 from pydantic import BaseModel
-from ray.rllib.agents.trainer import COMMON_CONFIG
+from ray.rllib.algorithms.algorithm import COMMON_CONFIG
 
 
 class AutoRllibConfigSetup(BaseModel):
@@ -30,7 +30,7 @@ class AutoRllibConfigSetup(BaseModel):
 def auto_configure_rllib_config(
     rllib_config: typing.Dict[str, typing.Any], auto_rllib_config_setup: AutoRllibConfigSetup, ray_resources: dict
 ) -> None:
-    """Optimize rllib_config parameters for trainer alg"""
+    """Optimize rllib_config parameters for areana training"""
     print("*" * 50 + "Auto Updates to RLLIB Settings (if not set)")
 
     num_trials = auto_rllib_config_setup.num_trials
@@ -48,7 +48,7 @@ def auto_configure_rllib_config(
     if "num_cpus_for_driver" in rllib_config.keys():
         num_cpus_for_driver = rllib_config["num_cpus_for_driver"]
     else:
-        num_cpus_for_driver = COMMON_CONFIG["num_cpus_for_driver"]
+        num_cpus_for_driver = COMMON_CONFIG["num_cpus_for_driver"]  # type: ignore
 
     cpus_per_trial_available: float = int((cpus_available - num_cpus_for_driver) / num_trials)
 
@@ -60,7 +60,7 @@ def auto_configure_rllib_config(
     if "num_cpus_per_worker" in rllib_config.keys():
         workers_per_arena = max(1, int(cpus_per_trial_available / rllib_config["num_cpus_per_worker"]))
     else:
-        workers_per_arena = max(1, int(cpus_per_trial_available / COMMON_CONFIG["num_cpus_per_worker"]))
+        workers_per_arena = max(1, int(cpus_per_trial_available / COMMON_CONFIG["num_cpus_per_worker"]))  # type: ignore
 
     if 'num_workers' not in rllib_config:
         rllib_config['num_workers'] = {"grid_search": [workers_per_arena]}
@@ -166,7 +166,7 @@ def get_gpu_avail(ray_resources: dict) -> float:
     if "GPU" in ray_resources.keys():
         gpus_available = ray_resources["GPU"]
     else:
-        gpus_available = COMMON_CONFIG["num_gpus"]
+        gpus_available = COMMON_CONFIG["num_gpus"]  # type: ignore
     return gpus_available
 
 

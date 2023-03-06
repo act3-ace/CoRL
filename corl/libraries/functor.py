@@ -11,6 +11,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 """
 import enum
 from collections.abc import Mapping as Mapping_Type
+from string import digits
 from typing import Any, Dict, List, Literal, Mapping, Optional, Sequence, Union
 
 from pydantic import BaseModel, Field, PyObject, validator
@@ -19,6 +20,7 @@ from typing_extensions import Annotated
 from corl.libraries.factory import Factory
 from corl.libraries.parameters import Parameter
 from corl.libraries.units import NoneUnitType, ValueWithUnits
+from corl.simulators.base_platform import BasePlatform
 
 ObjectStoreElem = Union[Parameter, ValueWithUnits, Any]
 
@@ -58,13 +60,18 @@ class Functor(BaseModel):
 
         TODO:  Better description
         """
-        functor_args = self.resolve_storage_and_references(param_sources=param_sources, ref_sources=ref_sources)
+        functor_args = self.resolve_storage_and_references(
+            param_sources=param_sources,
+            ref_sources=ref_sources,
+            platform=kwargs.get("platform", None),
+        )
         return self.functor(name=self.name, **functor_args, **kwargs)
 
     def resolve_storage_and_references(
         self,
         param_sources: Sequence[Mapping[str, Any]] = (),
         ref_sources: Sequence[Mapping[str, Any]] = (),
+        platform: BasePlatform = None,
     ):
         """ Resolve parameter storage and references to get direct functor arguments."""
 
@@ -95,22 +102,33 @@ class Functor(BaseModel):
                 name=arg_name, value=resolved_value, functor_units=functor_units, config_units=config_units, error_name=self.name
             )
 
+        if platform:
+            remove_digits = str.maketrans('', '', digits)
+            team_string = platform.name.translate(remove_digits)
+
         for ref_dest, ref_src in self.references.items():
+            true_dest = ref_dest.split(".")
+            true_ref_src = ref_src
+            if platform:
+                true_ref_src = true_ref_src.replace("%%SIDE%%", team_string).replace("%%PLATFORM%%", platform.name)
 
             # Resolve references
             for source in ref_sources:
-                if ref_src in source:
-                    ref_obj = source[ref_src]
+                if true_ref_src in source:
+                    ref_obj = source[true_ref_src]
                     if not isinstance(ref_obj, Parameter):
                         break
             else:
                 # This "else" means "no break encountered", which means either:
-                # 1. ref_src was not found in any source
-                # 2. ref_src was found; however, it was an unresolved Parameter
-                raise RuntimeError(f'Could not find {ref_src} for {self.name} in the reference storage')
+                # 1. true_ref_src was not found in any source
+                # 2. true_ref_src was found; however, it was an unresolved Parameter
+                raise RuntimeError(f'Could not find {ref_src} -> {true_ref_src} for {self.name} in the reference storage')
 
             # Resolve units
-            functor_args[ref_dest] = self._resolve_units(
+            tmp_functor_args = functor_args
+            for functor_arg_path in true_dest[:-1]:
+                tmp_functor_args = tmp_functor_args.setdefault(functor_arg_path, {})
+            tmp_functor_args[true_dest[-1]] = self._resolve_units(
                 name=ref_dest, value=ref_obj, functor_units=functor_units, config_units=config_units, error_name=self.name
             )
 
@@ -190,7 +208,11 @@ class FunctorWrapper(Functor):
 
         wrapped_func = self.wrapped.create_functor_object(param_sources=param_sources, ref_sources=ref_sources, **kwargs)
 
-        functor_args = self.resolve_storage_and_references(param_sources=param_sources, ref_sources=ref_sources)
+        functor_args = self.resolve_storage_and_references(
+            param_sources=param_sources,
+            ref_sources=ref_sources,
+            platform=kwargs.get("platform", None),
+        )
 
         return self.functor(name=self.name, wrapped=wrapped_func, **functor_args, **kwargs)
 
@@ -223,7 +245,11 @@ class FunctorMultiWrapper(Functor):
         """
         wrapped_funcs = [x.create_functor_object(param_sources=param_sources, ref_sources=ref_sources, **kwargs) for x in self.wrapped]
 
-        functor_args = self.resolve_storage_and_references(param_sources=param_sources, ref_sources=ref_sources)
+        functor_args = self.resolve_storage_and_references(
+            param_sources=param_sources,
+            ref_sources=ref_sources,
+            platform=kwargs.get("platform", None),
+        )
 
         return self.functor(name=self.name, wrapped=wrapped_funcs, **functor_args, **kwargs)
 
@@ -281,7 +307,11 @@ class FunctorDictWrapper(Functor):
             for k, v in self.wrapped.items()
         }
 
-        functor_args = self.resolve_storage_and_references(param_sources=param_sources, ref_sources=ref_sources)
+        functor_args = self.resolve_storage_and_references(
+            param_sources=param_sources,
+            ref_sources=ref_sources,
+            platform=kwargs.get("platform", None),
+        )
 
         return self.functor(name=self.name, wrapped=wrapped_funcs, **functor_args, **kwargs)
 

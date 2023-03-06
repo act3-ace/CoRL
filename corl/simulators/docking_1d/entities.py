@@ -4,7 +4,7 @@ calculate state transitions between time steps, given applied controls. In this 
 a 1D Double Integrator.
 """
 
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import scipy.integrate
@@ -171,7 +171,7 @@ class Docking1dDynamics:
         self,
         state_min: Union[float, np.ndarray] = -np.inf,
         state_max: Union[float, np.ndarray] = np.inf,
-        angle_wrap_centers: np.ndarray = None,
+        angle_wrap_centers: Optional[np.ndarray] = None,
         m: float = 12.0,
         integration_method: str = "RK45",
     ):

@@ -84,7 +84,7 @@ class DockingReward(RewardFuncBase):
         reward = RewardDict()
         value = 0.0
 
-        deputy = get_platform_by_name(next_state, self.config.agent_name)
+        deputy = get_platform_by_name(next_state, self.config.platform_names[0])
 
         position_sensor = get_sensor_by_name(deputy, self.config.position_sensor_name)  # type: ignore
         velocity_sensor = get_sensor_by_name(deputy, self.config.velocity_sensor_name)  # type: ignore

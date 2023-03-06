@@ -22,8 +22,8 @@ def test_override_controller_sensor_prop():
 
     openai_mod_platform = OpenAiGymPlatform(platform_name="blue0", platform=base_environment, parts_list=platform_mod_parts)
 
-    controller_space = openai_mod_platform.controllers[0].control_properties.create_space()
-    sensor_space = openai_mod_platform.sensors[0].measurement_properties.create_space()
+    controller_space = list(openai_mod_platform.controllers.values())[0].control_properties.create_space()
+    sensor_space = list(openai_mod_platform.sensors.values())[0].measurement_properties.create_space()
 
     assert controller_space != base_action_space
     assert controller_space == gym.spaces.Discrete(NUM_DISCRETE)

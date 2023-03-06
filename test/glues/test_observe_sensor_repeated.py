@@ -149,7 +149,7 @@ def test_observe_sensor_repeated_no_unit_default():
     np.testing.assert_allclose(observation_space.child_space["TestProp2"].high, np.array([2.0]).astype(np.float32))
     # Check get_observation
     observe_sensor_repeated._sensor.calculate_and_cache_measurement(None)
-    observation = observe_sensor_repeated.get_observation()[observe_sensor_repeated.Fields.DIRECT_OBSERVATION]
+    observation = observe_sensor_repeated.get_observation({}, {}, {})[observe_sensor_repeated.Fields.DIRECT_OBSERVATION]
     np.testing.assert_allclose(observation[0]["TestProp1"], np.array([1.0]).astype(np.float32))
     np.testing.assert_allclose(observation[0]["TestProp2"], np.array([2.0]).astype(np.float32))
 
@@ -196,7 +196,7 @@ def test_observe_sensor_repeated_no_unit_not_default():
     np.testing.assert_allclose(observation_space.child_space["TestProp2"].high, np.array([2.0 * math.pi / 180.0]).astype(np.float32))
     # Check get_observation
     observe_sensor_repeated._sensor.calculate_and_cache_measurement(None)
-    observation = observe_sensor_repeated.get_observation()[observe_sensor_repeated.Fields.DIRECT_OBSERVATION]
+    observation = observe_sensor_repeated.get_observation({}, {}, {})[observe_sensor_repeated.Fields.DIRECT_OBSERVATION]
     np.testing.assert_allclose(observation[0]["TestProp1"], np.array([1.0 / 3.28084]).astype(np.float32))
     np.testing.assert_allclose(observation[0]["TestProp2"], np.array([2.0 * math.pi / 180.0]).astype(np.float32))
 
@@ -244,7 +244,7 @@ def test_observe_sensor_repeated_unit_default():
     np.testing.assert_allclose(observation_space.child_space["TestProp2"].high, np.array([2.0 * 180.0 / math.pi]).astype(np.float32))
     # Check get_observation
     observe_sensor_repeated._sensor.calculate_and_cache_measurement(None)
-    observation = observe_sensor_repeated.get_observation()[observe_sensor_repeated.Fields.DIRECT_OBSERVATION]
+    observation = observe_sensor_repeated.get_observation({}, {}, {})[observe_sensor_repeated.Fields.DIRECT_OBSERVATION]
     np.testing.assert_allclose(observation[0]["TestProp1"], np.array([1.0 * 3.28084]).astype(np.float32))
     np.testing.assert_allclose(observation[0]["TestProp2"], np.array([2.0 / math.pi * 180.0]).astype(np.float32))
 
@@ -292,7 +292,7 @@ def test_observe_sensor_repeated_unit_not_default():
     np.testing.assert_allclose(observation_space.child_space["TestProp2"].high, np.array([2.0]).astype(np.float32))
     # Check get_observation
     observe_sensor_repeated._sensor.calculate_and_cache_measurement(None)
-    observation = observe_sensor_repeated.get_observation()[observe_sensor_repeated.Fields.DIRECT_OBSERVATION]
+    observation = observe_sensor_repeated.get_observation({}, {}, {})[observe_sensor_repeated.Fields.DIRECT_OBSERVATION]
     np.testing.assert_allclose(observation[0]["TestProp1"], np.array([1.0 / 1852 / 3.28084]).astype(np.float32))
     np.testing.assert_allclose(observation[0]["TestProp2"], np.array([2.0]).astype(np.float32))
 
@@ -340,6 +340,6 @@ def test_observe_sensor_repeated_partial_unit_default():
     np.testing.assert_allclose(observation_space.child_space["TestProp2"].high, np.array([2.0]).astype(np.float32))
     # Check get_observation
     observe_sensor_repeated._sensor.calculate_and_cache_measurement(None)
-    observation = observe_sensor_repeated.get_observation()[observe_sensor_repeated.Fields.DIRECT_OBSERVATION]
+    observation = observe_sensor_repeated.get_observation({}, {}, {})[observe_sensor_repeated.Fields.DIRECT_OBSERVATION]
     np.testing.assert_allclose(observation[0]["TestProp1"], np.array([1.0 * 3.28084]).astype(np.float32))
     np.testing.assert_allclose(observation[0]["TestProp2"], np.array([2.0]).astype(np.float32))

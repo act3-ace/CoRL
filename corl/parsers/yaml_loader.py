@@ -110,7 +110,7 @@ class Loader(yaml.SafeLoader):  # pylint: disable=too-few-public-methods,W0223
                     raise ConstructorError(
                         None,
                         None,
-                        "expected a sequence returned by 'include-extend', but found %s" % type(this_output).__name__,
+                        f"expected a sequence returned by 'include-extend', but found {type(this_output).__name__}",
                         child.start_mark
                     )
                 output.extend(this_output)
@@ -136,7 +136,7 @@ class Loader(yaml.SafeLoader):  # pylint: disable=too-few-public-methods,W0223
                             raise yaml.ConstructorError(
                                 "while constructing a mapping",
                                 node.start_mark,
-                                "expected a mapping for merging, but found %s" % subnode.id,
+                                f"expected a mapping for merging, but found {subnode.id}",
                                 subnode.start_mark
                             )
                         self.flatten_mapping(subnode)
@@ -160,7 +160,7 @@ class Loader(yaml.SafeLoader):  # pylint: disable=too-few-public-methods,W0223
                     raise yaml.ConstructorError(
                         "while constructing a mapping",
                         node.start_mark,
-                        "expected a mapping or list of mappings for merging, but found %s" % value_node.id,
+                        f"expected a mapping or list of mappings for merging, but found {value_node.id}",
                         value_node.start_mark
                     )
             elif key_node.tag == 'tag:yaml.org,2002:value':
@@ -177,7 +177,7 @@ def construct_include(loader: Loader, node: yaml.Node) -> Any:
     filename = os.path.realpath(os.path.join(loader._root, loader.construct_scalar(node)))  # type: ignore # pylint: disable=protected-access # noqa: E501
     extension = os.path.splitext(filename)[1].lstrip(".")
 
-    with open(filename, "r") as fp:
+    with open(filename, "r", encoding="utf-8") as fp:
         if extension in ("yaml", "yml"):  # pylint: disable=no-else-return
             return yaml.load(fp, Loader)
         elif extension in ("json", ):
@@ -191,7 +191,7 @@ def construct_include_direct(loader: Loader, node: yaml.Node) -> Any:
     filename = os.path.realpath(os.path.join(loader._root, loader.construct_scalar(node)))  # type: ignore # pylint: disable=protected-access # noqa: E501
     extension = os.path.splitext(filename)[1].lstrip(".")
 
-    with open(filename, "r") as fp:
+    with open(filename, "r", encoding="utf-8") as fp:
         if extension in ("yaml", "yml"):  # pylint: disable=no-else-return
             temp = yaml.load(fp, Loader)
             loader._include_mapping[filename] = temp  # pylint: disable=protected-access
@@ -218,7 +218,7 @@ def construct_include_arr(loader: Loader, node: yaml.Node) -> Any:
         filename = os.path.abspath(os.path.join(loader._root, item))  # pylint: disable=protected-access
         extension = os.path.splitext(filename)[1].lstrip(".")
 
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding="utf-8") as f:
             if extension in ("yaml", "yml"):  # pylint: disable=no-else-return
                 data = data + (yaml.load(f, Loader))
             elif extension in ("json", ):
@@ -233,7 +233,7 @@ Loader.add_constructor("!include", construct_include)
 Loader.add_constructor("!include-direct", construct_include_direct)
 Loader.add_constructor("!include-extend", construct_include)
 Loader.add_constructor("!function", construct_tune_function)
-Loader.add_constructor(u'tag:yaml.org,2002:python/tuple', Loader.construct_python_tuple)
+Loader.add_constructor("tag:yaml.org,2002:python/tuple", Loader.construct_python_tuple)
 Loader.add_constructor("!include_arr", construct_include_arr)
 
 
@@ -241,7 +241,7 @@ def load_file(config_filename: str):
     """
     Utility function to load in a specified yaml file
     """
-    with open(config_filename, "r") as fp:
+    with open(config_filename, "r", encoding="utf-8") as fp:
         config = yaml.load(fp, Loader)
     return config
 
@@ -272,9 +272,9 @@ def separate_config(config: typing.Dict):
     else:
         raise ValueError(f"Could not find a rllib_config in {config} or 'config' in tune_config")
 
-    for key in rllib_configs:
-        rllib_configs[key]["env_config"] = copy.deepcopy(env_config)
-        rllib_configs[key]["env_config"].setdefault("environment", {})["horizon"] = rllib_configs[key].get("horizon", 1000)
+    for key, value in rllib_configs.items():
+        value["env_config"] = copy.deepcopy(env_config)
+        value["env_config"].setdefault("environment", {})["horizon"] = value.get("horizon", 1000)
 
     # a trainable config is not necessary
     trainable_config = apply_patches(config.get("trainable_config", None))

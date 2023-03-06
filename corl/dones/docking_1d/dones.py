@@ -1,13 +1,4 @@
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
 This module defines functions that determine terminal conditions for the 1D Docking environment.
 """
 
@@ -94,13 +85,13 @@ class DockingDoneFunction(DoneFuncBase):
         successful_dock = in_docking and not max_velocity_exceeded
         crash = (in_docking and max_velocity_exceeded) or position < 0  # pylint: disable=R1706
 
-        done[self.agent] = False
+        done[self.platform] = False
         if crash:
-            done[self.agent] = True
-            next_state.episode_state[self.agent][self.name] = DoneStatusCodes.LOSE
+            done[self.platform] = True
+            next_state.episode_state[self.platform][self.name] = DoneStatusCodes.LOSE
         elif successful_dock:
-            done[self.agent] = True
-            next_state.episode_state[self.agent][self.name] = DoneStatusCodes.WIN
+            done[self.platform] = True
+            next_state.episode_state[self.platform][self.name] = DoneStatusCodes.WIN
 
         self._set_all_done(done)
         return done

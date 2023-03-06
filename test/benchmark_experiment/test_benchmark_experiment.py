@@ -15,22 +15,22 @@ import pytest
 import ray
 import yaml
 
-from corl.train_rl import MainUtilACT3Core
+from corl.train_rl import parse_corl_args
 from corl.parsers.yaml_loader import load_file
 from corl.experiments.base_experiment import ExperimentParse
 
 
 # Adjustments to the configuration files used in this test to match the current baseline is authorized, provided you make a post on
-# * with notifications to * and * that the change was made.
-# All other changes, such as commenting out tests or disabling inference or evaluation requires coordination on the
-# channel of * with notifications to * and *.
+# MatterMost aaco-ai-agents with notifications to joblackburn and bheiner that the change was made.
+# All other changes, such as commenting out tests or disabling inference or evaluation requires coordination on the aaco-ai-agents
+# channel of MatterMost with notifications to joblackburn and bheiner.
 # This should always be committed as False; however, if you need to debug this unit test, set it temporarily to True
 # @pytest.mark.ray_debug_mode(False)
 @pytest.mark.parametrize(
     'experiment_config',
     [
         pytest.param(
-            'config/experiments/cartpole_v1_benchmark.yml',
+            'config/tasks/openai_gym/experiments/cartpole_v1_benchmark.yml',
             id='cartpole-v1-benchmark'
         ),
     ],
@@ -46,7 +46,7 @@ def test_tasks(
     # else:
     #     ray_config['ignore_reinit_error'] = True
 
-    args = MainUtilACT3Core.parse_args(["--cfg", experiment_config])
+    args = parse_corl_args(["--cfg", experiment_config])
     config = load_file(config_filename=args.config)
 
     # print(config)

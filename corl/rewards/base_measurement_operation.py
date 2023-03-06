@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -30,7 +28,7 @@ class ObservationExtractorValidator(BaseModel):
         ex: [ObserveSensor_Sensor_AltitudeDiff, direct_observation_diff]
     indices: List of indices to extract from the glue
     """
-    fields: typing.List[str]
+    fields: typing.List[typing.Union[int, str]]
     indices: typing.Union[int, typing.List[int]] = []
 
     def construct_extractors(self):

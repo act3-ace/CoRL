@@ -91,7 +91,7 @@ class TargetValue(BaseAgentPlatformGlue):
         return d
 
     @lru_cache(maxsize=1)
-    def observation_space(self) -> gym.spaces.Space:
+    def observation_space(self):
         """Describes observation space for a single scalar continuous value
 
         Returns:
@@ -103,7 +103,7 @@ class TargetValue(BaseAgentPlatformGlue):
                  ] = gym.spaces.Box(self.config.limit.minimum, self.config.limit.maximum, shape=(1, ), dtype=np.float32)
         return d
 
-    def get_observation(self) -> OrderedDict:
+    def get_observation(self, other_obs: OrderedDict, obs_space, obs_units) -> OrderedDict:
         """Constructs a portion of the observation space
 
         Arguments:
@@ -121,5 +121,5 @@ class TargetValue(BaseAgentPlatformGlue):
     def action_space(self):
         ...
 
-    def apply_action(self, action, observation):
+    def apply_action(self, action, observation, action_space, obs_space, obs_units):
         ...

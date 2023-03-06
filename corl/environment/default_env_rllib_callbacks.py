@@ -19,7 +19,7 @@ import numpy as np
 from flatten_dict import flatten
 from gym.utils import seeding
 from ray.rllib import BaseEnv
-from ray.rllib.agents.callbacks import DefaultCallbacks
+from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.evaluation.episode import Episode
 from ray.rllib.policy import Policy
 from ray.rllib.policy.sample_batch import SampleBatch
@@ -36,19 +36,34 @@ def log_done_status(env, episode):
     Log done status codes to done_status/{platform}/{status}
     """
 
+    def process_done_entry(platform, data, prefix=""):
+        if not data:
+            return
+        at_least_table = [0] * len(DoneStatusCodes)
+        episode_codes = set(data.values())
+
+        for indx, status in enumerate(DoneStatusCodes):
+            metric_key = f"{prefix}done_status/{platform}/{status}"
+            if status in episode_codes:
+                episode.custom_metrics[metric_key] = 1
+                for x in range(indx, len(at_least_table)):
+                    at_least_table[x] += 1
+            else:
+                episode.custom_metrics[metric_key] = 0
+
+        for indx, status in enumerate(DoneStatusCodes):
+            if indx in [0, 4]:
+                continue
+            metric_key = f"{prefix}done_status/{platform}/AT_LEAST_{status}"
+            episode.custom_metrics[metric_key] = at_least_table[indx]
+
     if env.state.episode_state:
         for platform, data in env.state.episode_state.items():
-            if not data:
-                continue
+            process_done_entry(platform=platform, data=data)
 
-            episode_codes = set(data.values())
-
-            for status in DoneStatusCodes:
-                metric_key = f"done_status/{platform}/{status}"
-                if status in episode_codes:
-                    episode.custom_metrics[metric_key] = 1
-                else:
-                    episode.custom_metrics[metric_key] = 0
+    if env.state.agent_episode_state:
+        for agent, data in env.state.agent_episode_state.items():
+            process_done_entry(platform=agent, data=data, prefix="agent_")
 
 
 def log_done_info(env, episode):
@@ -56,21 +71,10 @@ def log_done_info(env, episode):
     Log done info to done_results/{platform}/{done_name}
     """
     if env.done_info:
-        platform_done_info: typing.Dict[str, typing.Dict[str, bool]] = {}
-        for agent_id, agent_data in env.done_info.items():
-            plat_name = env.agent_dict[agent_id].platform_name
-            platform_done_info.setdefault(plat_name, {})
-            for done_name, done_data in agent_data.items():
-                if done_name == '__all__':
-                    continue
-                platform_done_info[plat_name].setdefault(done_name, False)
-                if done_data[plat_name] is not None:
-                    platform_done_info[plat_name][done_name] |= done_data[plat_name]
-
-        for plat_name, done_data in platform_done_info.items():
-            for done_name, done_value in done_data.items():
-                episode.custom_metrics[f'done_results/{plat_name}/{done_name}'] = int(done_value)
-            episode.custom_metrics[f'done_results/{plat_name}/NoDone'] = int(not any(platform_done_info[plat_name].values()))
+        for platform_id, platform_data in env.done_info.items():
+            for done_name, done_value in platform_data.items():
+                episode.custom_metrics[f'done_results/{platform_id}/{done_name}'] = int(done_value)
+            episode.custom_metrics[f'done_results/{platform_id}/NoDone'] = int(not any(platform_data.values()))
 
 
 class EnvironmentDefaultCallbacks(DefaultCallbacks):
@@ -298,22 +302,22 @@ class EnvironmentDefaultCallbacks(DefaultCallbacks):
             lambda env: env.post_process_trajectory(agent_id, postprocessed_batch, episode, policies[policy_id])
         )  # type: ignore
 
-    def on_train_result(self, *, trainer, result: dict, **kwargs) -> None:
+    def on_train_result(self, *, algorithm, result: dict, **kwargs) -> None:
         """
         Called at the end of Trainable.train().
 
         Parameters
         ----------
-        trainer: Trainer
-            Current trainer instance.
+        algorithm: algorithm
+            Current algorithm instance.
         result: dict
-            Dict of results returned from trainer.train() call.
+            Dict of results returned from algorithm.train() call.
             You can mutate this object to add additional metrics.
         """
-        rng, _ = seeding.np_random(seed=trainer.iteration)
+        rng, _ = seeding.np_random(seed=algorithm.iteration)
 
         # Environment EPP
-        assert result['config']['env'] == ACT3MultiAgentEnv.__name__
+        assert result['config']['env'] == ACT3MultiAgentEnv
 
         for epp in result['config']['env_config']['epp_registry'].values():
             epp.update(result, rng)

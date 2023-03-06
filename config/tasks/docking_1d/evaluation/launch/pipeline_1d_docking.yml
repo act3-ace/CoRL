@@ -1,0 +1,4 @@
+eval_config: config/tasks/docking_1d/evaluation/launch/eval_1d_docking.yml
+gen_metrics_config: config/tasks/docking_1d/evaluation/launch/metrics_gen_1d_docking.yml
+visualize_config: config/tasks/docking_1d/evaluation/launch/visualize_1d_docking.yml
+storage_config: config/tasks/docking_1d/evaluation/launch/storage_acedt_1d_docking.yml

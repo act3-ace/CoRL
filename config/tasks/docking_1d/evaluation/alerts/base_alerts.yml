@@ -1,0 +1,10 @@
+world:
+  -
+    name: Short Episodes
+    metric: rate_of_runs_lt_5steps
+    scope: evaluation
+    thresholds:
+      - type: warning
+        condition:
+          operator: ">"
+          lhs: 0

@@ -108,7 +108,7 @@ def test_observe_sensor_no_unit_default():
     np.testing.assert_array_equal(observation_space.high, np.array([2.0, 2.0]).astype(np.float32))
     # Check get_observation
     observe_sensor._sensor.calculate_and_cache_measurement(None)
-    observation = observe_sensor.get_observation()[observe_sensor.Fields.DIRECT_OBSERVATION]
+    observation = observe_sensor.get_observation({}, {}, {})[observe_sensor.Fields.DIRECT_OBSERVATION]
     np.testing.assert_array_equal(observation, np.array([1.0, 1.0]).astype(np.float32))
 
 
@@ -134,7 +134,7 @@ def test_observe_sensor_no_unit_not_default():
     np.testing.assert_array_equal(observation_space.high, np.array([2.0 / 3.28084, 2.0 * math.pi / 180.0]).astype(np.float32))
     # Check get_observation
     observe_sensor._sensor.calculate_and_cache_measurement(None)
-    observation = observe_sensor.get_observation()[observe_sensor.Fields.DIRECT_OBSERVATION]
+    observation = observe_sensor.get_observation({}, {}, {})[observe_sensor.Fields.DIRECT_OBSERVATION]
     np.testing.assert_array_equal(observation, np.array([1.0 / 3.28084, 1.0 * math.pi / 180.0]).astype(np.float32))
 
 
@@ -161,7 +161,7 @@ def test_observe_sensor_unit_default():
     np.testing.assert_array_equal(observation_space.high, np.array([2.0 * 3.28084, 2.0 * 180.0 / math.pi]).astype(np.float32))
     # Check get_observation
     observe_sensor._sensor.calculate_and_cache_measurement(None)
-    observation = observe_sensor.get_observation()[observe_sensor.Fields.DIRECT_OBSERVATION]
+    observation = observe_sensor.get_observation({}, {}, {})[observe_sensor.Fields.DIRECT_OBSERVATION]
     np.testing.assert_array_equal(observation, np.array([3.28084, 180.0 / math.pi]).astype(np.float32))
 
 
@@ -188,7 +188,7 @@ def test_observe_sensor_unit_not_default():
     np.testing.assert_array_equal(observation_space.high, np.array([2.0 / 1852 / 3.28084, 2.0]).astype(np.float32))
     # Check get_observation
     observe_sensor._sensor.calculate_and_cache_measurement(None)
-    observation = observe_sensor.get_observation()[observe_sensor.Fields.DIRECT_OBSERVATION]
+    observation = observe_sensor.get_observation({}, {}, {})[observe_sensor.Fields.DIRECT_OBSERVATION]
     np.testing.assert_array_equal(observation, np.array([1.0 / 1852 / 3.28084, 1.0]).astype(np.float32))
 
 
@@ -215,7 +215,7 @@ def test_observe_sensor_unit_not_default_2d():
     np.testing.assert_array_equal(observation_space.high, np.array([[2.0 / 1852 / 3.28084, 2.0 * math.pi / 180.0], [2.5 / 1852 / 3.28084, 2.5 * math.pi / 180.0]]).astype(np.float32))
     # Check get_observation
     observe_sensor._sensor.calculate_and_cache_measurement(None)
-    observation = observe_sensor.get_observation()[observe_sensor.Fields.DIRECT_OBSERVATION]
+    observation = observe_sensor.get_observation({}, {}, {})[observe_sensor.Fields.DIRECT_OBSERVATION]
     expected_observation = np.array([[1.0 / 1852 / 3.28084, 1.0 * math.pi / 180.0], [1.5 / 1852 / 3.28084, 1.5 * math.pi / 180.0]]).astype(np.float32)
     np.testing.assert_array_equal(observation, expected_observation)
 
@@ -242,6 +242,6 @@ def test_observe_sensor_no_unit_not_default_2d():
     np.testing.assert_array_equal(observation_space.high, np.array([[2.0 / 3.28084, 2.0 * math.pi / 180.0], [2.5 / 3.28084, 2.5 * math.pi / 180.0]]).astype(np.float32))
     # Check get_observation
     observe_sensor._sensor.calculate_and_cache_measurement(None)
-    observation = observe_sensor.get_observation()[observe_sensor.Fields.DIRECT_OBSERVATION]
+    observation = observe_sensor.get_observation({}, {}, {})[observe_sensor.Fields.DIRECT_OBSERVATION]
     expected_observation = np.array([[1.0 / 3.28084, 1.0 * math.pi / 180.0], [1.5 / 3.28084, 1.5 * math.pi / 180.0]]).astype(np.float32)
     np.testing.assert_array_equal(observation, expected_observation)

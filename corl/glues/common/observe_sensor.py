@@ -34,7 +34,7 @@ class ObserveSensorValidator(BaseAgentPlatformGlueValidator):
     output_units: typing.Union[typing.Sequence[enum.Enum], typing.Sequence[typing.Sequence[enum.Enum]]] = []
 
     @validator('output_units', always=True, pre=True)
-    def validate_output_units(cls, v, values):  # pylint: disable=no-self-argument, no-self-use
+    def validate_output_units(cls, v, values):  # pylint: disable=no-self-argument
         """output_units validator"""
         units = []
         sensor_obj = get_sensor_by_name(values['platform'], values['sensor'])
@@ -165,7 +165,7 @@ class ObserveSensor(BaseAgentPlatformGlue):
         return d
 
     @lru_cache(maxsize=1)
-    def observation_space(self) -> gym.spaces.Space:
+    def observation_space(self):
         """Observation Space
         """
         d = gym.spaces.dict.Dict()
@@ -179,7 +179,7 @@ class ObserveSensor(BaseAgentPlatformGlue):
             raise TypeError("Only supports {BoxProp.__name__}, {MultiBinary.__name__} and {DiscreteProp.__name__}")
         return d
 
-    def get_observation(self) -> OrderedDict:
+    def get_observation(self, other_obs: OrderedDict, obs_space, obs_units) -> OrderedDict:
         """Observation Values
         """
         d = OrderedDict()
@@ -225,12 +225,12 @@ class ObserveSensor(BaseAgentPlatformGlue):
         return d
 
     @lru_cache(maxsize=1)
-    def action_space(self) -> gym.spaces.Space:
+    def action_space(self):
         """No Actions
         """
         return None
 
-    def apply_action(self, action, observation):
+    def apply_action(self, action, observation, action_space, obs_space, obs_units):
         """No Actions
         """
         return None

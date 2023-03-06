@@ -1,4 +1,4 @@
-# pylint: disable=no-self-argument, no-self-use
+# pylint: disable=no-self-argument
 """
 ---------------------------------------------------------------------------
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
@@ -16,8 +16,9 @@ import collections
 import copy
 import fractions
 import typing
-from itertools import chain
-from typing import Any, Dict, List, MutableMapping, Union
+from functools import lru_cache
+from graphlib import TopologicalSorter
+from typing import Any, Dict, List, Literal, MutableMapping, Union
 
 import flatten_dict
 import gym
@@ -26,13 +27,14 @@ from pydantic import BaseModel, PyObject, validator
 from corl.dones.done_func_base import DoneFuncBase
 from corl.dones.episode_length_done import EpisodeLengthDone
 from corl.episode_parameter_providers import EpisodeParameterProvider, Randomness
-from corl.glues.base_glue import BaseAgentGlue
+from corl.glues.base_glue import BaseAgentGlue, TrainingExportBehavior
 from corl.libraries.env_space_util import EnvSpaceUtil
-from corl.libraries.environment_dict import DoneDict, RewardDict
+from corl.libraries.environment_dict import RewardDict
 from corl.libraries.factory import Factory
 from corl.libraries.functor import Functor, FunctorDictWrapper, FunctorMultiWrapper, FunctorWrapper, ObjectStoreElem
 from corl.libraries.parameters import Parameter
 from corl.libraries.plugin_library import PluginLibrary
+from corl.libraries.space_transformations import SpaceTransformationBase
 from corl.rewards.reward_func_base import RewardFuncBase
 from corl.simulators.base_simulator import validation_helper_units_and_parameters
 
@@ -70,7 +72,7 @@ class AgentParseInfo(BaseModel):
     - policy_config: Configuration of the policy of this agent
     """
     class_config: AgentParseBase
-    platform_name: str
+    platform_names: typing.List[str]
     policy_config: Dict[str, Any]
 
 
@@ -121,6 +123,27 @@ class BaseAgentEppParameters(BaseModel):
         return v
 
 
+class AgentSpaceTransformation(BaseModel):
+    """
+    AgentSpaceTransformation
+
+        transformation: Type[SpaceTransformationBase]
+        config: Dict
+    """
+    transformation: PyObject
+    config: typing.Dict = {}
+
+    @validator("transformation")
+    def validate_transformation(cls, val):
+        """
+        validates transformation subclass type
+        """
+        if issubclass(val, SpaceTransformationBase):
+            return val
+
+        raise TypeError(f"Invalid output_type {type(val)} in SpaceTypeConversionValidator")
+
+
 class BaseAgentParser(BaseModel):
     """
     - parts: A list of part configurations.
@@ -128,7 +151,8 @@ class BaseAgentParser(BaseModel):
     - rewards: A optional list of reward functor configurations
     - dones: An optional list of done functor configurations
     """
-    # these can be sensors, controller, or other platform parts
+    # these can be weapons, sensors, or controller
+    agent_name: str
     parts: List[PartsFunctor]  # this uses plugin loader to load
     reference_store: Dict[str, ObjectStoreElem] = {}
     glues: List[Union[FunctorMultiWrapper, FunctorWrapper, Functor, FunctorDictWrapper]]
@@ -137,10 +161,12 @@ class BaseAgentParser(BaseModel):
     simulator_reset_parameters: Dict[str, Any] = {}
     # frame_rate in Hz (i.e. .25 indicates this agent will process when sim_tim % 4 == 0)
     frame_rate: float = 1.0
-    agent_name: str
-    platform_name: str
+    platform_names: typing.List[str]
     multiple_workers: bool = False
-
+    policy_action_transformation: typing.Optional[AgentSpaceTransformation] = None
+    policy_observation_transformation: typing.Optional[AgentSpaceTransformation] = None
+    # modifies the normalization for any glue created by this agent
+    normalization_master_switch: Literal["ALL_ON", "DEFAULT", "ALL_OFF"] = "DEFAULT"
     episode_parameter_provider: Factory
     episode_parameter_provider_parameters: BaseAgentEppParameters = None  # type: ignore
     epp: EpisodeParameterProvider = None  # type: ignore
@@ -153,11 +179,34 @@ class BaseAgentParser(BaseModel):
         arbitrary_types_allowed = True
 
     @validator('glues', each_item=True)
-    def check_glues(cls, v):
+    def check_glues(cls, v, values):
         """Check if glues subclass BaseAgentGlue"""
         if not issubclass(v.functor, BaseAgentGlue):
             raise TypeError(f"Glue functors must subclass BaseAgentGlue, but glue {v.name} is of type {v.functor}")
+
+        assert 'agent_name' in values
+        assert 'parts' in values
+
+        cls._check_glue_parts(v, values)
+
         return v
+
+    @classmethod
+    def _check_glue_parts(cls, v, values) -> None:
+
+        for part_type in ['sensor', 'controller']:
+            if part_type in v.config:
+                assert any(x.config.get('name', x.part) == v.config[part_type] for x in values['parts']), \
+                    f'{v.config[part_type]} not found in the parts of {values["agent_name"]}'
+
+        if isinstance(v, FunctorWrapper):
+            cls._check_glue_parts(v.wrapped, values)
+        elif isinstance(v, FunctorMultiWrapper):
+            for elem in v.wrapped:
+                cls._check_glue_parts(elem, values)
+        elif isinstance(v, FunctorDictWrapper):
+            for elem in v.wrapped.values():
+                cls._check_glue_parts(elem, values)
 
     @validator('rewards', each_item=True)
     def check_rewards(cls, v):
@@ -269,16 +318,21 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
         self.config: BaseAgentParser = self.get_validator(**kwargs)
         self.agent_glue_dict: typing.Dict[str, BaseAgentGlue] = {}
         self.agent_reward_dict = RewardDict()
-        self.agent_done_dict = DoneDict()
+        self.agent_glue_order: typing.Tuple = ()
+
+        self._action_space_transformation: typing.Optional[SpaceTransformationBase] = None
+        self._obs_space_transformation: typing.Optional[SpaceTransformationBase] = None
+
         # self._agent_glue_obs_export_behavior = {}
 
         # Sample parameter provider
         # This RNG only used here.  Normal use uses the one from the environment.
         rng, _ = gym.utils.seeding.np_random(0)
         self.fill_parameters(rng=rng, default_parameters=True)
+        assert len(self.config.platform_names) == 1, "BaseAgent can only have one platform assigned to it currently"
 
     @property
-    def platform_name(self) -> str:
+    def platform_names(self) -> typing.List[str]:
         """
         Returns the name of the platform this agent is attached to
 
@@ -287,7 +341,7 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
         str:
             The name of the platform
         """
-        return self.config.platform_name
+        return self.config.platform_names
 
     @property
     def trainable(self) -> bool:
@@ -324,7 +378,8 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
             current_parameters = self.config.epp.config.parameters
         else:
             current_parameters, _ = self.config.epp.get_params(rng)
-        self.local_variable_store = flatten_dict.unflatten({k: v.get_value(rng) for k, v in current_parameters.items()})
+
+        self.local_variable_store = flatten_dict.unflatten({k: v.get_value(rng, {}) for k, v in current_parameters.items()})
 
     def get_simulator_reset_parameters(self) -> typing.Dict[str, typing.Any]:
         """Return the local parameters needed within the simulator reset"""
@@ -344,40 +399,42 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
 
         return output
 
-    def get_platform_parts(self, simulator, platform_type):
+    def get_platform_parts(self, simulator, platform_dict):
         """
         Gets a list of the agent's platform parts.
 
         Parameters
         ----------
         simulator: Simulator class used by environment to simulate agent actions.
-        platform_type: Platform type enumeration corresponding to the agent's platform
+        platform_type: A mapping of platform_names to platform type enumeration corresponding to the agent's platform
 
         Returns
         -------
         list:
             List of platform parts
         """
-        my_parts = []
-        for part in self.config.parts:
-            tmp = PluginLibrary.FindMatch(part.part, {"simulator": simulator, "platform_type": platform_type})
-            for ref_name, ref_key in part.references.items():
-                if ref_key not in self.config.reference_store:
-                    raise RuntimeError(f'Part reference {ref_key} must be in the agent reference store.')
-                ref_value = self.config.reference_store[ref_key]
-                if isinstance(ref_value, Parameter):
-                    raise TypeError(f'Part reference {ref_key} cannot be Parameter')
-                part.config[ref_name] = ref_value
-            my_parts.append((tmp, part.config))
+        my_parts = {platform_name: [] for platform_name in self.config.platform_names}
+        for platform_name in self.config.platform_names:
+            mapped_platform = platform_dict[platform_name]
+            for part in self.config.parts:
+                tmp = PluginLibrary.FindMatch(part.part, {"simulator": simulator, "platform_type": mapped_platform})
+                for ref_name, ref_key in part.references.items():
+                    if ref_key not in self.config.reference_store:
+                        raise RuntimeError(f'Part reference {ref_key} must be in the agent reference store.')
+                    ref_value = self.config.reference_store[ref_key]
+                    if isinstance(ref_value, Parameter):
+                        raise TypeError(f'Part reference {ref_key} cannot be Parameter')
+                    part.config[ref_name] = ref_value
+                my_parts[platform_name].append((tmp, part.config))
         return my_parts
 
-    def make_glues(self, platform, agent_id: str, env_ref_stores: typing.List[typing.Dict[str, typing.Any]]) -> None:
+    def make_glues(self, platforms, agent_id: str, env_ref_stores: typing.List[typing.Dict[str, typing.Any]]) -> None:
         """
         Creates agent glue functors from agent configuration.
 
         Parameters
         ----------
-        platform: The platform instance associated with the glue functors.
+        platforms: The platform_name to platform instances mapping associated with the glue functors.
         agent_id: The id of the agent associated with the glue functors.
         env_ref_stores: Reference stores for items managed by the environment
 
@@ -385,8 +442,14 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
         -------
         None
         """
+        sort_order = {}
+        # base agent only has one platform
+        platform_name = self.config.platform_names[0]
+        platform = platforms[platform_name]
         self.agent_glue_dict.clear()
         for glue_dict in self.config.glues:
+            if self.config.normalization_master_switch == "ALL_OFF":
+                glue_dict.config["normalization"] = {"enabled": False}
             created_glue = glue_dict.create_functor_object(
                 platform=platform,
                 agent_name=agent_id,
@@ -400,9 +463,14 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
             else:
                 raise RuntimeError(f"No glue name for {created_glue}")
 
+            # find dependent nodes for the topological search
+            dependent_glues = {extractor.fields[0] for extractor in created_glue.config.extractors.values()}
+            sort_order[glue_name] = dependent_glues
+
             # add the glue to the agent glue dict
             # self._agent_glue_obs_export_behavior[glue_name] = glue.training_obs_behavior
             self.agent_glue_dict[glue_name] = created_glue
+        self.agent_glue_order = tuple(TopologicalSorter(sort_order).static_order())
 
     def make_rewards(self, agent_id: str, env_ref_stores: typing.List[typing.Dict[str, typing.Any]]) -> None:
         """
@@ -422,48 +490,49 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
             tmp.append(
                 reward_dict.create_functor_object(
                     agent_name=agent_id,
+                    platform_names=self.platform_names,
                     param_sources=[self.local_variable_store.get('rewards', {})],
                     ref_sources=[self.local_variable_store.get('reference_store', {}), self.config.reference_store] + env_ref_stores
                 )
             )
         self.agent_reward_dict = RewardDict(processing_funcs=tmp)
 
-    def make_dones(
+    def make_platform_dones(
         self,
-        agent_id: str,
-        platform_name: str,
-        dones: typing.Iterable[Functor],
-        env_params: typing.List[typing.Sequence[typing.Dict[str, typing.Any]]],
+        env_params: typing.Dict[str, typing.List[typing.Sequence[typing.Dict[str, typing.Any]]]],
         env_ref_stores: typing.List[typing.Dict[str, typing.Any]]
-    ) -> None:
+    ) -> typing.Dict[str, typing.List[Functor]]:
         """
         Creates agent done functors from agent configuration.
 
         Parameters
         ----------
         agent_id: The id of the agent associated with the done functors.
-        dones: Additional done conditions to apply
-        env_params: Parameters for the provided dones
+        env_params: mapping of platform names to Parameters for the provided dones
         env_ref_stores: Reference stores for items managed by the environment
 
         Returns
         -------
-        None
+        a dictionary containing mapping platform names to all dones the agent class wants
+        to register to the platform
         """
 
-        tmp = []
-        for done_dict in chain(self.config.dones, dones):
-            tmp.append(
-                done_dict.create_functor_object(
-                    param_sources=[self.local_variable_store.get('dones', {})] + env_params,
-                    ref_sources=[self.local_variable_store.get('reference_store', {}), self.config.reference_store] + env_ref_stores,
-                    agent_name=agent_id,
-                    platform_name=platform_name
+        platform_dones: typing.Dict[str, typing.List[Functor]] = {}
+        for platform_name in self.config.platform_names:
+            my_platform_env_params = env_params[platform_name]
+            platform_dones[platform_name] = []
+            for done_dict in self.config.dones:
+                platform_dones[platform_name].append(
+                    done_dict.create_functor_object(
+                        param_sources=[self.local_variable_store.get('dones', {})] + my_platform_env_params,
+                        ref_sources=[self.local_variable_store.get('reference_store', {}), self.config.reference_store] + env_ref_stores,
+                        agent_name=self.config.agent_name,
+                        platform_name=platform_name
+                    )
                 )
-            )
-        self.agent_done_dict = DoneDict(processing_funcs=tmp)
+        return platform_dones
 
-    def create_space(self, space_getter: typing.Optional[typing.Callable] = None):
+    def _create_space(self, space_getter: typing.Optional[typing.Callable] = None):
         """
         Creates a gym dict space from the agent's glues.
 
@@ -486,36 +555,96 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
 
         return_space = gym.spaces.dict.Dict()
         # loop over all glue name and  glue_obj pairs
-        glue_obj: BaseAgentGlue
-        for glue_name, glue_obj in self.agent_glue_dict.items():
+        for glue_name in self.agent_glue_order:
             # call our space getter to pick which space we want,
             # for example: action_space, observation_space, normalized_action_space, normalized_observation_space
-            space_def = space_getter(glue_obj)
+            space_def = space_getter(self.agent_glue_dict[glue_name])
             # if the space is None don't add it
             if space_def:
                 return_space.spaces[glue_name] = space_def
         return return_space if len(return_space.spaces) > 0 else None
 
-    def apply_action(self, action_dict: typing.Dict[typing.Any, typing.Any]):
+    @lru_cache(maxsize=1)
+    def observation_space(self):
+        """
+        Returns agents obervation space
+        """
+        return self._create_space(space_getter=lambda glue_obj: glue_obj.observation_space())
+
+    @lru_cache(maxsize=1)
+    def normalized_observation_space(self):
+        """
+        Returns agents normalized obervation space
+        """
+
+        normalized_obs_space = self._create_space(
+            space_getter=lambda glue_obj: glue_obj.normalized_observation_space()
+            if glue_obj.config.training_export_behavior == TrainingExportBehavior.INCLUDE else None
+        )
+
+        if self.config.policy_observation_transformation:
+            self._obs_space_transformation = self.config.policy_observation_transformation.transformation(
+                normalized_obs_space, self.config.policy_observation_transformation.config
+            )
+            return self._obs_space_transformation.output_space
+
+        return normalized_obs_space
+
+    @lru_cache(maxsize=1)
+    def observation_units(self):
+        """
+        Returns agents obervation units
+        """
+        return self._create_space(
+            space_getter=lambda glue_obj: glue_obj.observation_units() if hasattr(glue_obj, "observation_units") else None
+        )
+
+    @lru_cache(maxsize=1)
+    def action_space(self):
+        """
+        Returns agents action space
+        """
+        return self._create_space(space_getter=lambda glue_obj: glue_obj.action_space())
+
+    @lru_cache(maxsize=1)
+    def normalized_action_space(self):
+        """
+        Returns agents normalized action space
+        """
+        normalized_action_space = self._create_space(space_getter=lambda glue_obj: glue_obj.normalized_action_space())
+
+        if self.config.policy_action_transformation:
+            self._action_space_transformation = self.config.policy_action_transformation.transformation(
+                normalized_action_space, self.config.policy_action_transformation.config
+            )
+            return self._action_space_transformation.output_space
+
+        return normalized_action_space
+
+    def apply_action(self, action: typing.Union[typing.Dict[typing.Any, typing.Any], typing.Any]):
         """
         Applies actions to agent.
 
         Parameters
         ----------
-        action_dict (optional): A dictionary of actions to be applied to agent.
+        action (optional): Either a dictionary of actions to be applied to agent, or
+            a flattened action.
 
         Returns
         -------
         None
         """
+
+        if self._action_space_transformation:
+            action = self._action_space_transformation.convert_transformed_sample(action)
+
         raw_action_dict = collections.OrderedDict()
         obs = self.get_observations()
-        for glue_name, glue_object in self.agent_glue_dict.items():
-            if glue_name in action_dict:
-                normalized_action = action_dict[glue_name]
-                raw_action = glue_object.unnormalize_action(normalized_action)
-                raw_action_dict[glue_name] = raw_action
-                glue_object.apply_action(raw_action, obs)
+        for glue_name, normalized_action in action.items():
+            glue_object = self.agent_glue_dict[glue_name]
+            raw_action = glue_object.unnormalize_action(normalized_action)
+            raw_action_dict[glue_name] = raw_action
+            glue_object.apply_action(raw_action, obs, self.action_space(), self.observation_space(), self.observation_units())
         return raw_action_dict
 
     def create_next_action(
@@ -536,7 +665,6 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
         -------
         None
         """
-        ...
 
     def get_observations(self):
         """
@@ -548,10 +676,13 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
             A dictionary of glue observations in the form {glue_name: glue_observation}
         """
         return_observation: collections.OrderedDict = collections.OrderedDict()
-        for glue_name, glue_object in self.agent_glue_dict.items():
-            glue_obs = glue_object.get_observation()
+        for glue_name in self.agent_glue_order:
+            glue_object = self.agent_glue_dict[glue_name]
+            glue_obs = glue_object.get_observation(return_observation, self.observation_space(), self.observation_units())
             if glue_obs:
                 return_observation[glue_name] = glue_obs
+                if glue_object.config.clip_to_space:
+                    return_observation[glue_name] = EnvSpaceUtil.clip_space_sample_to_space(glue_obs, glue_object.observation_space())
         return return_observation
 
     def get_info_dict(self):
@@ -564,38 +695,11 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
             A dictionary of glue observations in the form {glue_name: glue_observation}
         """
         return_info: collections.OrderedDict = collections.OrderedDict()
-        for glue_name, glue_object in self.agent_glue_dict.items():
-            glue_info = glue_object.get_info_dict()
+        for glue_name in self.agent_glue_order:
+            glue_info = self.agent_glue_dict[glue_name].get_info_dict()
             if glue_info:
                 return_info[glue_name] = glue_info
         return return_info
-
-    def get_dones(self, observation, action, next_observation, next_state, observation_space, observation_units):
-        """
-        Get agent's done state from agent done functors.
-
-        Parameters
-        ----------
-        - observation: The observation dictionary used to compute action.
-        - action: The action computed from observation.
-        - next_observation: The observation dictionary containing observation of next_state.
-        - next_state: The state dictionary containing the environment state after action was applied to the environment.
-        - observation_space: The agent observation space.
-        - observation_units: The units of the observations in the observation space. This may be None.
-
-        Returns
-        -------
-        DoneDict[str: bool]
-            A dictionary of the agent's done state in the form {agent_id: done}
-        """
-        return self.agent_done_dict(
-            observation=observation,
-            action=action,
-            next_observation=next_observation,
-            next_state=next_state,
-            observation_space=observation_space,
-            observation_units=observation_units,
-        )
 
     def get_rewards(self, observation, action, next_observation, state, next_state, observation_space, observation_units):
         """
@@ -631,12 +735,12 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
         calling function for sending data to on_postprocess_trajectory
 
         Arguments:
-            agent_id str -- name of the agent
-            state {[type]} -- current simulator state
-            batch {[type]} -- batch from the current trajectory
-            episode {[type]} -- the episode object
-            policy {[type]} -- the policy that ran the trajectory
-            reward_info {[type]} -- the info dict for rewards
+            agent_id: name of the agent
+            state: current simulator state
+            batch: batch from the current trajectory
+            episode: the episode object
+            policy: the policy that ran the trajectory
+            reward_info: the info dict for rewards
         """
         for reward_glue in self.agent_reward_dict.process_callbacks:
             output_value = reward_glue.post_process_trajectory(agent_id, state, batch, episode, policy)
@@ -646,8 +750,8 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
                 # This in turn causes major issues when trying to index reward_info
                 # Check that the agent exists
                 if agent_id in reward_info:
-                    reward_info[agent_id].setdefault(reward_glue.name, {}).setdefault(agent_id, 0.0)
-                    reward_info[agent_id][reward_glue.name][agent_id] += output_value
+                    reward_info[agent_id].setdefault(reward_glue.name, 0.0)
+                    reward_info[agent_id][reward_glue.name] += output_value
 
     def get_glue(self, name: str) -> typing.Optional[BaseAgentGlue]:
         """
@@ -672,9 +776,6 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
         """
         glue_obj = self.get_glue(obs_name)
         if glue_obj is not None:
-            # TODO: fix this
-            if 'ObserveSensorRepeated' in obs_name:
-                return glue_obj.normalize_observation(copy.deepcopy(obs))
             return glue_obj.normalize_observation(obs)
         return None
 
@@ -699,20 +800,39 @@ class BaseAgent:  # pylint: disable=too-many-public-methods
 
         return normalized_observation_dict
 
-    def set_removed(self, removed_state: bool):
+    def set_removed(self, removed_state: typing.Dict[str, bool]):
         """
         Set the agent_removed flag for the agent's glues.
 
         Parameters
         ----------
-        - removed_state (bool): The value to set the agent_removed flag to.
+        - removed_state (typing.Dict[str, bool]): The inoperability status of the platform an agent class is controlling.
+            True: the platform is no longer operable
+            False: the platform is still operable
 
         Returns
         -------
         None
         """
-        for glue in self.agent_glue_dict.values():
-            glue.set_agent_removed(removed_state)
+        if not removed_state[self.platform_names[0]]:
+            for glue in self.agent_glue_dict.values():
+                glue.set_agent_removed(True)
+
+    def create_training_observations(self, observations: collections.OrderedDict):
+        """
+        Base class representing a trainable agent in an environment.
+        """
+
+        training_obs = collections.OrderedDict()
+        for obs_name, obs in observations.items():
+            glue_obj = self.get_glue(obs_name)
+            if glue_obj is not None and glue_obj.config.training_export_behavior == TrainingExportBehavior.INCLUDE:
+                training_obs[obs_name] = self.normalize_observation(obs_name, obs)
+
+        if self._obs_space_transformation:
+            return self._obs_space_transformation.convert_sample(sample=training_obs)
+
+        return training_obs
 
 
 class TrainableBaseAgent(BaseAgent):

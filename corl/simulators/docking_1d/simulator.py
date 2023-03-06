@@ -8,8 +8,7 @@ import typing
 import numpy as np
 
 from corl.libraries.plugin_library import PluginLibrary
-from corl.libraries.state_dict import StateDict
-from corl.simulators.base_simulator import BaseSimulator, BaseSimulatorResetValidator, BaseSimulatorValidator
+from corl.simulators.base_simulator import BaseSimulator, BaseSimulatorResetValidator, BaseSimulatorState, BaseSimulatorValidator
 from corl.simulators.docking_1d.entities import Deputy1D
 from corl.simulators.docking_1d.platform import Docking1dPlatform
 
@@ -54,12 +53,11 @@ class Docking1dSimulator(BaseSimulator):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._state = StateDict()
+        self._state: BaseSimulatorState = None
         self.clock = 0.0
 
     def reset(self, config):
         config = self.get_reset_validator(**config)
-        self._state.clear()
         self.clock = 0.0
 
         # construct entities ("Gets the platform object associated with each simulation entity.")
@@ -69,24 +67,24 @@ class Docking1dSimulator(BaseSimulator):
             self.sim_entities[agent_id] = Deputy1D(name=agent_id, **agent_reset_config)
 
         # construct platforms ("Gets the correct backend simulation entity for each agent.")
-        sim_platforms = []
+        sim_platforms = {}
         for agent_id, entity in self.sim_entities.items():
             agent_config = self.config.agent_configs[agent_id]
-            sim_platforms.append(Docking1dPlatform(platform_name=agent_id, platform=entity, parts_list=agent_config.parts_list))
-        self._state.sim_platforms = tuple(sim_platforms)
+            sim_platforms[agent_id] = Docking1dPlatform(platform_name=agent_id, platform=entity, parts_list=agent_config.parts_list)
 
+        self._state = BaseSimulatorState(sim_platforms=sim_platforms, sim_time=self.clock)
         self.update_sensor_measurements()
         return self._state
 
     def step(self):
-        for platform in self._state.sim_platforms:
-            agent_id = platform.name
+        for agent_id, platform in self._state.sim_platforms.items():
             action = np.array(platform.get_applied_action(), dtype=np.float32)
             entity = self.sim_entities[agent_id]
             entity.step(action=action, step_size=self.config.step_size)
             platform.sim_time = self.clock
         self.update_sensor_measurements()
         self.clock += self.config.step_size
+        self._state.sim_time = self.clock
         return self._state
 
     @property
@@ -94,16 +92,16 @@ class Docking1dSimulator(BaseSimulator):
         return self.clock
 
     @property
-    def platforms(self) -> typing.List:
-        return list(self._state.sim_platforms)
+    def platforms(self):
+        return self._state.sim_platforms
 
     def update_sensor_measurements(self):
         """
         Update and cache all the measurements of all the sensors on each platform
         """
-        for plat in self._state.sim_platforms:
-            for sensor in plat.sensors:
-                sensor.calculate_and_cache_measurement(state=self._state.sim_platforms)
+        for plat in self._state.sim_platforms.values():
+            for sensor in plat.sensors.values():
+                sensor.calculate_and_cache_measurement(state=self._state)
 
     def mark_episode_done(self, done_info, episode_state):
         pass

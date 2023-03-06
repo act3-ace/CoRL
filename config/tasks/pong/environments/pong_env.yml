@@ -1,0 +1,56 @@
+# This config defines the environment for the training loop. This includes the Simulator entity, type of platform, path
+# to the directory in which components (Sensors, Controllers, and Simulators) are registered with the PluginLibrary.
+{
+  "simulator": {
+    "type": "PongSimulator",
+    "config": {},
+  },
+  "platforms": "PongSimulator_Platforms",
+  "plugin_paths": ["corl"],
+  "episode_parameter_provider": {
+    "type": "corl.episode_parameter_providers.simple.SimpleParameterProvider"
+  },
+  "simulator_reset_parameters": {
+    "pong": {
+      "ball": {
+          "x_vel": {
+            'type': 'corl.libraries.parameters.RandomSignUniformParameter',
+            'config': {
+              'low': 3,
+              'high': 5
+            },
+          },
+      },
+    },
+    "paddle0_side": {
+        'type': 'corl.libraries.parameters.ChoiceParameter',
+        'config': {
+            'name': 'side',
+              'units': None,
+            'choices': ['left', 'right']
+        }
+    },
+    "platforms": {
+      'paddle0': {
+        'y': {
+          'type': 'corl.libraries.parameters.ConstantParameter',
+          'config': {'value': 10 }
+        },
+        'vel': {
+          'type': 'corl.libraries.parameters.ConstantParameter',
+          'config': {'value': 10 }
+        },
+      },
+      'paddle1': {
+        'y': {
+          'type': 'corl.libraries.parameters.ConstantParameter',
+          'config': {'value': 10}
+        },
+        'vel': {
+          'type': 'corl.libraries.parameters.ConstantParameter',
+          'config': {'value': 10 }
+        },
+      }
+    },
+  }
+}

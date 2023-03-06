@@ -1,0 +1,24 @@
+# ---------------------------------------------------------------------------
+#
+#
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
+
+address: null
+# Password for redis cluster
+_redis_password: null
+# If true will start dashboard on localhost (default)
+include_dashboard: False
+# If set will ignore reinit errors
+ignore_reinit_error: True
+#If true, then output from all of the worker processes on all nodes will be directed to the driver.
+log_to_driver: True
+# If set will use local mode which ignores remote workers. used for debugging
+local_mode: False
+_temp_dir: /tmp/corl/ray_logs/

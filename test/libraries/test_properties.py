@@ -96,5 +96,8 @@ def test_MultiBinary_prop():
     expected_gym_space = spaces.MultiBinary(n = 5)
     act3_prop = TestProp()
     output_gym_space = act3_prop.create_space()
-    assert isinstance(output_gym_space, spaces.MultiBinary)
-    assert (output_gym_space.n == expected_gym_space.n)
+    # until ray2 is fixed for handling multibinary correctly this
+    # we are using multidiscrete as a standin
+    assert isinstance(output_gym_space, spaces.MultiDiscrete)
+    # assert (output_gym_space.n == expected_gym_space.n)
+    assert expected_gym_space.contains(output_gym_space.sample())

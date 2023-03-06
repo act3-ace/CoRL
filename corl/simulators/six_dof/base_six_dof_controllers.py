@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -33,8 +31,8 @@ class BaseSpeedController(BaseController, abc.ABC):
     """[summary]
 
     Arguments:
-        BaseController {[type]} -- [description]
-        abc {[type]} -- [description]
+        BaseController: [description]
+        abc: [description]
 
     Returns:
         [type] -- [description]
@@ -50,8 +48,8 @@ class BaseRollController(BaseController, abc.ABC):
     """[summary]
 
     Arguments:
-        BaseController {[type]} -- [description]
-        abc {[type]} -- [description]
+        BaseController: [description]
+        abc: [description]
 
     Returns:
         [type] -- [description]
@@ -67,8 +65,8 @@ class BasePitchController(BaseController, abc.ABC):
     """[summary]
 
     Arguments:
-        BaseController {[type]} -- [description]
-        abc {[type]} -- [description]
+        BaseController: [description]
+        abc: [description]
 
     Returns:
         [type] -- [description]
@@ -84,8 +82,8 @@ class BaseYawController(BaseController, abc.ABC):
     """[summary]
 
     Arguments:
-        BaseController {[type]} -- [description]
-        abc {[type]} -- [description]
+        BaseController: [description]
+        abc: [description]
 
     Returns:
         [type] -- [description]
@@ -101,8 +99,8 @@ class BasePitchRollController(BaseController, abc.ABC):
     """[summary]
 
     Arguments:
-        BaseController {[type]} -- [description]
-        abc {[type]} -- [description]
+        BaseController: [description]
+        abc: [description]
 
     Returns:
         [type] -- [description]

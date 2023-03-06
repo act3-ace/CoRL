@@ -1,0 +1,28 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
+
+# === Environment ===
+horizon: 2500
+
+# === Resources ===
+num_workers: 12
+num_cpus_per_worker: 1
+num_gpus_per_worker: 0
+num_envs_per_worker: 1
+
+custom_resources_per_worker: {}
+
+num_cpus_for_driver: 1
+
+num_gpus: 0
+
+# === Other ===
+seed: 1
+framework: 'torch'

@@ -1,13 +1,12 @@
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
+-------------------------------------------------------------------------------
+The Autonomous Capabilities Team (ACT3) Deep Reinforcement Learning (D-RL) Environment
 
 This is a US Government Work not subject to copyright protection in the US.
 
 The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 Common Platform Utils Module
 """
@@ -40,9 +39,7 @@ def get_platform_by_name(state: StateDict, platform_name: str, allow_invalid=Fal
     else:
         temp = platform_name
 
-    for plat in state.sim_platforms:
-        if plat.name == temp:
-            platform = plat
+    platform = state.sim_platforms.get(temp, None)
 
     if not allow_invalid and (platform is None or not issubclass(platform.__class__, BasePlatform)):
         raise ValueError(f"Could not find a platform named {platform_name} of class BasePlatform")
@@ -107,19 +104,20 @@ def get_part_by_name(platform: BasePlatform, name: str, part_type: typing.Type[T
     platform_part: BasePlatformPart
         The platform part with the given name
     """
-    if part_type:
 
-        def part_filter(part):
-            return isinstance(part, part_type)
+    found_part = platform.controllers.get(name, None)
+    if not found_part:
+        found_part = platform.sensors.get(name, None)
 
-        all_parts = filter(part_filter, platform.controllers + platform.sensors)
-    else:
-        all_parts = platform.controllers + platform.sensors
+    if not found_part:
+        raise RuntimeError(f"An attached part associated with {name} group could not be found")
+    if part_type and not isinstance(found_part, part_type):
+        raise RuntimeError(
+            f"An attached part associated with {name} group was found, however get_part_by_name "
+            f"was requested to find a {part_type} and the found part {found_part} does not subclass that type"
+        )
 
-    for part in all_parts:
-        if part.name == name:
-            return part
-    raise RuntimeError(f"An attached part associated with {name} group could not be found")
+    return found_part
 
 
 def is_platform_operable(state: StateDict, platform_name: str) -> bool:

@@ -35,6 +35,9 @@ class TargetValueDifferenceValidator(BaseDictWrapperGlueValidator):
     is_abs: bool - if the difference to the target value should be reported as absolute value
     limit: LimitConfigValidator - limit configuration
     unique_name: str - optional unique name for a target value difference glue
+    remove_invalid_obs: if the invalid flags should be removed from the obs
+    always_valid: never output a fixed value based on a check
+                  that an underlying glue may have a part that is invalid
     """
     target_value: typing.Optional[float] = None
     target_value_index: typing.Optional[int] = 0
@@ -47,6 +50,8 @@ class TargetValueDifferenceValidator(BaseDictWrapperGlueValidator):
     is_abs: bool = False
     limit: LimitConfigValidator
     unique_name: str = ''
+    remove_invalid_obs: bool = False
+    always_valid: bool = False
 
 
 class TargetValueDifference(BaseDictWrapperGlue):
@@ -63,6 +68,7 @@ class TargetValueDifference(BaseDictWrapperGlue):
         TARGET_VALUE_DIFF = "target_value_diff"
 
     def __init__(self, **kwargs) -> None:
+        self.config: TargetValueDifferenceValidator
         super().__init__(**kwargs)
         keys = self.glues().keys()
         if not isinstance(self.config.target_value, float) and len(self.glues()) != 2:  # type: ignore
@@ -111,7 +117,7 @@ class TargetValueDifference(BaseDictWrapperGlue):
         if isinstance(self.config.target_value, float):  # type: ignore
             target_value = self.config.target_value  # type: ignore
         else:
-            target_value = self.glues()[TargetValueDifference.TARGET_STR].get_observation()  # type: ignore
+            target_value = self.glues()[TargetValueDifference.TARGET_STR].get_observation({}, {}, {})  # type: ignore
 
         d[self.Fields.TARGET_VALUE] = np.asarray([target_value], dtype=np.float32)  # type: ignore
         return d
@@ -127,10 +133,11 @@ class TargetValueDifference(BaseDictWrapperGlue):
 
         for field in space.spaces:
             d.spaces[field + "_diff"] = gym.spaces.Box(self.config.limit.minimum, self.config.limit.maximum, shape=(1, ), dtype=np.float32)
-            d.spaces[field + "_diff_invalid"] = gym.spaces.Discrete(2)
+            if not self.config.remove_invalid_obs:
+                d.spaces[field + "_diff_invalid"] = gym.spaces.Discrete(2)
         return d
 
-    def get_observation(self):
+    def get_observation(self, other_obs: OrderedDict, obs_space, obs_units):  # pylint: disable=too-many-statements
         """Get observation"""
 
         def get_wrap_diff(A, B):
@@ -168,11 +175,11 @@ class TargetValueDifference(BaseDictWrapperGlue):
             return math.radians(result) if self.config.is_rad else result
 
         glue = self.glues()[TargetValueDifference.SENSOR_STR]
-        obs = glue.get_observation()
+        obs = glue.get_observation(other_obs, obs_space, obs_units)
 
         observation_units = None
         if hasattr(glue, "observation_units"):
-            observation_units = glue.observation_units()
+            observation_units = glue.observation_units()  # type: ignore
 
         if observation_units and self.config.unit:
             observation_unit = None
@@ -193,24 +200,32 @@ class TargetValueDifference(BaseDictWrapperGlue):
             target_value = self.config.target_value
         else:
             # TODO make this more configurable... assumes 1 value for target
-            if hasattr(self.glues()[TargetValueDifference.TARGET_STR], "_sensor"):
-                target_invalid = not self.glues()[TargetValueDifference.TARGET_STR]._sensor.valid  # pylint: disable=protected-access
-                target_name = self.glues()[TargetValueDifference.TARGET_STR]._sensor_name  # pylint: disable=protected-access
-            target_value = self.glues()[TargetValueDifference.TARGET_STR].get_observation()[self.config.target_value_field][
-                self.config.target_value_index]
+            if hasattr(self.glues()[TargetValueDifference.TARGET_STR], "_sensor"):  # type: ignore
+                target_invalid = not self.glues()[  # pylint: disable=protected-access  # type: ignore
+                    TargetValueDifference.TARGET_STR]._sensor.valid  # type: ignore
+                target_name = self.glues()[  # pylint: disable=protected-access  # type: ignore
+                    TargetValueDifference.TARGET_STR]._sensor_name  # type: ignore
+            target_value = self.glues()[TargetValueDifference.TARGET_STR].get_observation(other_obs, obs_space, obs_units)[
+                self.config.target_value_field][  # type: ignore
+                    self.config.target_value_index]
 
             # I would think that this would be needed by the target value but is already converted.
             # if units.GetUnitFromStr(self.glues()[1]._sensor._properties.unit[0]) != units.GetUnitFromStr(self.config.unit):
             #     target_value = units.Convert( target_value,
             #                                   units.GetUnitFromStr(self.glues()[1]._sensor._properties.unit[0]),
             #                                   units.GetUnitFromStr(self.config.unit))
-
+        # disable the invalid check and always treat the part as valid
+        if self.config.always_valid:
+            target_invalid = False
         d = OrderedDict()
+        if not isinstance(obs, dict):
+            raise RuntimeError("This glue cannot handle a wrapped glue outputting something other than a dict")
 
         if target_invalid:
             for field, value in obs.items():
                 d[field + "_diff"] = np.array([self.config.limit.minimum], dtype=np.float32)
-                d[field + "_diff_invalid"] = target_invalid
+                if not self.config.remove_invalid_obs:
+                    d[field + "_diff_invalid"] = target_invalid  # type: ignore
         else:
             for field, value in obs.items():
                 if self.config.is_wrap:
@@ -227,15 +242,16 @@ class TargetValueDifference(BaseDictWrapperGlue):
                 self._logger.debug(f"{TargetValueDifference.__name__}::{target_name}::diff = {diff}")
 
                 d[field + "_diff"] = np.array([diff], dtype=np.float32)
-                d[field + "_diff_invalid"] = glue.agent_removed()
+                if not self.config.remove_invalid_obs:
+                    d[field + "_diff_invalid"] = glue.agent_removed()  # type: ignore
 
         return d
 
     @lru_cache(maxsize=1)
-    def action_space(self) -> gym.spaces.Space:
+    def action_space(self):
         """Action space"""
         return None
 
-    def apply_action(self, action, observation):  # pylint: disable=unused-argument
+    def apply_action(self, action, observation, action_space, obs_space, obs_units):  # pylint: disable=unused-argument
         """Apply action"""
         return None

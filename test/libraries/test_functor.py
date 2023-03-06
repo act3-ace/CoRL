@@ -81,10 +81,10 @@ def _get_base_config():
     return {
         'parts': [
             {
-                'part': 'Controller_Gym',
+                'part': 'Controller_Gym_Args',
             },
             {
-                'part': 'Sensor_State',
+                'part': 'Sensor_State_Args',
             }
         ],
         'episode_parameter_provider': {
@@ -162,7 +162,7 @@ def test_functor_parameters_references():
     agent_parse_base = AgentParseBase(agent=TrainableBaseAgent, config=config)
 
     agent_class = agent_parse_base.agent(
-        **agent_parse_base.config, agent_name='foobar', platform_name=agent_id
+        **agent_parse_base.config, agent_name='foobar', platform_names=[agent_id]
     )
 
     # Pairs of identical random number generators
@@ -186,8 +186,8 @@ def test_functor_parameters_references():
     agent_class.make_rewards(agent_id, [])
 
     # Determine what value is randomly sampled from the default parameters by using the same random number generator
-    param1_value = param1_parameter.get_value(rng1b).value
-    param2_value = param2_parameter.get_value(rng1b).value
+    param1_value = param1_parameter.get_value(rng1b, {}).value
+    param2_value = param2_parameter.get_value(rng1b, {}).value
 
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param1 == pytest.approx(param1_value)
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param2 == pytest.approx(param2_value)
@@ -198,8 +198,8 @@ def test_functor_parameters_references():
     agent_class.fill_parameters(rng2a, default_parameters=False)
     agent_class.make_rewards(agent_id, [])
 
-    param1_value = param1_parameter.get_value(rng2b).value
-    param2_value = param2_parameter.get_value(rng2b).value
+    param1_value = param1_parameter.get_value(rng2b, {}).value
+    param2_value = param2_parameter.get_value(rng2b, {}).value
 
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param1 == pytest.approx(param1_value)
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param2 == pytest.approx(param2_value)    
@@ -267,7 +267,7 @@ def test_functor_wrapper_parameters_references():
     agent_parse_base = AgentParseBase(agent=TrainableBaseAgent, config=config)
 
     agent_class = agent_parse_base.agent(
-        **agent_parse_base.config, agent_name='foobar', platform_name=agent_id
+        **agent_parse_base.config, agent_name='foobar', platform_names=[agent_id]
     )
 
     # Pairs of identical random number generators
@@ -298,10 +298,10 @@ def test_functor_wrapper_parameters_references():
 
     # Determine what value is randomly sampled from the default parameters by using the same random number generator
     # The order of these must match how the agent fills parameters.
-    wrapping_param1_value = wrapping_param1_parameter.get_value(rng1b).value
-    internal_param1_value = internal_param1_parameter.get_value(rng1b).value
-    internal_param2_value = internal_param2_parameter.get_value(rng1b).value
-    wrapping_param2_value = wrapping_param2_parameter.get_value(rng1b).value
+    wrapping_param1_value = wrapping_param1_parameter.get_value(rng1b, {}).value
+    internal_param1_value = internal_param1_parameter.get_value(rng1b, {}).value
+    internal_param2_value = internal_param2_parameter.get_value(rng1b, {}).value
+    wrapping_param2_value = wrapping_param2_parameter.get_value(rng1b, {}).value
 
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param1 == pytest.approx(wrapping_param1_value)
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param2 == pytest.approx(wrapping_param2_value)
@@ -314,10 +314,10 @@ def test_functor_wrapper_parameters_references():
     agent_class.fill_parameters(rng2a, default_parameters=False)
     agent_class.make_rewards(agent_id, [])
     
-    wrapping_param1_value = wrapping_param1_parameter.get_value(rng2b).value
-    internal_param1_value = internal_param1_parameter.get_value(rng2b).value
-    internal_param2_value = internal_param2_parameter.get_value(rng2b).value
-    wrapping_param2_value = wrapping_param2_parameter.get_value(rng2b).value
+    wrapping_param1_value = wrapping_param1_parameter.get_value(rng2b, {}).value
+    internal_param1_value = internal_param1_parameter.get_value(rng2b, {}).value
+    internal_param2_value = internal_param2_parameter.get_value(rng2b, {}).value
+    wrapping_param2_value = wrapping_param2_parameter.get_value(rng2b, {}).value
     
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param1 == pytest.approx(wrapping_param1_value)
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param2 == pytest.approx(wrapping_param2_value)
@@ -415,7 +415,7 @@ def test_functor_multi_wrapper_parameters_references():
     agent_parse_base = AgentParseBase(agent=TrainableBaseAgent, config=config)
 
     agent_class = agent_parse_base.agent(
-        **agent_parse_base.config, agent_name='foobar', platform_name=agent_id
+        **agent_parse_base.config, agent_name='foobar', platform_names=[agent_id]
     )
 
     # Pairs of identical random number generators
@@ -452,12 +452,12 @@ def test_functor_multi_wrapper_parameters_references():
 
     # Determine what value is randomly sampled from the default parameters by using the same random number generator
     # The order of these must match how the agent fills parameters.
-    wrapping_param1_value = wrapping_param1_parameter.get_value(rng1b).value
-    first_internal_param1_value = first_internal_param1_parameter.get_value(rng1b).value
-    second_internal_param1_value = second_internal_param1_parameter.get_value(rng1b).value
-    first_internal_param2_value = first_internal_param2_parameter.get_value(rng1b).value
-    second_internal_param2_value = second_internal_param2_parameter.get_value(rng1b).value
-    wrapping_param2_value = wrapping_param2_parameter.get_value(rng1b).value
+    wrapping_param1_value = wrapping_param1_parameter.get_value(rng1b, {}).value
+    first_internal_param1_value = first_internal_param1_parameter.get_value(rng1b, {}).value
+    second_internal_param1_value = second_internal_param1_parameter.get_value(rng1b, {}).value
+    first_internal_param2_value = first_internal_param2_parameter.get_value(rng1b, {}).value
+    second_internal_param2_value = second_internal_param2_parameter.get_value(rng1b, {}).value
+    wrapping_param2_value = wrapping_param2_parameter.get_value(rng1b, {}).value
 
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param1 == pytest.approx(wrapping_param1_value)
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param2 == pytest.approx(wrapping_param2_value)
@@ -472,12 +472,12 @@ def test_functor_multi_wrapper_parameters_references():
     agent_class.fill_parameters(rng2a, default_parameters=False)
     agent_class.make_rewards(agent_id, [])
     
-    wrapping_param1_value = wrapping_param1_parameter.get_value(rng2b).value
-    first_internal_param1_value = first_internal_param1_parameter.get_value(rng2b).value
-    second_internal_param1_value = second_internal_param1_parameter.get_value(rng2b).value
-    first_internal_param2_value = first_internal_param2_parameter.get_value(rng2b).value
-    second_internal_param2_value = second_internal_param2_parameter.get_value(rng2b).value
-    wrapping_param2_value = wrapping_param2_parameter.get_value(rng2b).value
+    wrapping_param1_value = wrapping_param1_parameter.get_value(rng2b, {}).value
+    first_internal_param1_value = first_internal_param1_parameter.get_value(rng2b, {}).value
+    second_internal_param1_value = second_internal_param1_parameter.get_value(rng2b, {}).value
+    first_internal_param2_value = first_internal_param2_parameter.get_value(rng2b, {}).value
+    second_internal_param2_value = second_internal_param2_parameter.get_value(rng2b, {}).value
+    wrapping_param2_value = wrapping_param2_parameter.get_value(rng2b, {}).value
     
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param1 == pytest.approx(wrapping_param1_value)
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param2 == pytest.approx(wrapping_param2_value)
@@ -575,7 +575,7 @@ def test_functor_dict_wrapper_parameters_references():
     agent_parse_base = AgentParseBase(agent=TrainableBaseAgent, config=config)
 
     agent_class = agent_parse_base.agent(
-        **agent_parse_base.config, agent_name='foobar', platform_name=agent_id
+        **agent_parse_base.config, agent_name='foobar', platform_names=[agent_id]
     )
 
     # Pairs of identical random number generators
@@ -612,12 +612,12 @@ def test_functor_dict_wrapper_parameters_references():
 
     # Determine what value is randomly sampled from the default parameters by using the same random number generator
     # The order of these must match how the agent fills parameters.
-    wrapping_param1_value = wrapping_param1_parameter.get_value(rng1b).value
-    first_internal_param1_value = first_internal_param1_parameter.get_value(rng1b).value
-    second_internal_param1_value = second_internal_param1_parameter.get_value(rng1b).value
-    first_internal_param2_value = first_internal_param2_parameter.get_value(rng1b).value
-    second_internal_param2_value = second_internal_param2_parameter.get_value(rng1b).value
-    wrapping_param2_value = wrapping_param2_parameter.get_value(rng1b).value
+    wrapping_param1_value = wrapping_param1_parameter.get_value(rng1b, {}).value
+    first_internal_param1_value = first_internal_param1_parameter.get_value(rng1b, {}).value
+    second_internal_param1_value = second_internal_param1_parameter.get_value(rng1b, {}).value
+    first_internal_param2_value = first_internal_param2_parameter.get_value(rng1b, {}).value
+    second_internal_param2_value = second_internal_param2_parameter.get_value(rng1b, {}).value
+    wrapping_param2_value = wrapping_param2_parameter.get_value(rng1b, {}).value
 
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param1 == pytest.approx(wrapping_param1_value)
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param2 == pytest.approx(wrapping_param2_value)
@@ -632,12 +632,12 @@ def test_functor_dict_wrapper_parameters_references():
     agent_class.fill_parameters(rng2a, default_parameters=False)
     agent_class.make_rewards(agent_id, [])
     
-    wrapping_param1_value = wrapping_param1_parameter.get_value(rng2b).value
-    first_internal_param1_value = first_internal_param1_parameter.get_value(rng2b).value
-    second_internal_param1_value = second_internal_param1_parameter.get_value(rng2b).value
-    first_internal_param2_value = first_internal_param2_parameter.get_value(rng2b).value
-    second_internal_param2_value = second_internal_param2_parameter.get_value(rng2b).value
-    wrapping_param2_value = wrapping_param2_parameter.get_value(rng2b).value
+    wrapping_param1_value = wrapping_param1_parameter.get_value(rng2b, {}).value
+    first_internal_param1_value = first_internal_param1_parameter.get_value(rng2b, {}).value
+    second_internal_param1_value = second_internal_param1_parameter.get_value(rng2b, {}).value
+    first_internal_param2_value = first_internal_param2_parameter.get_value(rng2b, {}).value
+    second_internal_param2_value = second_internal_param2_parameter.get_value(rng2b, {}).value
+    wrapping_param2_value = wrapping_param2_parameter.get_value(rng2b, {}).value
     
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param1 == pytest.approx(wrapping_param1_value)
     assert agent_class.agent_reward_dict.process_callbacks[-1].config.param2 == pytest.approx(wrapping_param2_value)

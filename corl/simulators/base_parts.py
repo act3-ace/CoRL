@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -46,65 +44,7 @@ import corl.simulators.base_properties as base_props
 from corl.libraries.nan_check import nan_check_result
 from corl.libraries.plugin_library import PluginLibrary
 from corl.libraries.property import Prop
-
-
-class MutuallyExclusiveParts():
-    """
-    Class to check to see/controll mutually exclusive parts
-    """
-
-    def __init__(self, exclusive_parts, allow_other_keys=False):
-        """
-        exclusive_parts: The parts to check exclusivity
-        allow_other_keys: allows exclusivity other than the parts defined here
-        """
-        self._exclusive_parts = exclusive_parts
-        self.allow_other_keys = allow_other_keys
-
-    def are_platform_parts_mutually_exclusive(self, *args: BasePlatformPart):
-        """Checks to see if platform parts are mutually exclusive
-
-        Returns:
-            [type] -- [description]
-        """
-        parts = [platform_part.exclusiveness for platform_part in args]
-        return self.are_parts_mutually_exclusive(*parts)
-
-    def are_parts_mutually_exclusive(self, *args):
-        """[summary]
-
-        Returns:
-            [type] -- [description]
-        """
-        total_set = set()
-        for part_exclusive_set in args:
-            for part_exclusiveness in part_exclusive_set:
-                if part_exclusiveness in total_set:
-                    return False
-                if part_exclusiveness in self._exclusive_parts:
-                    total_set.add(part_exclusiveness)
-                elif not self.allow_other_keys:
-                    raise RuntimeError(
-                        f"Error: you attempted to add a part with the exclusivness {part_exclusiveness}, but "
-                        f"this plaforms exclusive parts for this component type were {self._exclusive_parts}, "
-                        "and the platform specified to not allow other exclusivity"
-                    )
-        return True
-
-    def get_duplicate_parts(self, *args):
-        """[summary]
-
-        Returns:
-            [type] -- [description]
-        """
-        total_list = []
-        for mutually_exclusive_part in args:
-            total_list += list(mutually_exclusive_part.exclusiveness)
-        ret_list = []
-        for exclusive_key in self._exclusive_parts:
-            if total_list.count(exclusive_key) > 1:
-                ret_list.append(exclusive_key)
-        return ret_list
+from corl.simulators.base_simulator_state import BaseSimulatorState
 
 
 class BasePlatformPartValidator(BaseModel):
@@ -115,7 +55,7 @@ class BasePlatformPartValidator(BaseModel):
     part_class: PyObject
     name: typing.Optional[str] = None
     initial_validity: bool = True
-    properties: typing.Optional[typing.Dict] = dict()
+    properties: typing.Optional[typing.Dict] = {}
 
     @validator('name', always=True)
     def check_name(cls, v, values):
@@ -129,7 +69,7 @@ class BasePlatformPartValidator(BaseModel):
 class BasePlatformPart(abc.ABC):
     """
     BasePlatformPart abstract class for the classes that will be part of the BasePlatform.
-    This includes controls,and sensors
+    This includes controls, weapons and sensors
     """
 
     def __init__(self, parent_platform, config, property_class) -> None:
@@ -258,7 +198,6 @@ class BaseController(BasePlatformPart, abc.ABC):
         control
             The control to be executed by the controller
         """
-        ...
 
     @abc.abstractmethod
     def get_applied_control(self) -> typing.Union[np.ndarray, numbers.Number]:
@@ -302,7 +241,7 @@ class BaseSensor(BasePlatformPart, abc.ABC):
         return self._properties
 
     @abc.abstractmethod
-    def _calculate_measurement(self, state: typing.Tuple) -> typing.Union[np.ndarray, typing.Tuple, typing.Dict]:
+    def _calculate_measurement(self, state: BaseSimulatorState) -> typing.Union[np.ndarray, typing.Tuple, typing.Dict]:
         """
         The generic method to get calculate measurements from this sensor. This is used to calculate
          the measurement to be returned by
@@ -310,24 +249,23 @@ class BaseSensor(BasePlatformPart, abc.ABC):
 
         Parameters
         ----------
-        state: typing.Tuple
-            The current state of the environment used to obtain the measurement
+        state: BaseSimulatorState
+            The current state of the simulation used to obtain the measurement
 
         Returns
         -------
         typing.Union[np.ndarray, typing.Tuple, typing.Dict]
             The measurements from this sensor
         """
-        ...
 
-    def calculate_and_cache_measurement(self, state: typing.Tuple):
+    def calculate_and_cache_measurement(self, state: BaseSimulatorState):
         """
         Calculates the measurement and caches the result in the _last_measurement variable
 
         Parameters
         ----------
-        state: typing.Tuple
-            The current state of the environment used to obtain the measurement
+        state: BaseSimulatorState
+            The current state of the simulator used to obtain the measurement
         """
         measurement = self._calculate_measurement(state)
         try:

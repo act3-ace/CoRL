@@ -79,7 +79,7 @@ class DockingDistanceChangeReward(RewardFuncBase):
         reward = RewardDict()
         val = 0
 
-        deputy = get_platform_by_name(next_state, self.config.agent_name)
+        deputy = get_platform_by_name(next_state, self.config.platform_names[0])
         position_sensor = get_sensor_by_name(deputy, self.config.position_sensor_name)  # type: ignore
         deputy_position = position_sensor.get_measurement()
         chief_position = np.array([0])  # hardcoded to origin

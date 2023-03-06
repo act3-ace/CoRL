@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -116,27 +114,24 @@ class RelativeObsDeltaAction(BaseMultiWrapperGlue):
             return None
         return wrapped_glue_name + "RelativeDelta"
 
-    def get_observation(self) -> typing.Union[np.ndarray, typing.Tuple, typing.Dict]:
+    def get_observation(self, other_obs: OrderedDict, obs_space, obs_units) -> typing.Union[np.ndarray, typing.Tuple, typing.Dict]:
         return {
-            "absolute": self.controller.get_observation(),
+            "absolute": self.controller.get_observation(other_obs, obs_space, obs_units),
             "delta": self.saved_action_deltas,
         }
 
     @lru_cache()
-    def observation_space(self) -> gym.spaces.Space:
+    def observation_space(self):
         return gym.spaces.Dict({"absolute": self.controller.observation_space(), "delta": self.action_space()})
 
     @lru_cache()
-    def action_space(self) -> gym.spaces.Space:
+    def action_space(self):
         """
-        Build the action space for the controller, etc.
+        Build the action space for the controller, weapons, etc.
         """
 
         # get the action space from the parent
         original_action_space = self.controller.action_space()
-
-        # log the original action space
-        self._logger.debug(f"action_space: {original_action_space}")
 
         # zero mean the space so we can scale it easier
         zero_mean_space = EnvSpaceUtil.zero_mean_space(original_action_space)
@@ -148,14 +143,12 @@ class RelativeObsDeltaAction(BaseMultiWrapperGlue):
         return zero_mean_space
 
     # TODO: assumes self.controller._control_properties has unit attribute
-    def apply_action(self, action, observation) -> None:
+    def apply_action(self, action, observation, action_space, obs_space, obs_units) -> None:
         """
-        Apply the action for the controller, etc.
+        Apply the action for the controller, weapons, etc.
         """
 
-        self._logger.debug(f"apply_action: {action}")
-
-        current_observation = self.relative_obs_glue.get_observation()["direct_observation"]
+        current_observation = self.relative_obs_glue.get_observation(observation, obs_space, obs_units)["direct_observation"]
         # all units in an array must be the same, so this assumption is ok
         obs_units = self.relative_obs_glue.observation_units()["direct_observation"][0]
         if self.config.obs_index:
@@ -179,7 +172,7 @@ class RelativeObsDeltaAction(BaseMultiWrapperGlue):
         absolute_action = EnvSpaceUtil.clip_space_sample_to_space(absolute_action, self.controller.action_space(), self._is_wrap)
 
         try:
-            self.controller.apply_action(absolute_action, observation)
+            self.controller.apply_action(absolute_action, observation, action_space, obs_space, obs_units)
         except Exception as exc:
             # Purpose - add additional debugging information and re-raise the exception
             raise ValueError(

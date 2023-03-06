@@ -1,24 +1,29 @@
 #!/bin/bash -e
-# ---------------------------------------------------------------------------
-# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-# Reinforcement Learning (RL) Core.
 
-# This is a US Government Work not subject to copyright protection in the US.
-
-# The use, dissemination or disclosure of data in this file is subject to
-# limitation or restriction. See accompanying README and LICENSE for details.
-# ---------------------------------------------------------------------------
-
-# script looks for a variable __version__ in a python file and updates its value of the version
+# script looks for a variable __version__ in a pyproject.toml file and updates its value of the version
 # Matches the examples:
-# __version__ = "0.0.0"
-# __version__ = '0.0.0'
-
+# version = "0.0.0"
+# version = '0.0.0'
 # use poetry version to update version to next release
 NEXT_RELEASE="$1"
-poetry version ${NEXT_RELEASE}
+poetry version "${NEXT_RELEASE}"
+# 
+poetry export -f requirements.txt -o requirements.dep.txt --with dev,lint,test,docs,profile
+# 
+if [ -n "${REGISTRY}" ]; then
+    crane auth login -u "${REGISTRY_USER}" -p "${REGISTRY_PASSWORD}" "${REGISTRY}"
+    rm -f temp.txt
+    for DEST_PATH in $DESTINATION_PATH;
+    do
+        REPO="${CI_REGISTRY_IMAGE}${DEST_PATH}"
+        for tag in $(crane ls "${REPO}")
+        do
+            echo "$REPO:$tag" >> temp.txt
+        done
+        echo "${REPO}:v${NEXT_RELEASE}" >> temp.txt
 
-
-# use poetry export to generate a lock file for sync
-poetry export -f requirements.txt -o temp.lock.txt --without-hashes --without-urls --with dev --with=lint --with=test --with=docs --with=profile
-cat requirements.dep.txt | cut -d ';' -f1 > requirements.dep.txt
+    done
+    rm -f registry-images.txt
+    grep -E "v[[:digit:]]+.[[:digit:]]+.[[:digit:]]+" temp.txt >> registry-images.txt
+    rm -f temp.txt
+fi

@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -27,9 +25,12 @@ class RewardFuncBaseValidator(BaseModel):
     """
     name: Name of reward functor
     agent_name: Name of agent the reward functor belongs to
+    platform_names: list of platforms controlled by the agent
+                    this reward belongs to
     """
     name: typing.Optional[str]
     agent_name: str
+    platform_names: typing.List[str]
 
 
 class RewardFuncBase(EnvFuncBase):
@@ -58,13 +59,12 @@ class RewardFuncBase(EnvFuncBase):
     ) -> RewardDict:
         ...
 
-    def post_process_trajectory(self, agent_id, state, batch, episode, policy):  # pylint: disable=unused-argument,no-self-use
+    def post_process_trajectory(self, agent_id, state, batch, episode, policy):  # pylint: disable=unused-argument
         """Allows the user to modify the trajectory of the episode
         in the batch collected during an rllib callback. WARNING: This function is dangerous
         you can completly destroy training using this
         Use it only as a last resort
         """
-        ...
 
     @property
     def name(self) -> str:

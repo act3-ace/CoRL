@@ -1,13 +1,12 @@
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
+-------------------------------------------------------------------------------
+The Autonomous Capabilities Team (ACT3) Deep Reinforcement Learning (D-RL) Environment
 
 This is a US Government Work not subject to copyright protection in the US.
 
 The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 Structures that hold parameters and the ability to update them.
 """
@@ -43,6 +42,7 @@ class ParameterValidator(BaseModel):
     update: typing.Dict[str, typing.Any] = {}
     simulator: typing.Dict[str, typing.Any] = {}
     episode_parameter_provider: typing.Dict[str, typing.Any] = {}
+    dependent_parameters: typing.List[str] = []
 
     @validator('units', pre=True)
     def units_validator(cls, v):
@@ -72,7 +72,7 @@ class Parameter(abc.ABC):
         return None
 
     @abc.abstractmethod
-    def get_value(self, rng: Randomness) -> units.ValueWithUnits:
+    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
         """Get the value of the parameter.
 
         In order to avoid inconsistent operation between cases where the value is serialized (such as from the ray object store) or not,
@@ -83,8 +83,8 @@ class Parameter(abc.ABC):
         ----------
         rng : Union[Generator, RandomState]
             Random number generator from which to draw random values.
+        other_vars: variables previously processed, will contain any variables this parameter is dependent on
         """
-        ...
 
 
 class ConstantParameterValidator(ParameterValidator):
@@ -103,7 +103,7 @@ class ConstantParameter(Parameter):
     def get_validator(self) -> typing.Type[ConstantParameterValidator]:
         return ConstantParameterValidator
 
-    def get_value(self, rng: Randomness) -> units.ValueWithUnits:
+    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
         return units.ValueWithUnits(value=self.config.value, units=self.config.units)
 
 
@@ -131,7 +131,7 @@ class UniformParameter(Parameter):
     def get_validator(self) -> typing.Type[UniformParameterValidator]:
         return UniformParameterValidator
 
-    def get_value(self, rng: Randomness) -> units.ValueWithUnits:
+    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
         return units.ValueWithUnits(value=rng.uniform(self.config.low, self.config.high), units=self.config.units)
 
     def get_constraint(self, name: str) -> typing.Optional[_ConstraintCallbackType]:
@@ -173,7 +173,7 @@ class TruncatedNormalParameter(Parameter):
     def get_validator(self) -> typing.Type[TruncatedNormalParameterValidator]:
         return TruncatedNormalParameterValidator
 
-    def get_value(self, rng: Randomness) -> units.ValueWithUnits:
+    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
         low = self.config.mu - self.config.half_width_factor * self.config.std
         high = self.config.mu + self.config.half_width_factor * self.config.std
         value = stats.truncnorm.rvs(
@@ -234,7 +234,7 @@ class ChoiceParameter(Parameter):
     def get_validator(self) -> typing.Type[ChoiceParameterValidator]:
         return ChoiceParameterValidator
 
-    def get_value(self, rng: Randomness) -> units.ValueWithUnits:
+    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
         return units.ValueWithUnits(value=rng.choice(self.config.choices), units=self.config.units)
 
 
@@ -258,12 +258,12 @@ class OverridableParameterWrapper(Parameter):
     def get_constraint(self, name: str) -> typing.Optional[_ConstraintCallbackType]:
         return self.base.get_constraint(name=name)
 
-    def get_value(self, rng: Randomness) -> units.ValueWithUnits:
+    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
 
         if self.override_value is not None:
             return ValueWithUnits(value=self.override_value, units=self.config.units)
 
-        return self.base.get_value(rng)
+        return self.base.get_value(rng, {})
 
 
 class UpdaterValidator(BaseModel):
@@ -343,7 +343,6 @@ class Updater(abc.ABC):
             Perform a reverse update.  If allowed, performing a sequence with a normal update followed by a reverse update should return
             the original value.  Not all `Updater` subclasses allow reverse updates.  The default is False.
         """
-        ...
 
     @property
     def get_validator(self) -> typing.Type[UpdaterValidator]:
@@ -353,17 +352,14 @@ class Updater(abc.ABC):
     @abc.abstractmethod
     def supports_reverse_update(self) -> bool:
         """Indicator whether this updater supports reverse updates."""
-        ...
 
     @abc.abstractmethod
     def at_bound(self) -> bool:
         """Indicator whether this updater is at its bound."""
-        ...
 
     @abc.abstractmethod
     def get_bound(self) -> Number:
         """Get the bound of this updater."""
-        ...
 
     def get_current_extent(self) -> Number:
         """returns the current extent of the parameter controlled by this updater
@@ -461,3 +457,11 @@ class BoundStepUpdater(Updater):
 
     def create_config(self) -> dict:
         return {'bound': self.config.bound, 'step': self.config.step, 'bound_type': self.config.bound_type}
+
+
+class RandomSignUniformParameter(UniformParameter):
+    """A parameter that draws from a uniform distribution where the value is assigned a random sign.
+    The range of the parameter is [-high, -low], [low, high]. """
+
+    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
+        return units.ValueWithUnits(value=rng.uniform(self.config.low, self.config.high) * rng.choice([-1, 1]), units=self.config.units)

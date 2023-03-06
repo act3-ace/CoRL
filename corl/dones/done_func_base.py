@@ -15,7 +15,6 @@ import typing
 from collections import OrderedDict
 from enum import Enum
 
-import numpy as np
 from pydantic import BaseModel
 
 from corl.libraries.env_func_base import EnvFuncBase
@@ -44,14 +43,15 @@ class DoneFuncBaseValidator(BaseModel):
     name : str
         A name applied to this done condition, by default the name of the class.
     agent_name : str
-        Name of the agent to which this done condition applies
+        Name of the agent to which this done condition applies, This is only valid
+        if the done condition came from an agent
     platform_name : str
         Name of the platform to which this done condition applies
     early_stop : bool, optional
         If True, set the done condition on "__all__" once any done condition is True.  This is by default False.
     """
     name: str = ""
-    agent_name: str
+    agent_name: typing.Optional[str]
     platform_name: str
     early_stop: bool = False
 
@@ -76,7 +76,7 @@ class DoneFuncBase(EnvFuncBase):
         return DoneFuncBaseValidator
 
     @property
-    def agent(self) -> str:
+    def agent(self) -> typing.Optional[str]:
         """The agent to which this done is applied"""
         return self.config.agent_name
 
@@ -91,7 +91,7 @@ class DoneFuncBase(EnvFuncBase):
 
     def _set_all_done(self, done):
         done[DoneFuncBase._ALL] = False
-        if np.any(list(done.values())) and self.config.early_stop:
+        if self.config.early_stop and any(done.values()):
             done[DoneFuncBase._ALL] = True
             done = done.fromkeys(done, True)
         return done

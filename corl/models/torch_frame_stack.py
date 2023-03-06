@@ -1,14 +1,3 @@
-"""
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
-"""
 #  type: ignore
 #  flake8: noqa
 #  pylint: skip-file
@@ -29,7 +18,7 @@ torch, nn = try_import_torch()
 logger = logging.getLogger(__name__)
 
 
-class TorchFrameStack(TorchModelV2, nn.Module):  # type: ignore
+class TorchFrameStack(TorchModelV2, nn.Module):
     """Generic fully connected network."""
 
     PREV_N_OBS = "prev_n_obs"
@@ -158,8 +147,7 @@ class TorchFrameStack(TorchModelV2, nn.Module):  # type: ignore
         self._last_flat_in = None
 
     @override(TorchModelV2)
-    def forward(self, input_dict: Dict[str, TensorType], state: List[TensorType],
-                seq_lens: TensorType) -> (TensorType, List[TensorType]):  # type: ignore
+    def forward(self, input_dict: Dict[str, TensorType], state: List[TensorType], seq_lens: TensorType) -> (TensorType, List[TensorType]):
         self._last_flat_in = input_dict[TorchFrameStack.PREV_N_OBS].float()
         self._features = self._hidden_layers(self._last_flat_in)
         logits = self._logits(self._features) if self._logits else \

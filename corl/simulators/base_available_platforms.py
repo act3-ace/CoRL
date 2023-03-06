@@ -21,7 +21,8 @@ class BaseAvailablePlatformTypes(enum.Enum):
     """Enumeration that outlines the platform types that have been implemented
     """
 
-    @abc.abstractclassmethod
+    @classmethod
+    @abc.abstractmethod
     def ParseFromNameModel(cls, config: Dict[str, Any]) -> BaseAvailablePlatformTypes:  # pylint: disable=unused-argument
         """
         ParseFromNameModel is responsible for returning the platform type being used
@@ -33,4 +34,3 @@ class BaseAvailablePlatformTypes(enum.Enum):
         Returns:
             BaseAvailablePlatformTypes -- The platform type being used by this platform
         """
-        ...

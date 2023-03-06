@@ -23,10 +23,11 @@ from datetime import datetime
 
 import git
 import ray
-from pydantic import PyObject, validator
+from pydantic import BaseModel, DirectoryPath, PyObject, validator
 from ray import tune
-from ray.rllib.agents.callbacks import MultiCallbacks
+from ray.rllib.algorithms.callbacks import DefaultCallbacks, MultiCallbacks
 from ray.rllib.env.env_context import EnvContext
+from ray.rllib.policy.policy import Policy
 from ray.tune.registry import get_trainable_cls
 
 from corl.environment.default_env_rllib_callbacks import EnvironmentDefaultCallbacks
@@ -34,10 +35,18 @@ from corl.environment.multi_agent_env import ACT3MultiAgentEnv, ACT3MultiAgentEn
 from corl.episode_parameter_providers import EpisodeParameterProvider
 from corl.episode_parameter_providers.remote import RemoteEpisodeParameterProvider
 from corl.experiments.base_experiment import BaseExperiment, BaseExperimentValidator
+from corl.experiments.rllib_utils.policy_mapping_functions import PolicyIsAgent
 from corl.libraries.factory import Factory
 from corl.libraries.rllib_setup_util import AutoRllibConfigSetup, auto_configure_rllib_config
 from corl.parsers.yaml_loader import apply_patches
 from corl.policies.base_policy import BasePolicyValidator
+
+
+class RllibPolicyMappingValidator(BaseModel):
+    """validator of data used to generate policy mapping
+    """
+    functor: PyObject = PolicyIsAgent
+    config: dict = {}
 
 
 class RllibExperimentValidator(BaseExperimentValidator):
@@ -56,14 +65,16 @@ class RllibExperimentValidator(BaseExperimentValidator):
     rllib_configs: typing.Dict[str, typing.Dict[str, typing.Any]]
     tune_config: typing.Dict[str, typing.Any]
     trainable_config: typing.Optional[typing.Dict[str, typing.Any]]
+    disable_auto_rllib_config_setup: bool = False
     auto_rllib_config_setup: AutoRllibConfigSetup = AutoRllibConfigSetup()
     hparam_search_class: typing.Optional[PyObject]
     hparam_search_config: typing.Optional[typing.Dict[str, typing.Any]]
     extra_callbacks: typing.Optional[typing.List[PyObject]]
     trial_creator_function: typing.Optional[PyObject]
+    policy_mapping: RllibPolicyMappingValidator = RllibPolicyMappingValidator()
 
     @validator('rllib_configs', pre=True)
-    def apply_patches_rllib_configs(cls, v):  # pylint: disable=no-self-argument, no-self-use
+    def apply_patches_rllib_configs(cls, v):  # pylint: disable=no-self-argument
         """
         The dictionary of rllib configs may come in as a dictionary of
         lists of dictionaries, this function is responsible for collapsing
@@ -88,7 +99,7 @@ class RllibExperimentValidator(BaseExperimentValidator):
         return rllib_configs
 
     @validator('ray_config', 'tune_config', 'trainable_config', 'env_config', pre=True)
-    def apply_patches_configs(cls, v):  # pylint: disable=no-self-argument, no-self-use
+    def apply_patches_configs(cls, v):  # pylint: disable=no-self-argument
         """
         reduces a field from
         typing.Union[typing.List[typing.Dict[str, typing.Any]], typing.Dict[str, typing.Any]]]
@@ -115,9 +126,10 @@ class RllibExperimentValidator(BaseExperimentValidator):
 class RllibPolicyValidator(BasePolicyValidator):
     """
     policy_class: callable policy class None will use default from trainer
+    checkpoint_path: if this policy should attempt to load weights from a checkpoint
     train: should this policy be trained
     Arguments:
-        BaseModel {[type]} -- [description]
+        BaseModel: [description]
 
     Raises:
         RuntimeError: [description]
@@ -127,7 +139,30 @@ class RllibPolicyValidator(BasePolicyValidator):
     """
     config: typing.Dict[str, typing.Any] = {}
     policy_class: typing.Union[PyObject, None] = None
+    checkpoint_path: typing.Optional[str]
     train: bool = True
+
+    @validator('checkpoint_path')
+    def path_exists(cls, v):
+        """Check that the checkpoint path exists
+        """
+
+        if v is None:
+            return v
+
+        directory_path = pathlib.Path(os.path.expandvars(v))
+        DirectoryPath.validate(directory_path)
+
+        sub_file_checks = []
+        for x in ["rllib_checkpoint.json", "policy_state.pkl"]:
+            tmp = directory_path / x
+            sub_file_checks.append(tmp.exists())
+        if not all(sub_file_checks):
+            raise RuntimeError(
+                "Loading a checkpoint from the policy config 'checkpoint_path' requires "
+                "specifying a rllib policy folder that has both a 'rllib_checkpoint.json' and a 'policy_state.pkl' in it."
+            )
+        return directory_path
 
 
 class RllibExperiment(BaseExperiment):
@@ -167,7 +202,8 @@ class RllibExperiment(BaseExperiment):
 
         ray_resources = ray.available_resources()
 
-        auto_configure_rllib_config(rllib_config, self.config.auto_rllib_config_setup, ray_resources)
+        if not self.config.disable_auto_rllib_config_setup:
+            auto_configure_rllib_config(rllib_config, self.config.auto_rllib_config_setup, ray_resources)
 
         self.config.env_config["agents"], self.config.env_config["agent_platforms"] = self.create_agents(
             args.platform_config, args.agent_config
@@ -181,9 +217,6 @@ class RllibExperiment(BaseExperiment):
 
         if args.name:
             self.config.env_config["TrialName"] = args.name
-
-        if args.other_platform:
-            self.config.env_config["other_platforms"] = self.create_other_platforms(args.other_platform)
 
         if not self.config.ray_config['local_mode']:
             self.config.env_config['episode_parameter_provider'] = RemoteEpisodeParameterProvider.wrap_epp_factory(
@@ -217,14 +250,9 @@ class RllibExperiment(BaseExperiment):
 
         train_policies = [policy_name for policy_name in policies.keys() if tmp_ac[policy_name].policy_config["train"]]
 
-        self._update_rllib_config(rllib_config, train_policies, policies, args)
+        self._update_rllib_config(rllib_config, train_policies, policies, args, tmp_ac)
 
         self._enable_episode_parameter_provider_checkpointing()
-
-        if args.profile:
-            if "stop" not in self.config.tune_config:
-                self.config.tune_config["stop"] = {}
-            self.config.tune_config["stop"]["training_iteration"] = args.profile_iterations
 
         search_class = None
         if self.config.hparam_search_class is not None:
@@ -236,20 +264,47 @@ class RllibExperiment(BaseExperiment):
 
         tune.run(
             config=rllib_config,
+            # progress_reporter=AACOProgressReporter(),
             **self.config.tune_config,
         )
 
-    def _update_rllib_config(self, rllib_config, train_policies, policies, args: argparse.Namespace) -> None:
+    def _update_rllib_config(self, rllib_config, train_policies, policies, args: argparse.Namespace, tmp_ac) -> None:
         """
         Update several rllib config fields
+        tmp_ac: agent_classes from temporary environment to get obs/action space, these should be
+                considered read only, and will be destroyed when training begins
         """
 
         rllib_config["multiagent"] = {
-            "policies": policies, "policy_mapping_fn": lambda agent_id: agent_id, "policies_to_train": train_policies
+            "policies": policies,
+            "policy_mapping_fn": self.config.policy_mapping.functor(**self.config.policy_mapping.config),
+            "policies_to_train": train_policies,
         }
 
         rllib_config["env"] = ACT3MultiAgentEnv
-        callback_list = [self.get_callbacks()]
+        callback_list: typing.List[typing.Type[DefaultCallbacks]] = [self.get_callbacks()]
+        checkpoint_weight_files = {}
+        # if a policy shows a checkpoint
+        for agent_name, agent_config in tmp_ac.items():
+            if agent_config.policy_config["checkpoint_path"]:
+                checkpoint_weight_files[agent_name] = agent_config.policy_config["checkpoint_path"]
+        if checkpoint_weight_files:
+
+            class WeightLoaderCallback(DefaultCallbacks):
+                """
+                callback that will load the preexisting weights
+                into policies
+                """
+
+                def on_algorithm_init(self, *, algorithm, **kwargs):
+                    agent_weight_dict = {}
+                    for agent_name, file_path in checkpoint_weight_files.items():
+                        restored = Policy.from_checkpoint(file_path)
+                        agent_weight_dict[agent_name] = restored.get_weights()
+                    algorithm.set_weights(agent_weight_dict)
+                    algorithm.workers.sync_weights()
+
+            callback_list.append(WeightLoaderCallback)
         if self.config.extra_callbacks:
             callback_list.extend(self.config.extra_callbacks)  # type: ignore[arg-type]
         rllib_config["callbacks"] = MultiCallbacks(callback_list)
@@ -257,7 +312,6 @@ class RllibExperiment(BaseExperiment):
         now = datetime.now()
         rllib_config["env_config"]["output_date_string"] = f"{now.strftime('%Y%m%d_%H%M%S')}_{socket.gethostname()}"
         rllib_config["create_env_on_driver"] = True
-        rllib_config["batch_mode"] = "complete_episodes"
 
         self._add_git_hashes_to_config(rllib_config)
 
@@ -270,7 +324,7 @@ class RllibExperiment(BaseExperiment):
         Key modules are the following:
           - corl,
           - whatever cwd is set to at the time of the function call
-            (notionally /opt/project /)
+            (notionally /opt/project / aaco-rl-agents)
           - any other modules listed in rllib_config["env_config"]["plugin_paths"]
 
         This information is not actually used by ACT3MultiAgentEnv;
@@ -286,7 +340,7 @@ class RllibExperiment(BaseExperiment):
 
             corl_pattern = r"corl.*"
             cp0 = re.compile(corl_pattern)
-            rllib_config["env_config"]["git_hash"] = dict()
+            rllib_config["env_config"]["git_hash"] = {}
 
             # store hash on cwd
             cwd = os.getcwd()

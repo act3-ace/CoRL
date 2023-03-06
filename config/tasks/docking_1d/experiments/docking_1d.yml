@@ -1,0 +1,17 @@
+{
+  "config": "config/tasks/docking_1d/tasks/docking1d_task.yml",
+  "platform_config": [
+    {
+      "name": "blue0",
+      "config": "config/tasks/docking_1d/platforms/docking1d_platform.yml"
+    }
+  ],
+  "agent_config": [
+    {
+      "name": "blue0_ctrl",
+      "platforms": ["blue0"],
+      "config": "config/tasks/docking_1d/agents/docking1d_agent.yml",
+      "policy": "config/policy/ppo/default_config.yml"
+    }
+  ]
+}

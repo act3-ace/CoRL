@@ -104,14 +104,14 @@ class EpisodeParameterProvider(abc.ABC):
         """
         raise NotImplementedError
 
-    def compute_metrics(self) -> typing.Dict[str, typing.Any]:  # pylint: disable=no-self-use
+    def compute_metrics(self) -> typing.Dict[str, typing.Any]:
         """Get metrics on the operation of this provider.
 
         Often used in `on_episode_end` training callbacks.
         """
         return {}
 
-    def update(self, results: dict, rng: Randomness) -> None:  # pylint: disable=no-self-use, unused-argument
+    def update(self, results: dict, rng: Randomness) -> None:
         """Update the operation of this provider.
 
         Often used in `on_train_result` training callbacks.
@@ -119,14 +119,13 @@ class EpisodeParameterProvider(abc.ABC):
         Parameters
         ----------
         results : dict
-            As described by ray.rllib.agents.callbacks.DefaultCallbacks.on_train_result.
+            As described by ray.rllib.algorithms.callbacks.DefaultCallbacks.on_train_result.
             See https://docs.ray.io/en/master/_modules/ray/rllib/agents/callbacks.html#DefaultCallbacks.on_train_result
         rng : Union[Generator, RandomState]
             Random number generator from which to draw random values.
         """
-        ...
 
-    def save_checkpoint(self, checkpoint_path: PathLike) -> None:  # pylint: disable=no-self-use, unused-argument
+    def save_checkpoint(self, checkpoint_path: PathLike) -> None:
         """Save the internal state of the parameter provider.
 
         Parameters
@@ -134,9 +133,8 @@ class EpisodeParameterProvider(abc.ABC):
         checkpoint_path : PathLike
             Filesystem path at which to save the checkpoint
         """
-        ...
 
-    def load_checkpoint(self, checkpoint_path: PathLike) -> None:  # pylint: disable=no-self-use, unused-argument
+    def load_checkpoint(self, checkpoint_path: PathLike) -> None:
         """Load the internal state from a checkpoint.
 
         Parameters
@@ -144,4 +142,3 @@ class EpisodeParameterProvider(abc.ABC):
         checkpoint_path : PathLike
             Filesystem path from which to restore the checkpoint
         """
-        ...

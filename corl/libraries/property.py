@@ -1,8 +1,6 @@
 # pylint: disable=no-self-argument
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -35,12 +33,11 @@ class Prop(BaseModel, abc.ABC):
     class Config:  # pylint: disable=C0115, R0903
         validate_all = True
 
-    @abc.abstractclassmethod
-    def create_space(cls) -> gym.spaces.Space:
+    @abc.abstractmethod
+    def create_space(self, seed=None) -> gym.spaces.Space:  # pylint: disable=unused-argument
         """
         Creates RLLIB space
         """
-        ...
 
 
 class BoxProp(Prop):
@@ -99,12 +96,16 @@ class BoxProp(Prop):
         arbitrary_types_allowed = True
         validate_all = True
 
-    def create_space(self) -> gym.spaces.Space:
+    def create_space(self, seed=None) -> gym.spaces.Space:
         """
         Creates RLLIB Box space
         """
         return gym.spaces.Box(
-            low=np.array(self.low).astype(self.dtype), high=np.array(self.high).astype(self.dtype), dtype=self.dtype, shape=self.shape
+            low=np.array(self.low).astype(self.dtype),
+            high=np.array(self.high).astype(self.dtype),
+            dtype=self.dtype,  # type: ignore
+            shape=self.shape,
+            seed=seed
         )
 
     def min(
@@ -188,7 +189,7 @@ class BoxProp(Prop):
         return gym.spaces.Box(
             low=np.array(self.min(convert)).astype(self.dtype),
             high=np.array(self.max(convert)).astype(self.dtype),
-            dtype=self.dtype,
+            dtype=self.dtype,  # type: ignore
             shape=self.shape
         )
 
@@ -198,11 +199,11 @@ class DiscreteProp(Prop):
     """
     n: int
 
-    def create_space(self) -> gym.spaces.Space:
+    def create_space(self, seed=None) -> gym.spaces.Space:
         """
         Creates RLLIB Discrete space
         """
-        return gym.spaces.Discrete(self.n)
+        return gym.spaces.Discrete(self.n, seed=seed)
 
 
 class MultiBinary(Prop):
@@ -210,11 +211,13 @@ class MultiBinary(Prop):
     """
     n: int
 
-    def create_space(self) -> gym.spaces.Space:
+    def create_space(self, seed=None) -> gym.spaces.Space:
         """
         Creates RLLIB MultiBinary space
         """
-        return gym.spaces.MultiBinary(self.n)
+        # TODO ray2 temporarily doesn't support multibinary correctly
+        # so just map it to a vector of multi discretes
+        return gym.spaces.MultiDiscrete([2] * self.n, seed=seed, dtype=np.int8)
 
 
 class RepeatedProp(Prop):
@@ -223,9 +226,26 @@ class RepeatedProp(Prop):
     max_len: int
     child_space: typing.Dict[str, Prop]
 
-    def create_space(self) -> gym.spaces.Space:
+    def create_space(self, seed=None) -> gym.spaces.Space:
         """
         Creates RLLIB Repeated space
         """
-        gym_child_space = gym.spaces.Dict({key: value.create_space() for key, value in self.child_space.items()})
+        gym_child_space = gym.spaces.Dict({key: value.create_space(seed=seed) for key, value in self.child_space.items()})
         return Repeated(child_space=gym_child_space, max_len=self.max_len)
+
+
+class MultiDiscreteProp(Prop):
+    """Represents the MultiDiscrete
+    """
+    nvec: typing.Union[np.ndarray, list]
+    dtype = np.int64
+
+    class Config:
+        """Allow arbitrary types for Parameter"""
+        arbitrary_types_allowed = True
+
+    def create_space(self, seed=None) -> gym.spaces.Space:
+        """
+        Creates MultiDiscrete gym space
+        """
+        return gym.spaces.MultiDiscrete(self.nvec, dtype=self.dtype, seed=seed)

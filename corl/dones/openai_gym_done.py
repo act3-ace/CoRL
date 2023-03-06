@@ -30,6 +30,6 @@ class OpenAIGymDone(DoneFuncBase):
         observation_units,
     ):
         done = DoneDict()
-        done[self.config.agent_name] = next_state.dones[self.config.agent_name]
+        done[self.config.agent_name] = next_state.dones[self.config.platform_name]
         self._set_all_done(done)
         return done

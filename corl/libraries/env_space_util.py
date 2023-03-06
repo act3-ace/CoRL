@@ -1,8 +1,6 @@
 # pylint: disable=too-many-lines
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -12,17 +10,20 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 ENV Space Util Module
+
+this file is a mypy nightmare due to lots of typing unions and complex types
+do not trust mypy, trust the unit tests
 """
 import copy
 import logging
 import typing
 from collections import OrderedDict
-from collections.abc import Iterable, Iterator, MutableSequence, Sequence
-from itertools import repeat
+from collections.abc import MutableSequence, Sequence
 
+import flatten_dict
 import gym
 import numpy as np
-from gym.spaces import Discrete
+from ray.rllib.utils.spaces import space_utils
 from ray.rllib.utils.spaces.repeated import Repeated
 
 from corl.libraries.state_dict import StateDict
@@ -57,7 +58,7 @@ class EnvSpaceUtil:  # pylint: disable=R0904
                 raise ValueError(
                     f"space{key_stack}={space} was a gym.spaces.Dict type but\n"
                     f"sample{key_stack}={sample} \n"
-                    f"is a {type(sample)} type and not a StateDict, OrderedDict, or dict"
+                    f"is a {type(sample)} type and not a StateDict, OrderedDict, or dict\n"
                 )
             for key, value in sample.items():
                 EnvSpaceUtil.deep_sanity_check_space_sample(space.spaces[key], value, key_stack=f"{key_stack}[{key}]")
@@ -290,12 +291,11 @@ class EnvSpaceUtil:  # pylint: disable=R0904
         gym.spaces.Space:
             the new gym spaces where all boxes have had their bounds changed
         """
-        return EnvSpaceUtil.iterate_over_space_likes(
+        return EnvSpaceUtil.iterate_over_space(
             func=EnvSpaceUtil.space_box_min_maxer,
-            space_likes=(space, ),
+            space=space,
             out_min=out_min,
             out_max=out_max,
-            return_space=True,
         )
 
     @staticmethod
@@ -326,6 +326,8 @@ class EnvSpaceUtil:  # pylint: disable=R0904
             val = tuple(new_tuple)
         elif isinstance(space, gym.spaces.Box):
             val = np.zeros(shape=space.shape, dtype=np.float32)
+        elif isinstance(space, gym.spaces.Discrete):
+            val = 0
         return val
 
     @staticmethod
@@ -349,10 +351,10 @@ class EnvSpaceUtil:  # pylint: disable=R0904
         if isinstance(space, gym.spaces.Dict):
             new_dict = OrderedDict()
             for key, value in space.spaces.items():
-                new_dict[key] = EnvSpaceUtil.get_zero_sample_from_space(value)
+                new_dict[key] = EnvSpaceUtil.get_mean_sample_from_space(value)
             val = new_dict
         elif isinstance(space, gym.spaces.Tuple):
-            new_tuple = [EnvSpaceUtil.get_zero_sample_from_space(sp) for sp in space.spaces]
+            new_tuple = [EnvSpaceUtil.get_mean_sample_from_space(sp) for sp in space.spaces]
             val = tuple(new_tuple)
         elif isinstance(space, gym.spaces.Box):
             val = (space.high + space.low) / 2.0
@@ -421,7 +423,12 @@ class EnvSpaceUtil:  # pylint: disable=R0904
         sample_type
             the clipped space instance
         """
-        val = copy.deepcopy(space_sample)
+        val = space_sample
+        if isinstance(space, Repeated):
+            new_obs = []
+            for item in val:
+                new_obs.append(EnvSpaceUtil.clip_space_sample_to_space(item, space.child_space, is_wrap=is_wrap))
+            val = new_obs
         if isinstance(space, gym.spaces.Dict):
             new_dict = OrderedDict()
             for key, space_value in space.spaces.items():
@@ -448,52 +455,49 @@ class EnvSpaceUtil:  # pylint: disable=R0904
         return val
 
     @staticmethod
-    def turn_box_into_tuple_of_discretes(
-        space: gym.spaces.Space, num_actions: typing.Union[int, typing.List[int], Iterable, dict] = 10
-    ) -> gym.spaces.Space:
+    def iterate_over_space(func, space: gym.spaces.Space, *func_args, **func_kwargs) -> gym.spaces.Space:
         """
-        Takes a gym space and replaces any Box types with MultiDiscrete types with the same number of
-        possible of discrete as the box and each discrete has the same number of possible actions = num_actions
-        Parameters
-        ----------
-        space
-        num_actions: int, list, dict
-            how many discrete actions to give to each possible discrete in the MultiDiscrete
-        Returns
-        -------
-        gym.spaces.Space
-            A gym space where all the Box types are replaced with MultiDiscrete types
+        utility tool for iterate over space to help mypy handle the return type correctly
+        and be a little easier to use
+
+        Args:
+            func (_type_): function to call on space and all sub space, will recieve
+                            func_args and func_kwargs as arguments
+            space (gym.spaces.Space): space to call func on
+
+        Raises:
+            RuntimeError: if this function tries not to return a gym.spaces.Space
+
+        Returns:
+            gym.spaces.Space: Space after func has operated on it
         """
+        tmp = EnvSpaceUtil.iterate_over_space_likes(func, (space, ), True, *func_args, **func_kwargs)
+        if isinstance(tmp, gym.spaces.Space):
+            return tmp
+        raise RuntimeError("bug spat, should never happen, iterate_over_space tried to return something other than a gym Space")
 
-        # first pass through the code num_actions is an int or list, this code turns it into an
-        # iterator for the rest of the recursive calls
-        if isinstance(num_actions, int):
-            num_actions = repeat(num_actions)
-        elif isinstance(num_actions, (list, tuple)):
-            num_actions = iter(num_actions)
+    @staticmethod
+    def iterate_over_space_with_sample(func, space: gym.spaces.Space, sample: sample_type, *func_args, **func_kwargs) -> sample_type:
+        """
+        utility tool for iterate over space and sample to help mypy handle the return type correctly
+        and be a little easier to use
 
-        # TODO: this copy doesn't actually work but I can dream
-        val = copy.deepcopy(space)
+        Args:
+            func (_type_): function to call on sample and all sub samples, will recieve
+                            func_args and func_kwargs as arguments
+            space (gym.spaces.Space): space to call func on
+            sample: (sample_type): sample to call func on
 
-        if isinstance(space, gym.spaces.Dict):
-            new_dict = OrderedDict()
-            for key, space_value in space.spaces.items():
-                if isinstance(num_actions, dict):
-                    new_dict[key] = EnvSpaceUtil.turn_box_into_tuple_of_discretes(space=space_value, num_actions=num_actions[key])
-                else:
-                    new_dict[key] = EnvSpaceUtil.turn_box_into_tuple_of_discretes(space=space_value, num_actions=num_actions)
-            val = gym.spaces.Dict(spaces=new_dict)
-        elif isinstance(space, gym.spaces.Tuple):
-            new_tuple = [EnvSpaceUtil.turn_box_into_tuple_of_discretes(sv, num_actions=num_actions) for sv in space]
-            if len(new_tuple) == 1 and isinstance(new_tuple[0], gym.spaces.Tuple):
-                val = new_tuple[0]
-            else:
-                val = gym.spaces.Tuple(tuple(new_tuple))
-        elif isinstance(space, gym.spaces.Box):
-            assert isinstance(num_actions, Iterator), f'num_actions must be iterator, received {type(num_actions).__name__}'
-            val = gym.spaces.Tuple([Discrete(np.asarray(next(num_actions))) for _ in range(0, space.low.size)])
+        Raises:
+            RuntimeError: if this function tries to not return a sample
 
-        return val
+        Returns:
+            sample: space sample after func has operated on it
+        """
+        tmp = EnvSpaceUtil.iterate_over_space_likes(func, (space, sample), False, *func_args, **func_kwargs)
+        if not isinstance(tmp, gym.spaces.Space):
+            return tmp
+        raise RuntimeError("bug spat, should never happen, iterate_over_space tried to return something other than a sample_type")
 
     # TODO: maybe use this function in more places? maybe not? it could be slower?
     @staticmethod
@@ -537,8 +541,10 @@ class EnvSpaceUtil:  # pylint: disable=R0904
                 keys = first_space_like.spaces.keys()
             else:
                 keys = first_space_like.keys()
+
             for key in keys:
-                new_space_likes = tuple(spacer[key] for spacer in space_likes)
+                # type ignoring this because mypy is really struggling with the gym.Dict vs dict differences
+                new_space_likes = tuple(spacer[key] for spacer in space_likes)  # type: ignore[index]
                 new_dict[key] = EnvSpaceUtil.iterate_over_space_likes(  # type: ignore[misc]
                     func,
                     space_likes=new_space_likes,
@@ -546,7 +552,7 @@ class EnvSpaceUtil:  # pylint: disable=R0904
                     *func_args,
                     **func_kwargs,
                 )
-            val = gym.spaces.Dict(spaces=new_dict) if return_space else new_dict
+            val = gym.spaces.Dict(spaces=new_dict) if return_space else new_dict  # type: ignore
         elif isinstance(first_space_like, (gym.spaces.Tuple, tuple)):
             new_tuple = [
                 EnvSpaceUtil.iterate_over_space_likes(  # type: ignore[misc]
@@ -555,9 +561,9 @@ class EnvSpaceUtil:  # pylint: disable=R0904
                     return_space=return_space,
                     *func_args,
                     **func_kwargs,
-                ) for new_space_likes in zip(*space_likes)
+                ) for new_space_likes in zip(*space_likes)  # type: ignore
             ]
-            val = (gym.spaces.Tuple(tuple(new_tuple)) if return_space else tuple(new_tuple))
+            val = (gym.spaces.Tuple(tuple(new_tuple)) if return_space else tuple(new_tuple))  # type: ignore
         elif isinstance(first_space_like, Repeated):
             # if space_likes is longer than 1 that means that return_space = False
             # if there is only the space that means we need to generate just the space
@@ -567,15 +573,15 @@ class EnvSpaceUtil:  # pylint: disable=R0904
                 repeated_samples = space_likes[1]
                 assert isinstance(repeated_samples, MutableSequence), \
                     f'repeated_samples must be MutableSequence, received {type(repeated_samples).__name__}'
-                for indx, sample in enumerate(repeated_samples):
-                    repeated_samples[indx] = EnvSpaceUtil.iterate_over_space_likes(  # type: ignore[misc]
+                val = [  # type: ignore
+                    EnvSpaceUtil.iterate_over_space_likes(  # type: ignore[misc]
                         func,
                         space_likes=(first_space_like.child_space, sample),
                         return_space=return_space,
                         *func_args,
                         **func_kwargs,
-                    )
-                val = repeated_samples
+                    ) for sample in repeated_samples
+                ]  # type: ignore
             else:
                 new_child_space = EnvSpaceUtil.iterate_over_space_likes(  # type: ignore[misc]
                     func,
@@ -585,169 +591,10 @@ class EnvSpaceUtil:  # pylint: disable=R0904
                     **func_kwargs,
                 )
 
-                val = Repeated(child_space=new_child_space, max_len=first_space_like.max_len)
+                val = Repeated(child_space=new_child_space, max_len=first_space_like.max_len)  # type: ignore
         else:
-            val = func(space_likes, *func_args, **func_kwargs)
-        return val
-
-    @staticmethod
-    def turn_orig_space_box_to_cont_sample(space_likes: typing.Tuple[gym.spaces.Space, gym.spaces.Space, sample_type]) -> sample_type:
-        """
-        Given a continuous space and a discrete space and a sample of the discrete space,
-        this function turns the discrete sample into a continuous sample
-
-        Parameters
-        ----------
-        space_likes: typing.Tuple[gym.spaces.Space, gym.spaces.Space, sample_type]
-            the first is the original gym space that is continuous,
-            the second is the new gym space with discrete objects
-            the last is the space sample that is of discrete types
-
-        Returns
-        -------
-        sample_type:
-            the sample space that is now a continuous version of the discrete sample space according to the cont space
-        """
-        (original_space_arg, discrete_only_space_arg, space_sample_arg) = space_likes
-        if isinstance(original_space_arg,
-                      gym.spaces.Box) and (isinstance(discrete_only_space_arg, (gym.spaces.MultiDiscrete, gym.spaces.Discrete))):
-            if isinstance(discrete_only_space_arg, gym.spaces.MultiDiscrete):
-                possible_n = discrete_only_space_arg.nvec
-            elif isinstance(discrete_only_space_arg, gym.spaces.Discrete):
-                possible_n = discrete_only_space_arg.n
-            else:
-                raise RuntimeError("This should not be reachable")
-
-            action = space_sample_arg
-            low = original_space_arg.low
-            high = original_space_arg.high
-            new_cont_sample = (action / (possible_n - 1)) * (high - low) + low
-
-            return new_cont_sample
-
-        return copy.deepcopy(space_sample_arg)
-
-    @staticmethod
-    def turn_orig_space_box_to_cont_sample_powerspace(
-        space_likes: typing.Tuple[gym.spaces.Space, gym.spaces.Space, sample_type, sample_type]
-    ) -> sample_type:
-        """
-        Given a continuous space and a discrete space and a sample of the discrete space,
-        this function turns the discrete sample into a continuous sample
-
-        Parameters
-        ----------
-        space_likes: typing.Tuple[gym.spaces.Space, gym.spaces.Space, sample_type]
-            the first is the original gym space that is continuous,
-            the second is the new gym space with discrete objects
-            the last is the space sample that is of discrete types
-
-        Returns
-        -------
-        sample_type:
-            the sample space that is now a continuous version of the discrete sample space according to the cont space
-        """
-        # There is a test built for this function. Please keep the test up to date for any changes you make.
-        (original_space_arg, discrete_only_space_arg, space_sample_arg, pow_n) = space_likes
-        if isinstance(original_space_arg,
-                      gym.spaces.Box) and (isinstance(discrete_only_space_arg, (gym.spaces.Tuple, gym.spaces.Discrete))):
-            if isinstance(discrete_only_space_arg, gym.spaces.Tuple):
-                possible_n = np.asarray([x.n for x in discrete_only_space_arg])
-                pow_n = np.asarray(pow_n)
-                discrete_sample = np.asarray(space_sample_arg)
-            elif isinstance(discrete_only_space_arg, gym.spaces.Discrete):
-                possible_n = np.asarray([discrete_only_space_arg.n])
-                pow_n = np.asarray([pow_n])
-                discrete_sample = np.asarray([space_sample_arg])
-            else:
-                raise RuntimeError("This should not be reachable")
-
-            low = original_space_arg.low
-            high = original_space_arg.high
-
-            if any(low > high):
-                raise RuntimeError("lower bounds of space somehow higher than high bounds")
-
-            if not all(possible_n % 2):
-                if any(pow_n > 1):
-                    raise RuntimeError("The exponential power factor not supported when possible_n % 2")
-
-                difference = high - low
-                movement_per_space_sample = difference / possible_n
-
-                new_cont_sample = low + (movement_per_space_sample * space_sample_arg)
-
-                return new_cont_sample
-
-            if any(pow_n <= 0):
-                raise RuntimeError("The exponential power factor used to stretch/shrink the discrete space must be greater than zero")
-
-            if any(-low != high) or any(low >= high):
-                raise RuntimeError("Currently only support symmetric space about zero for power space setup - TODO")
-            p_high = np.power(high, 1 / pow_n.astype(float))
-            p_low = -p_high  # Since we have specified the space must be symetric around 0
-            new_cont_sample = (discrete_sample / (possible_n - 1)) * (p_high - p_low) + p_low
-            new_cont_sample = np.power(np.abs(new_cont_sample), pow_n) * np.sign(new_cont_sample)
-
-            return new_cont_sample
-
-        return copy.deepcopy(space_sample_arg)
-
-    @staticmethod
-    def turn_discrete_action_back_to_cont(
-        original_space: gym.spaces.Space,
-        discrete_only_space: gym.spaces.Space,
-        space_sample: sample_type,
-    ) -> sample_type:
-        """
-        This is a convenience wrapper for turn_orig_space_box_to_cont_sample
-
-        Parameters
-        ----------
-        original_space: gym.spaces.Space
-            the continuous space
-        discrete_only_space: gym.spaces.Space
-            the discrete space
-        space_sample: sample_type
-            the sample of the discrete space
-
-        Returns
-        -------
-        sample_type:
-            the continuous version of the discrete sample
-        """
-        return EnvSpaceUtil.iterate_over_space_likes(
-            EnvSpaceUtil.turn_orig_space_box_to_cont_sample,
-            space_likes=(original_space, discrete_only_space, space_sample),
-            return_space=False,
-        )
-
-    @staticmethod
-    def turn_discrete_action_back_to_cont_powerspace(
-        original_space: gym.spaces.Space, discrete_only_space: gym.spaces.Space, space_sample: sample_type, pow_n: dict
-    ) -> sample_type:
-        """
-        This is a convenience wrapper for turn_orig_space_box_to_cont_sample_powerspace
-
-        Parameters
-        ----------
-        original_space: gym.spaces.Space
-            the continuous space
-        discrete_only_space: gym.spaces.Space
-            the discrete space
-        space_sample: sample_type
-            the sample of the discrete space
-
-        Returns
-        -------
-        sample_type:
-            the continuous version of the discrete sample
-        """
-        return EnvSpaceUtil.iterate_over_space_likes(
-            EnvSpaceUtil.turn_orig_space_box_to_cont_sample_powerspace,
-            space_likes=(original_space, discrete_only_space, space_sample, pow_n),
-            return_space=False,
-        )
+            val = func(space_likes, *func_args, **func_kwargs)  # type: ignore
+        return val  # type: ignore
 
     @staticmethod
     def box_scaler(
@@ -809,12 +656,12 @@ class EnvSpaceUtil:  # pylint: disable=R0904
             the scaled sample with min of out_min and max of
             out_max (this is in dicts and tuples the same as space_sample was)
         """
-        return EnvSpaceUtil.iterate_over_space_likes(
+        return EnvSpaceUtil.iterate_over_space_with_sample(
             func=EnvSpaceUtil.box_scaler,
-            space_likes=(space, space_sample),
+            space=space,
+            sample=space_sample,
             out_min=out_min,
             out_max=out_max,
-            return_space=False,
         )
 
     @staticmethod
@@ -880,12 +727,12 @@ class EnvSpaceUtil:  # pylint: disable=R0904
             the unscaled version of the space_sample. Thus the space should now contain this output sample
         """
 
-        return EnvSpaceUtil.iterate_over_space_likes(
+        return EnvSpaceUtil.iterate_over_space_with_sample(
             func=EnvSpaceUtil.box_unscaler,
-            space_likes=(space, space_sample),
+            space=space,
+            sample=space_sample,
             out_min=out_min,
             out_max=out_max,
-            return_space=False,
         )
 
     @staticmethod
@@ -936,3 +783,189 @@ class EnvSpaceUtil:  # pylint: disable=R0904
                     action_params[key] = parameter[key]
 
         return action_params
+
+
+def convert_gym_space(input_space: gym.Space, output_type: typing.Type[gym.Space]) -> gym.Space:
+    """Converts a gym space to the specified output type.
+
+    Parameters
+    ----------
+    input_space : gym.spaces
+        The input space to convert.
+    output_type : Type[gym.spaces.Space]
+        The desired output space type.
+
+    Returns
+    -------
+    gym.spaces.Space
+        The converted gym space.
+
+    Raises
+    ------
+    ValueError
+        For Discrete output types, the input must contain only one discrete gym space.
+    NotImplementedError
+        Unsupported conversions.
+    """
+
+    if isinstance(input_space, gym.spaces.Dict):
+        if output_type is SingleLayerDict:
+            return SingleLayerDict(input_space)
+
+        if output_type is gym.spaces.discrete.Discrete:
+            flattened_space_list = space_utils.flatten_space(input_space)
+            if len(flattened_space_list) > 1:
+                raise ValueError(f'Too many inputs. Cannot convert: {input_space} into a single Discrete action')
+            if isinstance(flattened_space_list[0], gym.spaces.discrete.Discrete):
+                return flattened_space_list[0]
+            raise ValueError(f'Conversion invalid: {flattened_space_list[0]} -> {output_type}')
+
+    if isinstance(input_space, (gym.spaces.Dict, gym.spaces.MultiDiscrete, gym.spaces.Tuple, gym.spaces.MultiBinary)):
+        if output_type is gym.spaces.box.Box:
+            flattened_space = gym.spaces.flatten_space(input_space)
+            # Check to make sure the resultant space is a box. Raise error if not.
+            if not isinstance(flattened_space, gym.spaces.Box):
+                raise NotImplementedError(f'{input_space} contains a space where the conversion is not implemented.')
+            return flattened_space
+
+    raise NotImplementedError(f'Conversion not implemented: {type(input_space)} -> {output_type}')
+
+
+def convert_sample(sample: typing.Any, sample_space: gym.spaces.Space, output_space: gym.spaces.Space):
+    """Converts the sample into the output_space format.
+
+    Parameters
+    ----------
+    sample : typing.Any
+        A sample from `sample_space`.
+    sample_space : gym.spaces.Space
+        The space associated with the sample.
+    output_space : gym.spaces.Space
+        The output space to convert the sample into.
+
+    Returns
+    -------
+    typing.Any
+        The converted sample.
+
+    Raises
+    ------
+    NotImplementedError
+        When an unsupported conversion is passed in.
+    """
+    # sample_space: Discrete -> output_space:Dict
+    if isinstance(sample_space, gym.spaces.Discrete) and isinstance(output_space, gym.spaces.Dict):
+        # Turn the discrete input value into a one-hot encoded vector
+        sample = gym.spaces.flatten(sample_space, sample)
+        return gym.spaces.unflatten(output_space, sample)
+
+    # sample_space: Box -> output_space: Dict
+    if isinstance(sample_space, gym.spaces.Box
+                  ) and isinstance(output_space, (gym.spaces.Dict, gym.spaces.MultiDiscrete, gym.spaces.Tuple, gym.spaces.MultiBinary)):
+        return gym.spaces.unflatten(output_space, sample)
+
+    if isinstance(sample_space, (gym.spaces.Dict, gym.spaces.MultiDiscrete, gym.spaces.Tuple,
+                                 gym.spaces.MultiBinary)) and isinstance(output_space, gym.spaces.Box):
+        return gym.spaces.flatten(sample_space, sample)
+
+    # sample_space: Dict -> output_space: SingleLayerDict
+    if isinstance(sample_space, gym.spaces.Dict) and isinstance(output_space, SingleLayerDict):
+        return SingleLayerDict.flatten_and_convert_to_ordered_dict(sample)
+
+    # sample_space: SingleLayerDict -> output_space: Dict
+    if isinstance(sample_space, SingleLayerDict) and isinstance(output_space, gym.spaces.Dict):
+        return OrderedDict(flatten_dict.unflatten(sample, splitter='tuple'))
+
+    if isinstance(sample_space, gym.spaces.Dict) and isinstance(output_space, gym.spaces.Discrete):
+        flattened_sample_list = flatten_sample(sample)
+
+        if len(flattened_sample_list) > 1:
+            raise ValueError(f'Too many inputs. Cannot convert: {sample_space} into a single Discrete action')
+        return flattened_sample_list[0]
+
+    raise NotImplementedError(f'Conversion of sample is not implemented for: {sample_space}->{output_space}.')
+
+
+class SingleLayerDict(gym.spaces.Dict):
+    """A single layered gym.spaces.Dict
+
+    Inherits gym.spaces.Dict
+
+    Parameters
+    ----------
+    input_space_dict : gym.spaces.Dict
+        Input gym space dictionary to flatten.
+    """
+
+    def __init__(self, input_space_dict: gym.spaces.Dict) -> None:
+        converted_dict = SingleLayerDict._gym_dict_to_python_dict(copy.deepcopy(input_space_dict))
+        converted_dict = SingleLayerDict.flatten_and_convert_to_ordered_dict(converted_dict.spaces)
+        super().__init__(converted_dict)
+
+    @staticmethod
+    def _gym_dict_to_python_dict(input_space_dict: gym.spaces.Dict) -> typing.Any:
+        """Recursively converts all nested gym.spaces.Dicts into python dictionaries
+
+        Parameters
+        ----------
+        input_space_dict : gym.spaces.Space
+            The input gym space dictionary to be converted into a python dictinoary.
+
+        Returns
+        -------
+        Union[dict, gym.spaces.Dict]
+            Converted output.
+
+        """
+        for key, value in input_space_dict.items():
+            if isinstance(value, gym.spaces.Dict):
+                # Converts the gym.spaces.Dict -> dictionary
+                input_space_dict[key] = value.spaces
+                SingleLayerDict._gym_dict_to_python_dict(input_space_dict[key])
+        return input_space_dict
+
+    @staticmethod
+    def flatten_and_convert_to_ordered_dict(input_dict: typing.Union[dict, OrderedDict]) -> OrderedDict:
+        """Flattens and sorts a python dictionary.
+
+        Parameters
+        ----------
+        input_dict : typing.Union[dict, OrderedDict]
+            A dictionary or OrderedDict.
+
+        Returns
+        -------
+        OrderedDict
+            An ordered dictionary sorted by the key.
+        """
+        return OrderedDict(list(flatten_dict.flatten(input_dict, reducer='tuple').items()))
+
+
+def flatten_sample(sample):
+    """Flattens a sampe into its primitive components using rllib flatten technique.
+
+    Primitive components are any non Tuple/Dict types.
+
+    Args:
+        sample: action or observation to flatten. This may be any
+            supported type (including nested Tuples and Dicts).
+
+    Returns:
+        List[prim_data]: The flattened list of primitive types. This list
+            does not contain Tuples or Dicts anymore.
+    """
+
+    def _helper_flatten(sample_, return_list):
+
+        if isinstance(sample_, tuple):
+            for s in sample_:
+                _helper_flatten(s, return_list)
+        elif isinstance(sample_, (dict, OrderedDict)):
+            for k in sample_:
+                _helper_flatten(sample_[k], return_list)
+        else:
+            return_list.append(sample_)
+
+    ret = []
+    _helper_flatten(sample, ret)
+    return ret

@@ -1,13 +1,12 @@
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
+-------------------------------------------------------------------------------
+The Autonomous Capabilities Team (ACT3) Deep Reinforcement Learning (D-RL) Environment
 
 This is a US Government Work not subject to copyright protection in the US.
 
 The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 Observation Extractor
 """
@@ -45,8 +44,10 @@ def ObservationExtractor(
 
     value = observation
     for field in fields:
-        if field not in value:
-            raise RuntimeError(f"The field {field} is not present in the observation, the requested fields were {fields}, ")
+        if (isinstance(field, str) and field not in value) or (isinstance(field, int) and len(value) < field):
+            raise RuntimeError(
+                f"The field {field} is not present in the observation, the requested fields were {fields}, value was {value}"
+            )
         value = value[field]
     for index in indices:
         value = value[index]

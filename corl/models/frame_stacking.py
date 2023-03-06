@@ -8,7 +8,7 @@ This is a US Government Work not subject to copyright protection in the US.
 The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
-The following module contains the implementation for the stacked observation
+The following module contains the implementation for the AACO stacked observation
 """
 import gym
 import numpy as np
@@ -66,7 +66,7 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
         Inputs  = 1 X Frames X (Obs + Rewards + Actions)
         Outputs = 1 X Actions
 
-        The following is a example summary of the model from tensor flow on the base Single Environments
+        The following is a example summary of the model from tensor flow on the AACO base Single Environments
         Model: "functional_1"
         __________________________________________________________________________________________________
         Layer (type)                    Output Shape         Param #     Connected to
@@ -95,7 +95,7 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
         __________________________________________________________________________________________________
 
     Arguments:
-        TFModelV2 {[type]} -- [description]
+        TFModelV2: [description]
     """
 
     PREV_N_OBS = "prev_n_obs"
@@ -253,12 +253,12 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
         """[summary]
 
         Arguments:
-            no_final_linear {[type]} -- [description]
-            num_outputs {[type]} -- [description]
-            activation {[type]} -- [description]
-            last_layer {[type]} -- [description]
-            hiddens {[type]} -- [description]
-            obs_space {[type]} -- [description]
+            no_final_linear: [description]
+            num_outputs: [description]
+            activation: [description]
+            last_layer: [description]
+            hiddens: [description]
+            obs_space: [description]
 
         Returns:
             [type] -- [description]
@@ -292,10 +292,10 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
         """Creates the value function network if configured in model config
 
         Arguments:
-            vf_share_layers {[type]} -- [description]
-            inputs {[type]} -- [description]
-            hiddens {[type]} -- [description]
-            activation {[type]} -- [description]
+            vf_share_layers: [description]
+            inputs: [description]
+            hiddens: [description]
+            activation: [description]
 
         Returns:
             [type] -- [description]
@@ -315,18 +315,17 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
 
         Arguments:
             num_frames {int} -- The number of frames to stack
-            obs_space {[type]} -- The observation space definition
-            flattened_action_space {[type]} -- flattened action space
+            obs_space: The observation space definition
+            flattened_action_space: flattened action space
         """
         self.view_requirements[FrameStackingModel.PREV_N_OBS
-                               ] = ViewRequirement(data_col="obs", shift="-{}:0".format(num_frames - 1), space=obs_space)
+                               ] = ViewRequirement(data_col="obs", shift=f"-{num_frames - 1}:0", space=obs_space)
         if self.include_rewards:
-            self.view_requirements[FrameStackingModel.PREV_N_REWARDS
-                                   ] = ViewRequirement(data_col="rewards", shift="-{}:-1".format(self.num_frames))
+            self.view_requirements[FrameStackingModel.PREV_N_REWARDS] = ViewRequirement(data_col="rewards", shift=f"-{self.num_frames}:-1")
         if self.include_actions:
             self.view_requirements[FrameStackingModel.PREV_N_ACTIONS] = ViewRequirement(
                 data_col="actions",
-                shift="-{}:-1".format(self.num_frames),
+                shift=f"-{self.num_frames}:-1",
                 space=gym.spaces.box.Box(low=-np.inf, high=np.inf, shape=(len(flattened_action_space), ), dtype=np.int64)
             )
 

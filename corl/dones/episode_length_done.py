@@ -58,7 +58,7 @@ class EpisodeLengthDone(DoneFuncBase):
 
         done = DoneDict()
         try:
-            done[self.platform] = next_state['sim_time'] >= self.config.horizon
+            done[self.platform] = next_state.sim_time >= self.config.horizon
 
             if done[self.platform]:
                 next_state.episode_state[self.platform][self.name] = DoneStatusCodes.DRAW

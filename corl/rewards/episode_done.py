@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -91,12 +89,7 @@ class EpisodeDoneReward(RewardFuncBase):
         reward = RewardDict()
         reward[self.config.agent_name] = 0
 
-        if "_" in self.config.agent_name:
-            platform_name = self.config.agent_name.split("_", 1)[0]
-        else:
-            platform_name = self.config.agent_name
-
-        done_state = next_state.episode_state.get(platform_name, {})
+        done_state = next_state.agent_episode_state.get(self.config.agent_name, {})
         for done_name, done_code in done_state.items():
             if done_name in self._already_recorded:
                 continue

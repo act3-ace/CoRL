@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -17,6 +15,7 @@ import logging
 import typing
 from collections import OrderedDict
 
+import gym
 import numpy as np
 from pydantic import validator
 
@@ -85,16 +84,18 @@ class RelativeObsDeltaActionDict(BaseDictWrapperGlue, RelativeObsDeltaAction):  
 
         # verify that the config setup is not going to get the user into a situation where they are
         # only accessing one part of the obs but applying that obs as the base position for multiple actions
-        if self.config.obs_index and len(list(self.controller.action_space().values())[0].low) != 1:
+
+        tmp = self.controller.action_space()
+        if not isinstance(tmp, gym.spaces.Dict):
+            raise RuntimeError("obs relative delta controller only knows how to operate on dictionary action spaces currently")
+        if self.config.obs_index and len(list(tmp.spaces.values())[0].low) != 1:
             raise RuntimeError(
                 f"ERROR: your glue {self.get_unique_name()} has an action space length of more than 1, "
                 "but you specified though obs_index to access only 1 component of the obs "
                 "from the wrapped observe Sensor, to fix this error in your config for this glue define 'obs_index': null"
             )
 
-        self.step_size = EnvSpaceUtil.convert_config_param_to_space(
-            action_space=self.controller.action_space(), parameter=self.config.step_size
-        )
+        self.step_size = EnvSpaceUtil.convert_config_param_to_space(action_space=tmp, parameter=self.config.step_size)
 
         self._is_wrap = self.config.is_wrap
 

@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -33,5 +31,6 @@ class OpenAIGymReward(RewardFuncBase):
         observation_units,
     ):
         reward_dict = RewardDict()
-        reward_dict[self.config.agent_name] = next_state.rewards[self.config.agent_name]
+        reward_dict[self.config.agent_name] = next_state.rewards[self.config.platform_names[0]]
+
         return reward_dict

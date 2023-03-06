@@ -35,8 +35,8 @@ def get_credits_data() -> dict:
 
     return {
         "project_name": project_name,
-        "direct_dependencies": sorted(direct_dependencies),
-        "indirect_dependencies": sorted(indirect_dependencies),
+        "direct_dependencies": list(sorted(direct_dependencies)[8:]),
+        "indirect_dependencies": list(sorted(indirect_dependencies)),
         "more_credits": "http://pawamoy.github.io/credits/",
     }
 

@@ -20,5 +20,5 @@ ignore_reinit_error: True
 #If true, then output from all of the worker processes on all nodes will be directed to the driver.
 log_to_driver: True
 # If set will use local mode which ignores remote workers. used for debugging
-local_mode: True
+local_mode: False
 _temp_dir: /tmp/corl/ray_logs/

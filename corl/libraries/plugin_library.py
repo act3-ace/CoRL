@@ -1,13 +1,12 @@
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
+-------------------------------------------------------------------------------
+The Autonomous Capabilities Team (ACT3) Deep Reinforcement Learning (D-RL) Environment
 
 This is a US Government Work not subject to copyright protection in the US.
 
 The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 PluginLibrary.AddClassToGroup(CLASS, "NAME", {"simulator": INTEGRATION_CLASS, "platform_type": AvailablePlatformTypes.XXXX})
 """
@@ -125,7 +124,7 @@ class _PluginLibrary:
         """
 
         # first check that group_name exists in _group
-        if group_name not in self._groups.keys():
+        if group_name not in self._groups:
             raise RuntimeError(f"No items were found to be registered to group: {group_name}")
 
         tuple_items = self._groups[group_name]

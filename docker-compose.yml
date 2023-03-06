@@ -1,4 +1,4 @@
-# ---------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 # Reinforcement Learning (RL) Core.
 #
@@ -6,38 +6,27 @@
 #
 # The use, dissemination or disclosure of data in this file is subject to
 # limitation or restriction. See accompanying README and LICENSE for details.
-# ---------------------------------------------------------------------------
-
+# -------------------------------------------------------------------------------version: "3.7"
 version: "3.7"
 # some environment variables in this compose (for example $CODE_PATH) are set by the .env file in the repo root directory
 # to change those variables change them in the .env file not in this compose file
-services:
 
+services:
   dummy:
     build:
       context: .
       dockerfile: Dockerfile
       args: &default-args
-        # These may not be standard environment variables so you may need
-        # to set them in your .env file before running docker-compose
-        NEW_USER: $NEW_USER
-        NEW_GROUP: $NEW_GROUP
-        NEW_UID: $NEW_UID
-        NEW_GID: $NEW_GID
-        SSH_AUTH_SOCK: $SSH_AUTH_SOCK
-        OCI_REGISTRY: $OCI_REGISTRY
-        AGENTS_BASE_IMAGE: $AGENTS_BASE_IMAGE
-        APT_MIRROR_URL: $APT_MIRROR_URL
-        SECURITY_MIRROR_URL: $SECURITY_MIRROR_URL
-        NVIDIA_MIRROR_URL: $NVIDIA_MIRROR_URL
-        PIP_INDEX_URL: $PIP_INDEX_URL
-        ACT3_OCI_REGISTRY: $ACT3_OCI_REGISTRY
-        DOCKER_OCI_REGISTRY: $DOCKER_OCI_REGISTRY
+        OCI_REGISTRY: reg.git.act3-ace.com
+        PROJ_PKG: /opt/project/corl
+        PKG_ROOT: /opt/libcorl
+        AGENT_BASE_VERSION: v2.4.19
 
-    environment: &default-environment
+    environment: &development-environment
       SSH_AUTH_SOCK: "$SSH_AUTH_SOCK"
-      DISPLAY: ":0"
-
+      DISPLAY: "$DISPLAY"
+      <<: *default-args
+      
     volumes: &development-volumes
       # passing through this file allows opening windows from the container in your host computer
       # *** NOTE THIS IS LINUX SPECIFIC ITEM *** Updates needed for Virtual based setups
@@ -53,134 +42,90 @@ services:
       - "corl-bashhistory:/commandhistory"
       #
       # VSCODE items
-      - "vscode-server-extensions:/home/$NEW_USER/.vscode-server/extensions"
-      - "vscode-server-extensions-insiders:/home/$NEW_USER/.vscode-server-insiders/extensions"
-      #
-      # .ssh
-      # - "$HOME/.ssh/:/home/$NEW_USER/.ssh/"
-
-    # deploy: &development-deploy-nvidia
+      # - "vscode-server-extensions:/home/$NEW_USER/.vscode-server/extensions"
+      # - "vscode-server-extensions-insiders:/home/$NEW_USER/.vscode-server-insiders/extensions"
+      
+    # deploy: &development-deploy
     #   resources:
     #     reservations:
     #       devices:
-    #         - capabilities: [gpu]
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  deps:
+    image: $OCI_REGISTRY/act3-rl/corl/releases/deps:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: whl_dependencies_hack
+      args:
+        <<: *default-args
+    volumes: *development-volumes
+    environment:
+      <<: *development-environment
 
   develop:
+    image: $OCI_REGISTRY/act3-rl/corl/development/develop:latest
     build:
       context: .
       dockerfile: Dockerfile
       target: develop
       args:
         <<: *default-args
-    image: $ACT3_OCI_REGISTRY/act3-rl/corl/development/develop:latest
-    # ray wants shm_size but the size depends on available RAM on each machine
-    # shm_size: $SHM_SIZE
-
+    volumes: *development-volumes
+    environment:
+      <<: *development-environment
+      
   build:
+    image: $OCI_REGISTRY/act3-rl/corl:latest
     build:
       context: .
       dockerfile: Dockerfile
       target: build
       args:
         <<: *default-args
-    image: $ACT3_OCI_REGISTRY/act3-rl/corl/releases:latest
-    # ray wants shm_size but the size depends on available RAM on each machine
-    # shm_size: $SHM_SIZE
-
-  package:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: package
-      args:
-        <<: *default-args
-    image: $ACT3_OCI_REGISTRY/act3-rl/corl/releases/package:vX.X.X
-
-  # Defines the build environment for the act3-rl items within a vscode setup
-  corl:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: user-base-builder
-      args:
-        <<: *default-args
-
-    image: $ACT3_OCI_REGISTRY/act3-rl/corl/development/user-base-builder:latest
-
-    # set user to your user id which is usually 1000:1000 (ubuntu) or 1001:1001 (RHEL)
-    # to check you user id run `echo $(id -u):$(id -g)`
-    user: $UID:$GID
-    # shm_size: $SHM_SIZE
-
-    environment: *default-environment
-
-    # for development, link the host folder containing code to /opt/project in container
     volumes: *development-volumes
+    environment:
+      <<: *development-environment
 
-    # Overrides default command so things don't shut down after the process ends.
-    command: dumb-init fixuid sleep infinity
-
-    # deploy: *development-deploy-nvidia
-
-  code-server:
+  cicd:
+    image: $OCI_REGISTRY/act3-rl/corl/development/cicd:latest
     build:
       context: .
       dockerfile: Dockerfile
-      target: user-code-dev
+      target: develop
       args:
         <<: *default-args
-
-    image: $ACT3_OCI_REGISTRY/act3-rl/corl/development/user-code-dev:latest
-    working_dir: /opt/project
-
+    volumes: *development-volumes
+    environment:
+      <<: *development-environment
+    
+  coder-user:
+    image: $OCI_REGISTRY/act3-rl/corl/development/coder:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: coder-user
+      args:
+        <<: *default-args
+    user: 1000:1000
     ports:
-      - 127.0.0.1:8888:8888
+      - 8888:8888
       - 8000:8000  # mkdocs
       - 6006:6006  # Tensorboard
-      - 54321:54321 # Settings-Sync extension
-
-    # set user to your user id which is usually 1000:1000 (ubuntu) or 1001:1001 (RHEL)
-    # to check you user id run `echo $(id -u):$(id -g)`
-    user: $UID:$GID
-    # shm_size: $SHM_SIZE
-
-    environment: *default-environment
-
-    # for development, link the host folder containing code to /opt/project in container
     volumes: *development-volumes
+    environment:
+      <<: *development-environment
 
-    # deploy: *development-deploy-nvidia
-
-  poetry-update:
-    image: ${AGENTS_BASE_IMAGE}
-
-    environment: *default-environment
-    working_dir: /opt/project
-
-    # for development, link the host folder containing code to /opt/project in container
-    volumes:
-      - "$CODE_PATH/:/opt/project"
-
-    # Overrides default command so things don't shut down after the process ends.
-    command: bash -c "pip install poetry &&  poetry config virtualenvs.create false && poetry update"
-
-  poetry-build-dist:
-    image: ${AGENTS_BASE_IMAGE}
-
-    environment: *default-environment
-    working_dir: /opt/project
-
-    # for development, link the host folder containing code to /opt/project in container
-    volumes:
-      - "$CODE_PATH/:/opt/project"
-
-    # Overrides default command so things don't shut down after the process ends.
-    command: bash -c "pip install poetry &&  poetry config virtualenvs.create false && poetry build -n"
-
+  #########################################################################################
+  # Test UTILITIES with DOCKER
+  #########################################################################################
   docs:
-    image: ${AGENTS_BASE_IMAGE}
+    image: $OCI_REGISTRY/act3-rl/corl/development/develop:latest
 
-    environment: *default-environment
+    environment:
+      <<: *development-environment
     working_dir: /opt/project
 
     # for development, link the host folder containing code to /opt/project in container
@@ -188,12 +133,16 @@ services:
       - "$CODE_PATH/:/opt/project"
 
     # Overrides default command so things don't shut down after the process ends.
-    command: bash -c "pip install poetry &&  poetry config virtualenvs.create false && poetry install --with docs --without test,lint,profile && mkdocs build && PYTHONPATH=/opt/project poetry run python -m mkdocs serve"
+    command: bash -c "
+      poetry config virtualenvs.create false
+      && poetry install --with lint,docs,profile --without torch
+      && mkdocs build"
 
-  lint:
-    image: ${AGENTS_BASE_IMAGE}
+  pre-commit:
+    image: $OCI_REGISTRY/act3-rl/corl/development/develop:latest
 
-    environment: *default-environment
+    environment:
+      <<: *development-environment
     working_dir: /opt/project
 
     # for development, link the host folder containing code to /opt/project in container
@@ -201,25 +150,108 @@ services:
       - "$CODE_PATH/:/opt/project"
 
     # Overrides default command so things don't shut down after the process ends.
-    command: bash -c "pip install poetry &&  poetry config virtualenvs.create false && poetry install --with lint --without test,docs,profile && poetry run pre-commit run --all"
+    command: bash -c "
+      poetry config virtualenvs.create false
+      && conda install -c anaconda git
+      && poetry install --with lint --without docs,profile,torch
+      && poetry run pre-commit run --all"
 
   py-test:
-    image: ${AGENTS_BASE_IMAGE}
+    image: $OCI_REGISTRY/act3-rl/corl/development/develop:latest
 
-    environment: *default-environment
+    environment:
+      <<: *development-environment
     working_dir: /opt/project
     # for development, link the host folder containing code to /opt/project in container
     volumes:
       - "$CODE_PATH/:/opt/project"
 
     # Overrides default command so things don't shut down after the process ends.
-    command: bash -c "pip install poetry && poetry config virtualenvs.create false && poetry install --with test --without docs,lint,profile && pytest -s -v ${UNIT_TEST_DIR} --cov=${SRC_DIR} --cov-report term-missing --cov-report html --junitxml=junit.xml"
+    command: bash -c "
+      poetry config virtualenvs.create false
+      && poetry install --with lint,docs,profile,test --without torch
+      && pytest -s -v ${UNIT_TEST_DIR} --cov=${SRC_DIR} --cov-report term-missing --cov-report html --junitxml=junit.xml"
 
+  #########################################################################################
+  # POETRY UTILITIES with DOCKER
+  #########################################################################################
+  poetry-lock:
+    image: $OCI_REGISTRY/act3-rl/corl/development/develop:latest
+
+    environment:
+      <<: *development-environment
+
+    working_dir: /opt/project
+
+    # for development, link the host folder containing code to /opt/project in container
+    volumes:
+      - "$CODE_PATH/:/opt/project"
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: bash -c "
+      poetry config virtualenvs.create false
+      && poetry lock
+      && poetry install -vv --no-root --no-interaction --no-ansi --without torch"
+
+  poetry-install:
+    image: $OCI_REGISTRY/act3-rl/corl/development/develop:latest
+
+    environment:
+      <<: *development-environment
+    working_dir: /opt/project
+
+    # for development, link the host folder containing code to /opt/project in container
+    volumes:
+      - "$CODE_PATH/:/opt/project"
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: bash -c "
+      poetry config virtualenvs.create false
+      && poetry install"
+
+  poetry-update:
+    image: $OCI_REGISTRY/act3-rl/corl/development/develop:latest
+
+    environment:
+      <<: *development-environment
+    working_dir: /opt/project
+
+    # for development, link the host folder containing code to /opt/project in container
+    volumes:
+      - "$CODE_PATH/:/opt/project"
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: bash -c "
+      && poetry config virtualenvs.create false
+      && poetry update"
+
+  poetry-build-dist:
+    image: $OCI_REGISTRY/act3-rl/corl/development/develop:latest
+
+    environment:
+      <<: *development-environment
+    working_dir: /opt/project
+
+    # for development, link the host folder containing code to /opt/project in container
+    volumes:
+      - "$CODE_PATH/:/opt/project"
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: bash -c "
+      poetry config virtualenvs.create false
+      && poetry build -n"
+
+#########################################################################################
+# Volumes Stores
+#########################################################################################
 volumes:
   corl-bashhistory:
   vscode-server-extensions:
   vscode-server-extensions-insiders:
 
+#########################################################################################
+# Network
+#########################################################################################
 networks:
   default:
-    name: act3-rl
+    name: act3

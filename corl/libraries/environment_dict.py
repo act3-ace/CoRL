@@ -1,7 +1,5 @@
 """
 ---------------------------------------------------------------------------
-
-
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 Reinforcement Learning (RL) Core.
 
@@ -263,7 +261,6 @@ class EnvDict(StateDict, Callback):
         r : typing.Callable
             The reduce function to use
         """
-        ...
 
     def _set_default_kwargs(self, kwargs):
         """
@@ -386,6 +383,24 @@ class RewardDict(EnvDict):
         """
         self._agent_filter = alive_agents
 
+    def __call__(self, *args, **kwargs) -> typing.Tuple[OrderedDict, OrderedDict]:
+        """
+        __call__ Callable function for the done dictionary type
+
+        Returns
+        -------
+        typing.Tuple[OrderedDict, OrderedDict]
+            The done information
+        """
+        r = super().__call__(*args, **kwargs)
+        tmp = OrderedDict()
+        for key0, value0 in r[1].items():
+            assert len(value0) == 1
+            for value1 in value0.values():
+                tmp[key0] = value1
+
+        return (r[0], tmp)
+
     def _reduce(self, r, **kwargs):
         scale = 1.0
         if RewardDict.SCALE_KEY in kwargs:
@@ -394,6 +409,7 @@ class RewardDict(EnvDict):
         self._reduce_fn = self._reduce_fn or np.sum
         tmp = StateDict.stack_values(r)
         tmp = {k: self._reduce_fn(v, **kwargs) / scale for k, v in tmp.items()}
+
         return OrderedDict(sorted(tmp.items()))
 
     def set_scale_down(self, scale: int):
@@ -420,7 +436,7 @@ class DoneDict(EnvDict):
 
     def __init__(
         self,
-        processing_funcs: typing.Sequence[typing.Callable] = None,
+        processing_funcs: typing.List[typing.Callable] = None,
         reduce_fn: typing.Callable = None,
         reduce_fn_kwargs=None,
         **kwargs,
@@ -429,7 +445,7 @@ class DoneDict(EnvDict):
 
         self._agent_filter: typing.Optional[typing.Iterable[str]] = None
 
-    def __call__(self, *args, **kwargs) -> typing.Tuple[OrderedDict, OrderedDict]:
+    def __call__(self, *args, **kwargs):
         """
         __call__ Callable function for the done dictionary type
 
@@ -445,15 +461,16 @@ class DoneDict(EnvDict):
             if isinstance(value, np.bool_):
                 r[0][key] = bool(value)
             elif not isinstance(value, bool):
-                raise TypeError("DoneDict __call__ return is not type bool for key: {}".format(key))
+                raise TypeError(f"DoneDict __call__ return is not type bool for key: {key}")
+        # remap from platform: {Done: {platform: bool}} -> platform: {Done: bool}
+        tmp: OrderedDict[str, OrderedDict[str, bool]] = OrderedDict(
+            [(platform_name, OrderedDict()) for platform_name in r[0] if platform_name != "__all__"]
+        )
         for key0, value0 in r[1].items():
-            for key1, value1 in value0.items():
-                if isinstance(value1, np.bool_):
-                    r[1][key0][key1] = bool(value1)
-                elif not isinstance(value1, bool):
-                    raise TypeError("DoneDict __call__ return is not type bool for key: {}/{}".format(key0, key1))
+            for platform_name, platform_info in tmp.items():
+                platform_info[key0] = bool(value0.get(platform_name, False))
 
-        return r
+        return (r[0], tmp)
 
     @property
     def _filtered_process_callbacks(self) -> typing.List[typing.Callable]:
