@@ -17,6 +17,7 @@ ARG PROJ_PKG=/opt/project/corl
 ARG PKG_ROOT=/opt/libcorl
 ARG AGENT_BASE_VERSION=v2.4.19
 
+ARG AGENT_BASE_IMAGE_PATH=/act3-rl/agents-base/releases
 #########################################################################################
 # Utility image for combining the various package deps
 # Purpose: This image essentially only takes the whl files from other images and puts in
@@ -24,7 +25,7 @@ ARG AGENT_BASE_VERSION=v2.4.19
 # 
 # -------- > HACK FOR THE HPC!!!! < --------
 #########################################################################################
-FROM ${OCI_REGISTRY}/act3-rl/agents-base/releases/pytorch-rl-base:${AGENT_BASE_VERSION} AS whl_dependencies_hack
+FROM ${OCI_REGISTRY}${AGENT_BASE_IMAGE_PATH}/pytorch-rl-base:${AGENT_BASE_VERSION} AS whl_dependencies_hack
 
 WORKDIR /opt/project
 
@@ -36,7 +37,7 @@ RUN echo "DEPS PATH ${DEPS_PATH}" \
 #########################################################################################
 # Develop - Thin image that only contains the bare min deps for running
 #########################################################################################
-FROM ${OCI_REGISTRY}/act3-rl/agents-base/releases/pytorch-rl-base:${AGENT_BASE_VERSION} AS develop
+FROM ${OCI_REGISTRY}${AGENT_BASE_IMAGE_PATH}/pytorch-rl-base:${AGENT_BASE_VERSION} AS develop
 
 WORKDIR /opt/project
 
@@ -51,7 +52,7 @@ RUN poetry config virtualenvs.create false \
 #########################################################################################
 # Code Server
 #########################################################################################
-FROM ${OCI_REGISTRY}/act3-rl/agents-base/releases/pytorch-rl-coder-user:${AGENT_BASE_VERSION} AS coder-user
+FROM ${OCI_REGISTRY}${AGENT_BASE_IMAGE_PATH}/pytorch-rl-coder-user:${AGENT_BASE_VERSION} AS coder-user
 
 ARG TARGET_USER=act3
 ENV TARGET_USER=${TARGET_USER}
@@ -70,7 +71,7 @@ USER ${TARGET_USER}:${TARGET_USER}
 #########################################################################################
 # Code Server
 #########################################################################################
-FROM ${OCI_REGISTRY}/act3-rl/agents-base/releases/pytorch-rl-coder-hpc:${AGENT_BASE_VERSION} AS coder-hpc
+FROM ${OCI_REGISTRY}${AGENT_BASE_IMAGE_PATH}/pytorch-rl-coder-hpc:${AGENT_BASE_VERSION} AS coder-hpc
 
 WORKDIR /opt/project
 

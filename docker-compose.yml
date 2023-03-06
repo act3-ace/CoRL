@@ -21,6 +21,7 @@ services:
         PROJ_PKG: /opt/project/corl
         PKG_ROOT: /opt/libcorl
         AGENT_BASE_VERSION: v2.4.19
+        AGENT_BASE_IMAGE_PATH: /act3-rl/agents-base/releases
 
     environment: &development-environment
       SSH_AUTH_SOCK: "$SSH_AUTH_SOCK"
@@ -156,7 +157,7 @@ services:
       && poetry install --with lint --without docs,profile,torch
       && poetry run pre-commit run --all"
 
-  py-test:
+  pytest:
     image: $OCI_REGISTRY/act3-rl/corl/development/develop:latest
 
     environment:

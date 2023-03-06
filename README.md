@@ -180,35 +180,45 @@ mkdocs serve
 The following project support development via Docker containers in VSCode. This is not strictly required but does provide the mode conveniet way to get started. ***Note:*** fuller documentation is available in the documentation folder or online docs. 
 
 - ***Setup the user env file:*** in code directory run the following script  --> `./scripts/setup_env_docker.sh`
-- ***Build the Docker containers using compose:*** run the following command --> `docker-compose build`
+- ***Build the Docker containers using compose:*** run the following command 
+  - GITHUB --> `docker-compose -f docker-compose-github.yml build`
+  - ACT3 --> `docker-compose -f docker-compose.yml build`
 
+### Docker-Compose Utilities
+
+#### Test UTILITIES with DOCKER
+  
+- ***docs:*** run the following command
+  - GITHUB --> `docker-compose -f docker-compose-github.yml up docs`
+  - ACT3 --> `docker-compose -f docker-compose.yml up docs`
+- ***pre-commit:*** run the following command
+  - GITHUB --> `docker-compose -f docker-compose-github.yml up pre-commit`
+  - ACT3 --> `docker-compose -f docker-compose.yml up pre-commit`
+- ***pytest:*** run the following command
+  - GITHUB --> `docker-compose -f docker-compose-github.yml up pytest`
+  - ACT3 --> `docker-compose -f docker-compose.yml up pytest`
+#### POETRY UTILITIES with DOCKER
+
+- ***Generate Poetry Lock File:*** run the following command
+  - GITHUB --> `docker-compose -f docker-compose-github.yml up poetry-lock`
+  - ACT3 --> `docker-compose -f docker-compose.yml up poetry-lock`
+- ***Generate Poetry Update Lock File:*** run the following command
+  - GITHUB --> `docker-compose -f docker-compose-github.yml up poetry-update`
+  - ACT3 --> `docker-compose -f docker-compose.yml up poetry-update`
+- ***Generate Poetry Create Dist:*** run the following command
+  - GITHUB --> `docker-compose -f docker-compose-github.yml up poetry-build-dist`
+  - ACT3 --> `docker-compose -f docker-compose.yml up poetry-build-dist`
 ## Running base examples
 
 ```bash
     python -m corl.train_rl --cfg config/experiments/cartpole_v1.yml
 ```
 
-# Contributors
-
-- [Air Force Research Laboratory (AFRL)](https://www.afrl.af.mil/)
-  - [AFRL Autonomy Capability Team (ACT3)](https://www.afrl.af.mil/ACT3/)
-    - Autonomous Air Combat Operations (AACO) Team 
-      - Training Team
-          - Bejamin Heiner (AI Behavior Training Lead)
-          - Cameron Long (ML Training)
-          - Steve Fierro (ML Training / System Integration)
-          - Brian Stieber (ML Training)
-          - Joshua Blackburn (ML Training / System Integration)
-          - Madison Blake (ML Infrastructure and Evaluation)
-    
-- [AFRL AEROSPACE SYSTEMS DIRECTORATE (RQ)](https://www.afrl.af.mil/RQ/) 
-   - RQQA - Autonomous Controls Branch
-      - Justin Merrick (6.1 / 6.2 Research)
 # Initial Contributors
 
-Initial contributors include scientists and engineers associated with the [Air Force Research Laboratory (AFRL)](https://www.afrl.af.mil/), [Autonomy Capability Team 3 (ACT3)](https://www.afrl.af.mil/ACT3/), and the [Aerospace Systems Directorate (RQ)](https://www.afrl.af.mil/RQ/): 
+Initial contributors include scientists and engineers associated with the [Air Force Research Laboratory (AFRL)](https://www.afrl.af.mil/), [Autonomy Capability Team 3 (ACT3)](https://www.afrl.af.mil/ACT3/), and the [Aerospace Systems Directorate (RQ)](https://www.afrl.af.mil/RQ/):
 
-- ACT3's Autonomous Air Combat Operations (AACO) Team 
+- Autonomous Air Combat Operations (AACO) Team
   - Terry Wilson(PM/PI)
   - Karl Salva (System Integration)
   - James Patrick (Modeling & Simulation)
@@ -219,15 +229,21 @@ Initial contributors include scientists and engineers associated with the [Air F
     - Brian Stieber (ML Training)
     - Joshua Blackburn (ML Training / System Integration)
     - Madison Blake (ML Infrastructure and Evaluation)
-- ACT3
-  - Kerianne Hobbs 
+- Safe Autonomy
+  - Kerianne Hobbs
+  - John McCarroll
+  - Umberto Ravaioli
+  - Jamie Cunningham
+  - Kyle Dunlap
+  - Nate Hamilton
+- Fundemental Research
   - Jared Culbertson
   - Hamilton Clouse
   - Justin Merrick
   - Ian Cannon
   - Ian Leong
   - Vardaan Gangal
-    
+
 # Designation Indicator
 
 - Controlled by: Air Force Research Laboratory (AFRL)
@@ -237,14 +253,6 @@ Initial contributors include scientists and engineers associated with the [Air F
     - terry.wilson.11@us.af.mil (AFRL ACT3)
     - bejamin.heiner@us.af.mil (AFRL ACT3)
     - kerianne.hobbs@us.af.mil (AFRL ACT3)
-# Designation Indicator
-
-- Controlled by: Air Force Research Laboratory (AFRL)
-- Controlled by: AFRL Autonomy Capability Team (ACT3)
-- LDC/Distribution Statement: DIST-A
-- POCs:
-    - terry.wilson.11@us.af.mil (AFRL ACT3)
-    - bejamin.heiner@us.af.mil (AFRL ACT3)
-    - kerianne.hobbs@us.af.mil (AFRL ACT3)
+    - 
     
 # Notices and Warnings
