@@ -147,9 +147,13 @@ class BaseSimulator(ABC):
         """
 
     @abstractmethod
-    def step(self) -> BaseSimulatorState:
+    def step(self, platforms_to_action: typing.Set[str]) -> BaseSimulatorState:
         """
         advances the simulation platforms and returns the state
+
+        Arguments:
+            platforms_to_action {typing.Dict[str, typing.Any]} -- the List of platform names who the
+                environment believes should perform a new action on this call to step
 
         Returns:
             BaseSimulatorState -- The state after the simulation updates

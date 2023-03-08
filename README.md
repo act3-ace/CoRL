@@ -256,3 +256,22 @@ Initial contributors include scientists and engineers associated with the [Air F
 
     
 # Notices and Warnings
+
+
+# Citing CORL
+
+If you use CORL in your work, please use the following bibtex
+
+@inproceedings{
+  title={{CoRL}: Environment Creation and Management Focused on System Integration},
+  author={Justin D. Merrick, Benjamin K. Heiner, Cameron Long, Brian Stieber, Steve Fierro, Vardaan Gangal, Madison Blake, Joshua Blackburn},
+  year={2023},
+  url={https://arxiv.org/abs/2303.02182}
+}
+
+**White Paper ->** CoRL: Environment Creation and Management Focused on System Integration
+
+**Authors ->** Justin D. Merrick, Benjamin K. Heiner, Cameron Long, Brian Stieber, Steve Fierro, Vardaan Gangal, Madison Blake, Joshua Blackburn
+
+**Abstract ->** Existing reinforcement learning environment libraries use monolithic environment classes, provide shallow methods for altering agent observation and action spaces, and/or are tied to a specific simulation environment. The Core Reinforcement Learning library (CoRL) is a modular, composable, and hyper-configurable environment creation tool. It allows minute control over agent observations, rewards, and done conditions through the use of easy-to-read configuration files, pydantic validators, and a functor design pattern. Using integration pathways allows agents to be quickly implemented in new simulation environments, encourages rapid exploration, and enables transition of knowledge from low-fidelity to high-fidelity simulations. Natively multi-agent design and integration with Ray/RLLib (Liang et al., 2018) at release allow for easy scalability of agent complexity and computing power. The code is publicly released and available at this https URL.
+

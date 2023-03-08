@@ -76,7 +76,7 @@ class Docking1dSimulator(BaseSimulator):
         self.update_sensor_measurements()
         return self._state
 
-    def step(self):
+    def step(self, platforms_to_action):
         for agent_id, platform in self._state.sim_platforms.items():
             action = np.array(platform.get_applied_action(), dtype=np.float32)
             entity = self.sim_entities[agent_id]

@@ -106,7 +106,7 @@ class PongSimulator(BaseSimulator):
         self.update_sensor_measurements()
         return self._state
 
-    def step(self):
+    def step(self, platforms_to_action):
         keys = []
         for platform in self.platforms.values():
             keys.append(platform.last_move)

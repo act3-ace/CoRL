@@ -144,7 +144,7 @@ class BaseExperiment(abc.ABC):
         Updates/Modifies a config mapping object.
 
         target:  Config mapping object
-        path:    List of key words identifying where in the target to modify a value 
+        path:    List of key words identifying where in the target to modify a value
         arg:     Value that will modify or replace a value of target (i.e. 'output')
         func:    Functor that performs action on data in arg (i.e. lambda x : os.path.join(x,'a'))
         """

@@ -234,7 +234,7 @@ class OpenAIGymSimulator(BaseSimulator):
         self.update_sensor_measurements()
         return self._state
 
-    def step(self):
+    def step(self, platforms_to_action):
         for agent_name, sim_platform in self.sim_platforms.items():
             if sim_platform.operable:
                 tmp = self.gym_env_dict[agent_name].step(sim_platform.get_applied_action())
@@ -294,5 +294,5 @@ if __name__ == "__main__":
     sim_state = tmp_sim.reset(None)
     print(tmp_sim.platforms["blue0"].name, tmp_sim.platforms[0].action_space)
     print(tmp_sim.platforms["blue0"].observation_space)
-    step_result = tmp_sim.step()
+    step_result = tmp_sim.step({"blue0"})
     print(list(tmp_sim.platforms["blue0"].sensors.values())[0].get_measurement())

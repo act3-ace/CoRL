@@ -596,8 +596,9 @@ class ACT3MultiAgentEnv(MultiAgentEnv):
         # to 4 as we do not go higher thank jerk
         # 1 step is always added for the inital obs in reset
         warmup = self.config.sim_warmup_steps
+        platforms = set()
         for _ in range(warmup):
-            self._state = self._simulator.step()
+            self._state = self._simulator.step(platforms)
             self._obs_buffer.next_observation = self.__get_observations_from_glues(agent_list)
             self._obs_buffer.update_obs_pointer()
 
@@ -674,16 +675,16 @@ class ACT3MultiAgentEnv(MultiAgentEnv):
                             )
 
     def _get_operable_agent_platforms(self):
-        return [
+        return set(
             name for name,
             item in self.state.sim_platforms.items()
             if item.operable and not self.state.episode_state.get(name, {}) and self.platform_to_agents.get(name, None)
-        ]
+        )
 
     def _get_operable_agents(self):
         """Determines which agents are operable in the sim, this becomes stale after the simulation is stepped"""
 
-        operable_agents = []
+        operable_agents = set()
         for agent_name, platform_inoperability_status in self.agent_platform_inoperable_status.items():
 
             inoperability_values = platform_inoperability_status.values()
@@ -691,7 +692,7 @@ class ACT3MultiAgentEnv(MultiAgentEnv):
             if any(inoperability_values):
                 self.agent_dict[agent_name].set_removed(platform_inoperability_status)
             if not all(inoperability_values):
-                operable_agents.append(agent_name)
+                operable_agents.add(agent_name)
 
         return operable_agents
 
@@ -729,8 +730,14 @@ class ACT3MultiAgentEnv(MultiAgentEnv):
         # Save current action for future debugging
         self._actions.append(action_dict)
 
+        platforms_to_process = set()
+        for agent_id in action_dict:
+            for platform_name in self.agent_to_platforms[agent_id]:
+                if platform_name in operable_platforms:
+                    platforms_to_process.add(platform_name)
+
         try:
-            self._state = self._simulator.step()
+            self._state = self._simulator.step(platforms_to_process)
         except ValueError as err:
             self._save_state_pickle(err)
 
@@ -742,7 +749,7 @@ class ACT3MultiAgentEnv(MultiAgentEnv):
         operable_platforms_after_step = self._get_operable_agent_platforms()
         # get the difference in operable platforms to find those that are inoperable
         # then we mark it inoperable so that _get_operable_agents can correctly do it's job
-        new_inoperable_platforms = set(operable_platforms) - set(operable_platforms_after_step)
+        new_inoperable_platforms = operable_platforms - operable_platforms_after_step
         for platform_name in new_inoperable_platforms:
             for agent_name in self.platform_to_agents[platform_name]:
                 self.agent_platform_inoperable_status[agent_name][platform_name] = True
@@ -767,7 +774,7 @@ class ACT3MultiAgentEnv(MultiAgentEnv):
 
         platforms_done = self.__get_done_from_platforms(operable_platforms, raw_action_dict=raw_action_dict)
 
-        expected_done_keys = set(operable_platforms)
+        expected_done_keys = operable_platforms
         if set(platforms_done.keys()) != expected_done_keys:
             raise RuntimeError(
                 f'Local dones do not match expected keys.  Received "{platforms_done.keys()}".  Expected "{expected_done_keys}".'
@@ -882,7 +889,7 @@ class ACT3MultiAgentEnv(MultiAgentEnv):
             trainable_observations[agent_id] = complete_trainable_observations[agent_id]
 
         trainable_rewards = get_dictionary_subset(reward, agents_to_process_this_timestep)
-        trainable_dones = get_dictionary_subset(agents_done, ["__all__"] + agents_to_process_this_timestep)
+        trainable_dones = get_dictionary_subset(agents_done, list(agents_to_process_this_timestep) + ["__all__"])
         trainable_info = get_dictionary_subset(self._info, agents_to_process_this_timestep)
 
         # add platform obs and env data to trainable_info (for use by custom policies)

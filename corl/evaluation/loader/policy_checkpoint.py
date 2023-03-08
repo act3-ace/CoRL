@@ -60,14 +60,14 @@ class PolicyCheckpoint(IAgentLoader):
         if not self._policy:
             policy = Policy.from_checkpoint(str(self.checkpoint_filename))
             agent_to_policies = list(policy.config['multiagent']['policies'].keys())
-            if not self.trained_agent_id in agent_to_policies:
+            if self.trained_agent_id not in agent_to_policies:
                 raise RuntimeError(f"agent_id '{self.trained_agent_id}' not in '{agent_to_policies}'")
             self._policy = policy
         return typing.cast(Policy, self._policy)
 
     @property
     def was_trained(self) -> bool:
-        return self.trained_agent_id in self.policy.config['multiagent']['policies_to_train']
+        return self.trained_agent_id in self.policy.config['multiagent']['policies_to_train']  # type: ignore
 
     @property
     def agent_id(self) -> typing.Optional[str]:

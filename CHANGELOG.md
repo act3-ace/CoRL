@@ -1,3 +1,30 @@
+## [2.7.10](https://git.act3-ace.com/act3-rl/corl/compare/v2.7.9...v2.7.10) (2023-03-07)
+
+
+### Bug Fixes
+
+* The following updates move to the latest docker images and support setup of act3_corl. ([ebf54af](https://git.act3-ace.com/act3-rl/corl/commit/ebf54afd5d280fdcd88c322b5551d8d8df9c18b7))
+
+## [2.7.10-beta.5](https://git.act3-ace.com/act3-rl/corl/compare/v2.7.10-beta.4...v2.7.10-beta.5) (2023-03-07)
+
+
+### Bug Fixes
+
+* Framer rate step arg ([276f393](https://git.act3-ace.com/act3-rl/corl/commit/276f3938a3d35f7fe55e77076fdc1f2bc7253e7d))
+
+## [2.7.10-beta.4](https://git.act3-ace.com/act3-rl/corl/compare/v2.7.10-beta.3...v2.7.10-beta.4) (2023-03-06)
+
+
+### Bug Fixes
+
+* udpates to match github ([9d62ffe](https://git.act3-ace.com/act3-rl/corl/commit/9d62ffebdbc59fcceea1aa6302b205cc31a6c8d1))
+* update readme ([29e7dc8](https://git.act3-ace.com/act3-rl/corl/commit/29e7dc8204a1ed400d46b8b305d076bd925477bb))
+* updates ([549df9e](https://git.act3-ace.com/act3-rl/corl/commit/549df9e702462742d298a4f1f47c0881795b2b0c))
+* updates for cleanup ([a7e63f3](https://git.act3-ace.com/act3-rl/corl/commit/a7e63f39290fcd71968b91a5304108550a1d34ea))
+* updates for cleanup ([01b1954](https://git.act3-ace.com/act3-rl/corl/commit/01b1954022974b2d7311f0d98eae4ac087dbbc41))
+* updates for git ([5e81040](https://git.act3-ace.com/act3-rl/corl/commit/5e8104083b5cbb32783b530cccf9da72b7559cf7))
+* updates for git ([44ac6c7](https://git.act3-ace.com/act3-rl/corl/commit/44ac6c74513492746a975b6fc013c12bf5e047ff))
+
 ## [2.7.10-beta.3](https://git.act3-ace.com/act3-rl/corl/compare/v2.7.10-beta.2...v2.7.10-beta.3) (2023-03-03)
 
 
