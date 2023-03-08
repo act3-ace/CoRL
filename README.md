@@ -262,12 +262,14 @@ Initial contributors include scientists and engineers associated with the [Air F
 
 If you use CORL in your work, please use the following bibtex
 
+```bibtex
 @inproceedings{
   title={{CoRL}: Environment Creation and Management Focused on System Integration},
   author={Justin D. Merrick, Benjamin K. Heiner, Cameron Long, Brian Stieber, Steve Fierro, Vardaan Gangal, Madison Blake, Joshua Blackburn},
   year={2023},
   url={https://arxiv.org/abs/2303.02182}
 }
+```
 
 **White Paper ->** CoRL: Environment Creation and Management Focused on System Integration
 
