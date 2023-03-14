@@ -463,6 +463,11 @@ class ACT3MultiAgentEnv(MultiAgentEnv):
             lcm = values[0].denominator
             for v in values:
                 lcm = lcm // math.gcd(lcm, v.denominator) * v.denominator
+            if lcm == 1:
+                lcm = values[0].numerator
+                for v in values:
+                    lcm = math.gcd(lcm, v.numerator)
+                lcm = 1 / lcm  # type: ignore
             return 1.0 / lcm
 
         max_rate = self.config.max_agent_rate

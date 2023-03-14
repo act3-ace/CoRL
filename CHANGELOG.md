@@ -1,3 +1,10 @@
+# [2.8.0](https://git.act3-ace.com/act3-rl/corl/compare/v2.7.10...v2.8.0) (2023-03-13)
+
+
+### Features
+
+* Update lcm calculation for integer agent periods ([de9a44e](https://git.act3-ace.com/act3-rl/corl/commit/de9a44e13d6ec0a23befec9319c6747733d2f5e4))
+
 ## [2.7.10](https://git.act3-ace.com/act3-rl/corl/compare/v2.7.9...v2.7.10) (2023-03-07)
 
 

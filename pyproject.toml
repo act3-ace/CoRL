@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "corl"
-version = "2.7.10"
+version = "2.8.0"
 description = "Core ACT3 Reinforcement Learning (RL) Library - Core framework and base implementations of common things such as controllers, glues, observes, sensors, evaluation, and ect"
 authors = [
         "Benjamin K Heiner <benjamin.heiner@us.af.mil>",
@@ -17,9 +17,9 @@ maintainers  = [
         "Joshua Blackburn <joshua.blackburn@stresearch.com>"
     ]
 readme = "README.md"
-homepage = "https://git.act3-ace.com/act3-rl/corl"
-repository = "https://git.act3-ace.com/act3-rl/corl"
-documentation = "https://act3-rl.git.act3-ace.com/corl/"
+homepage = "https://github.com/act3-ace/CoRL"
+repository = "https://github.com/act3-ace/CoRL"
+documentation = "https://github.com/act3-ace/CoRL"
 keywords = ["Deep", "Reinforcement", "Learning", "CoRL"]
 include = ["docs/*","config/*"]
 classifiers = [

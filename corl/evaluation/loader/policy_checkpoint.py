@@ -57,6 +57,15 @@ class PolicyCheckpoint(IAgentLoader):
 
     @property
     def policy(self) -> Policy:
+        """
+        returns the policy object given the class config
+
+        Raises:
+            RuntimeError: if the specified agent is not the checkpoint
+
+        Returns:
+            Policy: The policy from the checkpoint
+        """
         if not self._policy:
             policy = Policy.from_checkpoint(str(self.checkpoint_filename))
             agent_to_policies = list(policy.config['multiagent']['policies'].keys())
@@ -67,6 +76,9 @@ class PolicyCheckpoint(IAgentLoader):
 
     @property
     def was_trained(self) -> bool:
+        """
+        specifies if a policy to be extract was trained in the checkpoint
+        """
         return self.trained_agent_id in self.policy.config['multiagent']['policies_to_train']  # type: ignore
 
     @property
