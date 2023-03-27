@@ -218,32 +218,6 @@ The following project support development via Docker containers in VSCode. This 
 
 Initial contributors include scientists and engineers associated with the [Air Force Research Laboratory (AFRL)](https://www.afrl.af.mil/), [Autonomy Capability Team 3 (ACT3)](https://www.afrl.af.mil/ACT3/), and the [Aerospace Systems Directorate (RQ)](https://www.afrl.af.mil/RQ/):
 
-- Autonomous Air Combat Operations (AACO) Team
-  - Terry Wilson(PM/PI)
-  - Karl Salva (System Integration)
-  - James Patrick (Modeling & Simulation)
-  - Benjamin Heiner (AI Behavior Training Lead)
-  - Training Team
-    - Cameron Long (ML Training)
-    - Steve Fierro (ML Training / System Integration)
-    - Brian Stieber (ML Training)
-    - Joshua Blackburn (ML Training / System Integration)
-    - Madison Blake (ML Infrastructure and Evaluation)
-- Safe Autonomy
-  - Kerianne Hobbs
-  - John McCarroll
-  - Umberto Ravaioli
-  - Jamie Cunningham
-  - Kyle Dunlap
-  - Nate Hamilton
-- Fundemental Research
-  - Jared Culbertson
-  - Hamilton Clouse
-  - Justin Merrick
-  - Ian Cannon
-  - Ian Leong
-  - Vardaan Gangal
-
 # Designation Indicator
 
 - Controlled by: Air Force Research Laboratory (AFRL)
