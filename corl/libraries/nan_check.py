@@ -14,6 +14,8 @@ import traceback
 
 import numpy as np
 
+from corl.libraries.units import Quantity
+
 
 def print_trace():
     """
@@ -25,20 +27,23 @@ def print_trace():
         print(line.strip())
 
 
-def nan_check_result(data, skip_trace=False):
+def recursive_nan_check(data, skip_trace=False):
     """
-    Checks for nan in np array
+    does the nan check after quantities are extracted
+    adds a stack trace for the nan checks should something fail the check
     """
-    if np.isscalar(data):
+    if isinstance(data, Quantity):
+        recursive_nan_check(data.m, skip_trace=skip_trace)
+    elif np.isscalar(data):
         if np.isnan(data):
             if not skip_trace:
                 print_trace()
             raise ValueError("Data contains nan")
     # special case for repeated space
     elif isinstance(data, dict):
-        list(map(nan_check_result, data.values()))
+        list(map(recursive_nan_check, data.values()))
     elif isinstance(data, list):
-        list(map(nan_check_result, data))
+        list(map(recursive_nan_check, data))
     elif data is None:
         if not skip_trace:
             print_trace()
@@ -53,9 +58,22 @@ def nan_check_result(data, skip_trace=False):
             if not skip_trace:
                 print_trace()
             raise ValueError("Data contains nan")
-    else:
-        if np.isnan(data).any():
-            if not skip_trace:
-                print_trace()
-            raise ValueError("Data contains nan")
+    elif np.isnan(data).any():
+        if not skip_trace:
+            print_trace()
+        raise ValueError("Data contains nan")
+
+
+def nan_check_result(data, skip_trace=False):
+    """
+    Checks for nan in np array
+    """
+    tmp_data = data
+    if not isinstance(tmp_data, list | dict | Quantity):
+        raise RuntimeError(
+            "ERROR: nan_check_result was given an outer data structure that was not a "
+            "Quantity, Dict, or List, sensors and controllers must always return one of these types "
+            f"data struct was {data}"
+        )
+    recursive_nan_check(tmp_data, skip_trace=skip_trace)
     return data

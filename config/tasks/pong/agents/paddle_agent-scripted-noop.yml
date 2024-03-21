@@ -1,0 +1,49 @@
+# This config defines parameters used to initialize the agent, including platform parts, initial state
+# (simulator_reset_parameters), glues, dones, and rewards.
+
+"agent": "corl.agents.non_trainable.noop.NoOpAgent"
+"config": {
+
+    "parts": [
+        {"part": "PaddleController"},
+        {"part": "Platform_Paddle_Type_Sensor"},
+        {"part": "Paddle_Position_Sensor", "config": {name: "left_paddle", paddle: "left"}},
+        {"part": "Paddle_Position_Sensor", "config": {name: "right_paddle", paddle: "right"}},
+        {"part": "Ball_Sensor"}
+    ],
+
+    "episode_parameter_provider": {
+        "type": "corl.episode_parameter_providers.simple.SimpleParameterProvider"
+    },
+
+    "glues": [
+        {
+            "functor": "corl.glues.common.controller_glue.ControllerGlue",
+            "config": {"controller": "PaddleController", "training_export_behavior": "EXCLUDE"},
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config": {"sensor": "Platform_Paddle_Type_Sensor"},
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config": {"sensor": "left_paddle"},
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config": {"sensor": "right_paddle"},
+        },
+        {
+            "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+            "config": {"sensor": "Ball_Sensor", "clip_to_space":"True"},
+        },
+    ],
+    "dones": [
+        {
+            "name": "PongGameDoneFunction",
+            "functor": "corl.dones.pong.dones.PongGameDoneFunction",
+        },
+    ],
+    "rewards": []
+
+}

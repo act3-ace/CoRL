@@ -14,38 +14,43 @@ import os
 import typing
 
 from numpy.random import Generator, RandomState
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from corl.libraries.parameters import Parameter
+from corl.libraries.parameters import Parameter, ParameterWrapper
 
-PathLike = typing.Union[str, os.PathLike]
-Randomness = typing.Union[Generator, RandomState]
-ParameterModel = typing.Mapping[typing.Tuple[str, ...], Parameter]
+PathLike = str | os.PathLike
+Randomness = Generator | RandomState
+ParameterModel = typing.Mapping[tuple[str, ...], ParameterWrapper | Parameter]
 
 
 class EpisodeParameterProviderValidator(BaseModel):
     """Validation model for the inputs of EpisodeParameterProvider"""
-    parameters: ParameterModel = {}
 
-    class Config:
-        """Allow arbitrary types for Parameter"""
-        arbitrary_types_allowed = True
-        allow_mutation = False
+    parameters: ParameterModel = {}
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class EpisodeParameterProvider(abc.ABC):
-    """Interface definition for episode parameter providers.
-    """
+    """Interface definition for episode parameter providers."""
 
     def __init__(self, **kwargs) -> None:
-        self.config: EpisodeParameterProviderValidator = self.get_validator(**kwargs)
+        super().__init__()
 
-    @property
-    def get_validator(self) -> typing.Type[EpisodeParameterProviderValidator]:
+        self.config: EpisodeParameterProviderValidator = self.get_validator()(**kwargs)
+
+    @abc.abstractmethod
+    def reset(self) -> None:
+        """Resets this object to its initial state"""
+
+    def shutdown(self) -> None:
+        """Cleans up this object for destruction"""
+
+    @staticmethod
+    def get_validator() -> type[EpisodeParameterProviderValidator]:
         """Get the validator for this class."""
         return EpisodeParameterProviderValidator
 
-    def get_params(self, rng: Randomness) -> typing.Tuple[ParameterModel, typing.Union[int, None]]:
+    def get_params(self, rng: Randomness, env_epp_ctx: dict | None = None) -> tuple[ParameterModel, int | None, dict | None]:
         """Get the next instance of episode parameters from this provider
 
         Subclasses: Override _do_get_params.
@@ -63,27 +68,23 @@ class EpisodeParameterProvider(abc.ABC):
             The episode index number for this set of parameters
         """
 
-        output, episode_id = self._do_get_params(rng)
+        output, episode_id, env_epp_ctx = self._do_get_params(rng, env_epp_ctx)
 
-        extra_keys = output.keys() - self.config.parameters.keys()
-        if extra_keys:
-            raise KeyError(f'Extra keys provided: {extra_keys}')
+        if extra_keys := output.keys() - self.config.parameters.keys():
+            raise KeyError(f"Extra keys provided: {extra_keys}")
 
-        missing_keys = self.config.parameters.keys() - output.keys()
-        if missing_keys:
-            raise KeyError(f'Missing keys: {missing_keys}')
+        if missing_keys := self.config.parameters.keys() - output.keys():
+            raise KeyError(f"Missing keys: {missing_keys}")
 
-        bad_types: typing.Dict[str, str] = {}
-        for key, value in output.items():
-            if not isinstance(value, Parameter):
-                bad_types['.'.join(key)] = type(value).__name__
-        if bad_types:
-            raise TypeError(f'Unsupported types: {bad_types}')
+        if bad_types := {
+            ".".join(key): type(value).__name__ for key, value in output.items() if not isinstance(value, Parameter | ParameterWrapper)
+        }:
+            raise TypeError(f"Unsupported` types: {bad_types}")
 
-        return output, episode_id
+        return output, episode_id, env_epp_ctx
 
     @abc.abstractmethod
-    def _do_get_params(self, rng: Randomness) -> typing.Tuple[ParameterModel, typing.Union[int, None]]:
+    def _do_get_params(self, rng: Randomness, env_epp_ctx: dict | None) -> tuple[ParameterModel, int | None, dict | None]:
         """Get the next instance of episode parameters from this provider
 
         This is an abstract method that must be overridden by each subclass.
@@ -104,7 +105,7 @@ class EpisodeParameterProvider(abc.ABC):
         """
         raise NotImplementedError
 
-    def compute_metrics(self) -> typing.Dict[str, typing.Any]:
+    def compute_metrics(self) -> dict[str, typing.Any]:  # noqa: PLR6301
         """Get metrics on the operation of this provider.
 
         Often used in `on_episode_end` training callbacks.

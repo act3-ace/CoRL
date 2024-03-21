@@ -1,0 +1,24 @@
+episode_parameter_providers:
+  environment:
+    simulator_reset:
+      paddle0_side: 
+        value: "left"
+        unit: null
+      pong:
+        ball:
+          x_vel: 
+            value: 2
+      platforms:
+        paddle0:
+          y: 
+            value: [10]
+          vel: 
+            value: 10
+        paddle1:
+          y: 
+            value: [10]
+          vel: 
+            value: 10
+    reference_store:
+      target_side:
+        value: [0, 1]

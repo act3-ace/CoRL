@@ -1,0 +1,50 @@
+teams:
+  platform_config:
+    - name: paddle0
+      config: config/tasks/pong/platforms/paddle.yml
+    - name: paddle1
+      config: config/tasks/pong/platforms/paddle.yml
+  agent_config:
+    - name: paddle0_ctrl
+      platforms: ["paddle0"]
+      config: config/tasks/pong/agents/paddle_agent.yml
+      policy: config/tasks/pong/agents/paddle_agent.yml
+      agent_loader:
+        class_path: corl.evaluation.loader.policy_checkpoint.PolicyCheckpoint
+        init_args:
+          trained_agent_id: paddle0_ctrl
+          checkpoint_filename: /tmp/ray_results/ACT3-RLLIB-AGENTS/Pong-EpisodeParameterProviderSavingTrainer_ACT3MultiAgentEnv_2c179_00000_0_num_gpus=0,rollout_fragment_length=2500,sgd_minibatch_s_2023-04-28_17-36-14/eval_checkpoints/epoch_000001/policies/paddle0_ctrl/policy_state.pkl
+    - name: paddle1_ctrl
+      platforms: ["paddle1"]
+      config: config/tasks/pong/agents/paddle_agent.yml
+      policy: config/tasks/pong/agents/paddle_agent.yml
+      agent_loader:
+        class_path: corl.evaluation.loader.policy_checkpoint.PolicyCheckpoint
+        init_args:
+          trained_agent_id: paddle0_ctrl
+          checkpoint_filename: /tmp/ray_results/ACT3-RLLIB-AGENTS/PPO_CorlMultiAgentEnv_de2a4_00000_0_2024-01-03_19-54-13/checkpoint_000000/
+
+task:
+    config_yaml_file: config/tasks/pong/tasks/pong_task_ppo.yml
+
+test_case_manager:
+  type: corl.evaluation.runners.section_factories.test_cases.default_strategy.DefaultStrategy
+  config:
+    num_test_cases: 10
+
+
+plugins:
+    platform_serialization:
+        class_path: corl.evaluation.serialize_platforms.Serialize_Pong
+
+engine:
+    rllib:
+        callbacks: []
+        workers: 0
+        explore: False
+
+recorders:
+- class_path: corl.evaluation.recording.folder.Folder
+  init_args:
+    dir: /tmp/pong_evaluate/
+    append_timestamp: True

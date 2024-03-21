@@ -36,14 +36,16 @@ import numbers
 import typing
 import warnings
 from operator import attrgetter
+from typing import Annotated
 
-import numpy as np
-from pydantic import BaseModel, PyObject, validator
+import tree
+from pydantic import BaseModel, BeforeValidator, ImportString, model_validator
 
 import corl.simulators.base_properties as base_props
 from corl.libraries.nan_check import nan_check_result
 from corl.libraries.plugin_library import PluginLibrary
 from corl.libraries.property import Prop
+from corl.libraries.units import Quantity, corl_get_ureg
 from corl.simulators.base_simulator_state import BaseSimulatorState
 
 
@@ -52,29 +54,31 @@ class BasePlatformPartValidator(BaseModel):
     name: the optional name for this part, the class name
     will be used otherwise
     """
-    part_class: PyObject
-    name: typing.Optional[str] = None
-    initial_validity: bool = True
-    properties: typing.Optional[typing.Dict] = {}
 
-    @validator('name', always=True)
-    def check_name(cls, v, values):
+    part_class: ImportString
+    name: str | None = None
+    initial_validity: bool = True
+    properties: dict | None = {}
+
+    @model_validator(mode="after")
+    def check_name(self):
         """Check if agent subclass AgentBase"""
-        if v is None:
-            assert 'part_class' in values
-            v = PluginLibrary.FindGroup(values['part_class'])
-        return v
+        if self.name is None:
+            v = PluginLibrary.FindGroup(self.part_class)
+            self.name = v
+        return self
 
 
 class BasePlatformPart(abc.ABC):
     """
     BasePlatformPart abstract class for the classes that will be part of the BasePlatform.
-    This includes controls, weapons and sensors
+    This includes controls and sensors
     """
 
     def __init__(self, parent_platform, config, property_class) -> None:
         config["part_class"] = self.__class__
-        self.config = self.get_validator(**config)
+        self.config = self.get_validator()(**config)
+        self._property_class = property_class
         self._properties = property_class(**self.config.properties)
         self._parent_platform = parent_platform
         self._valid = self.config.initial_validity
@@ -105,7 +109,7 @@ class BasePlatformPart(abc.ABC):
         self._valid = False
 
     @property
-    def name(self) -> typing.Optional[str]:
+    def name(self) -> str | None:
         """
         The name for this platform part
 
@@ -117,7 +121,7 @@ class BasePlatformPart(abc.ABC):
         return self.config.name
 
     @property
-    def parent_platform(self) -> 'BasePlatform':  # type: ignore  # noqa: F821
+    def parent_platform(self) -> BasePlatform:  # type: ignore  # noqa: F821
         """
         The parent platform this platform part is attached to
 
@@ -128,13 +132,8 @@ class BasePlatformPart(abc.ABC):
         """
         return self._parent_platform
 
-    @property
-    def exclusiveness(self) -> typing.Set[str]:
-        """Return exclusiveness"""
-        return set()
-
-    @property
-    def get_validator(self) -> typing.Type[BasePlatformPartValidator]:
+    @staticmethod
+    def get_validator() -> type[BasePlatformPartValidator]:
         """
         return the validator that will be used on the configuration
         of this part
@@ -142,20 +141,23 @@ class BasePlatformPart(abc.ABC):
         return BasePlatformPartValidator
 
     @classmethod
-    def embed_properties(cls, property_class: typing.Type[Prop]) -> typing.Type[BasePlatformPart]:
+    def embed_properties(cls, property_class: type[Prop]) -> type[BasePlatformPart]:
         """Embed the properties in the class definition."""
 
-        class DynamicPlatformPart(cls):  # type: ignore[valid-type,misc]  # pylint: disable=missing-class-docstring
-
+        class DynamicPlatformPart(cls):  # type: ignore[valid-type,misc]
             def __init__(self, parent_platform, config) -> None:
                 super().__init__(parent_platform=parent_platform, config=config, property_class=property_class)
 
         DynamicPlatformPart.__doc__ = cls.__doc__
-        DynamicPlatformPart.__name__ += f':{cls.__name__}:{property_class.__name__}'
-        DynamicPlatformPart.__qualname__ += f':{cls.__name__}:{property_class.__name__}'
+        DynamicPlatformPart.__name__ += f":{cls.__name__}:{property_class.__name__}"
+        DynamicPlatformPart.__qualname__ += f":{cls.__name__}:{property_class.__name__}"
         DynamicPlatformPart.embedded_properties = property_class
 
         return DynamicPlatformPart
+
+
+nested_control_dict = typing.Mapping[tuple[str, ...], Quantity]
+ControlType = nested_control_dict | Quantity
 
 
 class BaseController(BasePlatformPart, abc.ABC):
@@ -163,6 +165,10 @@ class BaseController(BasePlatformPart, abc.ABC):
     BaseController base abstraction for a controller. A controller is used to move a platform with action commands.
     The actions are usually changing the desired rates or applied forces to the platform.
     """
+
+    def __init__(self, parent_platform, config, property_class) -> None:
+        super().__init__(parent_platform, config, property_class)
+        self._prop_space = self.control_properties.create_space()
 
     @property
     def control_properties(self) -> Prop:
@@ -176,7 +182,7 @@ class BaseController(BasePlatformPart, abc.ABC):
         """
         return self._properties
 
-    def validate_control(self, control: np.ndarray) -> None:
+    def validate_control(self, control: ControlType) -> None:
         """
         The generic method to validate a control for this controller.
 
@@ -185,11 +191,11 @@ class BaseController(BasePlatformPart, abc.ABC):
         control
             The control to be validated
         """
-        if not self.control_properties.create_space().contains(control):
-            raise ValueError(f"{type(self).__name__} control {control} not in space {self.control_properties.create_space()} values")
+        if not self._prop_space.contains(tree.map_structure(lambda x: x.m, control)):
+            raise ValueError(f"{type(self).__name__} control {control} not in space {self._prop_space} values")
 
     @abc.abstractmethod
-    def apply_control(self, control: np.ndarray) -> None:
+    def apply_control(self, control: ControlType) -> None:
         """
         The generic method to apply the control for this controller.
 
@@ -200,7 +206,7 @@ class BaseController(BasePlatformPart, abc.ABC):
         """
 
     @abc.abstractmethod
-    def get_applied_control(self) -> typing.Union[np.ndarray, numbers.Number]:
+    def get_applied_control(self) -> ControlType | numbers.Number:
         """
         Get the previously applied control that was given to the apply_control function
         Returns
@@ -208,7 +214,7 @@ class BaseController(BasePlatformPart, abc.ABC):
         previously applied control that was given to the apply_control function
         """
 
-    def get_validated_applied_control(self) -> typing.Union[np.ndarray, numbers.Number]:
+    def get_validated_applied_control(self) -> ControlType:
         """
         Get the previously applied control with nan check
         Returns
@@ -226,7 +232,7 @@ class BaseSensor(BasePlatformPart, abc.ABC):
 
     def __init__(self, parent_platform, config, property_class) -> None:
         super().__init__(parent_platform=parent_platform, config=config, property_class=property_class)
-        self._last_measurement: typing.Optional[typing.Union[np.ndarray, typing.Tuple, typing.Dict]] = None
+        self._last_measurement: Quantity | None = None
 
     @property
     def measurement_properties(self) -> Prop:
@@ -241,7 +247,7 @@ class BaseSensor(BasePlatformPart, abc.ABC):
         return self._properties
 
     @abc.abstractmethod
-    def _calculate_measurement(self, state: BaseSimulatorState) -> typing.Union[np.ndarray, typing.Tuple, typing.Dict]:
+    def _calculate_measurement(self, state: BaseSimulatorState) -> Quantity:
         """
         The generic method to get calculate measurements from this sensor. This is used to calculate
          the measurement to be returned by
@@ -277,9 +283,9 @@ class BaseSensor(BasePlatformPart, abc.ABC):
             )
             # raise ValueError(f"Error calculating Measurement in {self.__class__}\n" f"Measurement: {self._last_measurement}\n") from err
         if self._last_measurement is None:
-            raise ValueError('Measurement is None')
+            raise ValueError("Measurement is None")
 
-    def get_measurement(self) -> typing.Union[np.ndarray, typing.Tuple, typing.Dict, typing.List]:
+    def get_measurement(self) -> Quantity:
         """
         The generic method to get measurements from this sensor.
 
@@ -289,15 +295,16 @@ class BaseSensor(BasePlatformPart, abc.ABC):
             The measurements from this sensor
         """
         if self._last_measurement is None:
-            raise ValueError(f'Measurement is None - may also want to check operable states - ({type(self)})')
+            raise ValueError(f"Measurement is None - may also want to check operable states - ({type(self)})")
         return self._last_measurement
 
 
 class CommandWithArgs(BaseModel):  # type: ignore[no-redef]
-    """Model for a command with its argumets."""
+    """Model for a command with its arguments."""
+
     command: str
-    args: typing.List[typing.Any] = []
-    kwargs: typing.Dict[str, typing.Any] = {}
+    args: list[typing.Any] = []
+    kwargs: dict[str, typing.Any] = {}
 
 
 class NoOpControllerValidator(BasePlatformPartValidator):
@@ -310,14 +317,8 @@ class NoOpControllerValidator(BasePlatformPartValidator):
     Dot notation is supported, so `foo.bar.baz` will call the method `self.parent_platform.foo.bar.baz()`.
 
     """
-    platform_init_commands: typing.List[CommandWithArgs] = []
 
-    @validator('platform_init_commands', pre=True, each_item=True)
-    def expand_command(cls, v):
-        """Convert simple string form to full form with arguments."""
-        if isinstance(v, str):
-            return {'command': v}
-        return v
+    platform_init_commands: list[Annotated[CommandWithArgs, BeforeValidator(lambda v: {"command": v} if isinstance(v, str) else v)]] = []
 
 
 class NoOpController(BaseController):
@@ -329,18 +330,18 @@ class NoOpController(BaseController):
     def __init__(self, parent_platform, config, property_class) -> None:
         self.config: NoOpControllerValidator
         super().__init__(parent_platform=parent_platform, config=config, property_class=property_class)
-        self.new_control = np.array([], dtype=np.float32)
+        self.new_control = corl_get_ureg().Quantity(0, "dimensionless")
 
         for command_data in self.config.platform_init_commands:
             func = attrgetter(command_data.command)
             func(self.parent_platform)(*command_data.args, **command_data.kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[NoOpControllerValidator]:
+    @staticmethod
+    def get_validator() -> type[NoOpControllerValidator]:
         """Validator for NoOpController"""
         return NoOpControllerValidator
 
-    def apply_control(self, control: np.ndarray) -> None:
+    def apply_control(self, control) -> None:
         """
         The generic method to apply the control for this controller.
 
@@ -365,5 +366,5 @@ class BaseTimeSensor(BaseSensor):
         BaseSensor -- The base class type for the sensor
     """
 
-    def __init__(self, parent_platform, config: typing.Dict = None):
+    def __init__(self, parent_platform, config: dict | None = None):
         super().__init__(parent_platform, config, base_props.TimeProp)

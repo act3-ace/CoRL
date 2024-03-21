@@ -19,8 +19,7 @@ from corl.evaluation.scene_processors import SceneProcessors
 
 
 class Visualization:
-    """Base class for a visualization
-    """
+    """Base class for a visualization"""
 
     def __init__(self):
         pass
@@ -38,16 +37,15 @@ class Visualization:
         if isinstance(metrics_location.location, str):
             post_processed_data_location = pathlib.Path(metrics_location.location).joinpath(metrics_location.file)
             with open(post_processed_data_location, "rb") as fp:
-                self._post_processed_data: SceneProcessors = pickle.load(fp)  # pylint: disable=W0201
+                self._post_processed_data: SceneProcessors = pickle.load(fp)  # noqa: S301
         else:
             raise RuntimeError("Pulling metrics from anything other than folder not supported")
 
         if isinstance(visualization_location.location, str):
-            self.out_folder = Path(visualization_location.location)  # pylint: disable=W0201
+            self.out_folder = Path(visualization_location.location)
         else:
             raise RuntimeError("Saving visualization to anything aside folder not supported")
 
     @abstractmethod
     def visualize(self):
-        """Execute visualization code
-        """
+        """Execute visualization code"""

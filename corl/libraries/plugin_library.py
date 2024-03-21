@@ -22,17 +22,17 @@ import numpy as np
 
 
 class _PluginLibrary:
-    """Class defining the plugin Library
-    """
+    """Class defining the plugin Library"""
 
-    def __init__(self):
-        self._groups: typing.Dict[str, typing.List[typing.Tuple[typing.Callable, typing.Dict]]] = {}
+    def __init__(self) -> None:
+        self._groups: dict[str, list[tuple[typing.Callable, dict]]] = {}
+        self.__PLATFORM_TYPES_LOC = "__PLATFORM_TYPES__"
 
     @staticmethod
-    def add_paths(plugin_packages: typing.List[str]):
+    def add_paths(plugin_packages: list[str]):
         """
         loops through a list of strings (which are strings python paths)
-        then recursivly walks through subdirectories of those paths
+        then recursively walks through subdirectories of those paths
         and imports them, which will cause any side effect of importing them
         such as adding a class to the plugin library
         """
@@ -45,22 +45,20 @@ class _PluginLibrary:
 
         for root_pkg in plugin_packages:
             root_import = importlib.import_module(root_pkg)
-            for module in pkgutil.walk_packages(root_import.__path__, root_import.__name__ + '.', onerror=pkg_error):  # type: ignore
+            for module in pkgutil.walk_packages(root_import.__path__, f"{root_import.__name__}.", onerror=pkg_error):
                 importlib.import_module(module.name)
 
-    def AddClassToGroup(
-        self, regclass: typing.Callable, group_name: str, conditions: typing.Dict[str, typing.Union[typing.List[typing.Any], typing.Any]]
-    ):
-        """Add a type (or set of types) to a group name to be invoked with the provided conditions
-        """
+    def AddClassToGroup(self, regclass: typing.Callable, group_name: str, conditions: dict[str, list[typing.Any] | typing.Any]):
+        """Add a type (or set of types) to a group name to be invoked with the provided conditions"""
 
+        # TODO: delete this? I think? DO NOT MERGE CORL3 with out deleting or uncommenting
         # if there exists an entry with given group_name and conditions throw a RuntimeError
-        if group_name in self._groups:
-            for group_to_check in self._groups[group_name]:
-                if group_to_check[1] == conditions:
-                    raise RuntimeError(f"An instance with provided conditions has already been added: {group_name} -> {conditions}")
+        # if group_name in self._groups:
+        #     for group_to_check in self._groups[group_name]:
+        #         if group_to_check[1] == conditions:
+        #             raise RuntimeError(f"An instance with provided conditions has already been added: {group_name} -> {conditions}")
 
-        conditions_list = []
+        conditions_list = []  # type: ignore
         if not isinstance(conditions, dict):
             raise RuntimeError(
                 f"The conditions provided to register the class {regclass.__name__} "
@@ -68,20 +66,15 @@ class _PluginLibrary:
             )
         # if a user provides a list to a condition, this means they want to register more than one condition
         if any(isinstance(x, list) for x in conditions.values()):
-
             tmp_conditions = [cond if isinstance(cond, list) else [cond] for cond in conditions.values()]
             product_result = itertools.product(*tmp_conditions)
 
-            for product_tuple in product_result:
-                conditions_list.append(dict(zip(conditions.keys(), product_tuple)))
+            conditions_list.extend(dict(zip(conditions.keys(), product_tuple)) for product_tuple in product_result)
         else:
             conditions_list.append(conditions)
 
         if not callable(regclass):
-            raise RuntimeError(
-                f"The {regclass.__name__} being registered to {group_name} "
-                f"is expected to be a callable. but it is {type(regclass)}"
-            )
+            raise RuntimeError(f"The {regclass} being registered to {group_name} is expected to be a callable. but it is {type(regclass)}")
         if inspect.isabstract(regclass):
             raise RuntimeError(
                 f"The {regclass.__name__} being registered to {group_name} "
@@ -91,25 +84,20 @@ class _PluginLibrary:
         if group_name not in self._groups:
             self._groups[group_name] = []
 
-        # TODO make sure the keys to provided conditions match with entires already in group
+        # TODO make sure the keys to provided conditions match with entries already in group
         for condition in conditions_list:
             self._groups[group_name].append((regclass, condition))
 
     def GroupExists(self, group_name: str) -> bool:
-        """Determine if provided group name exists
-        """
-        if group_name in self._groups:
-            return True
-        return False
+        """Determine if provided group name exists"""
+        return group_name in self._groups
 
-    def GroupMembers(self, group_name: str) -> typing.List[typing.Tuple[typing.Callable, typing.Dict]]:
-        """Return the members of the given group
-        """
+    def GroupMembers(self, group_name: str) -> list[tuple[typing.Callable, dict]]:
+        """Return the members of the given group"""
         return self._groups[group_name]
 
     def FindGroup(self, reg_class: typing.Callable):
-        """Return the group a class belongs to
-        """
+        """Return the group a class belongs to"""
         for group_name, group_list in self._groups.items():
             for item_tuple in group_list:
                 if reg_class in item_tuple:
@@ -136,7 +124,7 @@ class _PluginLibrary:
             return tuple_items[0][0]
 
         # otherwise determine the best match, or even if there is a match
-        mapping_results = list(map(lambda reg_tuple: difference_metric(condition, reg_tuple[1]), tuple_items))
+        mapping_results = [difference_metric(condition, reg_tuple[1]) for reg_tuple in tuple_items]
 
         if np.allclose(mapping_results, 0):
             raise RuntimeError(f"In the group {group_name}, an instance matching the given conditions {condition} could not be established")
@@ -145,8 +133,41 @@ class _PluginLibrary:
 
         return tuple_items[max_index][0]
 
+    def add_platform_to_sim(self, platform_class: typing.Callable, sim_class: typing.Callable) -> None:
+        """
+        Utility for adding a platform mapping to a simulator
+        """
+        PluginLibrary.AddClassToGroup(platform_class, self.__PLATFORM_TYPES_LOC, {"platform": platform_class, "simulator": sim_class})
 
-def difference_metric(x1: typing.Dict[str, typing.Any], x2: typing.Dict[str, typing.Any]):
+    def get_platform_from_sim_and_config(self, sim_class: typing.Callable, config: dict[str, typing.Any]) -> typing.Callable:
+        """
+        Utility for getting a platform type from the sim class and platform config dict
+        """
+        found_platforms = [
+            env_plt[0]
+            for env_plt in PluginLibrary.GroupMembers(self.__PLATFORM_TYPES_LOC)
+            if env_plt[1]["simulator"] == sim_class and env_plt[0].match_model(config)  # type: ignore
+        ]
+
+        if not found_platforms:
+            found_platforms = [
+                env_plt[0] for env_plt in PluginLibrary.GroupMembers(self.__PLATFORM_TYPES_LOC) if env_plt[1]["simulator"] == sim_class
+            ]
+            raise RuntimeError(
+                f"Unable to find a matching platform for the target configuration\n{config}"
+                f"platforms classes registered to sim but not matching were: {found_platforms}"
+            )
+
+        if len(found_platforms) > 1:
+            raise RuntimeError(
+                f"Found {len(found_platforms)} matching platform for the target configuration\n{config}\n"
+                f"platform classes found were: {found_platforms}"
+            )
+
+        return found_platforms[0]
+
+
+def difference_metric(x1: dict[str, typing.Any], x2: dict[str, typing.Any]):
     """
     Heuristic for determining how much of a match 2 dictionaries are
     Dictionaries may only be a single layer or this may not work correctly

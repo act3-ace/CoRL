@@ -1,0 +1,52 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
+
+####################################################################
+# Override values used by the setup
+####################################################################
+auto_system_detect_class: corl.experiments.base_experiment.BaseAutoDetect
+experiment_class: corl.experiments.rllib_experiment.RllibExperiment
+
+config:
+  policy_mapping:
+    functor: corl.experiments.rllib_utils.policy_mapping_functions.SinglePolicy
+    config:
+      policy_id: "dummy"
+
+  rllib_config_updates: &rllib_config_updates
+
+  # No overrides for ray as there are no changes
+  ray_config_updates: &ray_config_updates
+    local_mode: False
+
+  # Change the default path for saving out the data
+  env_config_updates: &env_config_updates
+    TrialName: Pong
+    output_path: /tmp//act3
+
+  # Change the default path for saving out the data
+  tune_config_updates: &tune_config_updates
+    storage_path: /tmp//ray_results/
+
+  ####################################################################
+  # Setup the actual keys used by the code
+  # Note that items are patched from the update section
+  ###################################################################
+  rllib_configs:
+    default: !merge [!include ../rllib_config.yml, *rllib_config_updates]
+    local: !merge [!include ../rllib_config.yml,  *rllib_config_updates]
+
+  ray_config: !merge [!include ../ray_config.yml, *ray_config_updates]
+  env_config: !merge [!include ../environments/pong_env.yml, *env_config_updates]
+  tune_config: !merge [!include ../tune_config_ppo.yml, *tune_config_updates]
+  extra_callbacks: [
+    corl.environment.episode_artifact_callbacks.PongEpisodeArtifactLogger,
+    corl.environment.custom_env_metrics.CustomPongMetrics]
+

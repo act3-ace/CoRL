@@ -1,0 +1,21 @@
+{
+  "config": "config/tasks/pong/tasks/pong_commander_task_ppo.yml",
+  "platform_config": [
+    {
+      "name": "paddle0",
+      "config": "config/tasks/pong/platforms/paddle.yml"
+    },
+    {
+      "name": "paddle1",
+      "config": "config/tasks/pong/platforms/paddle.yml"
+    }
+  ],
+  "agent_config": [
+    {
+      "name": "paddle_ctrl",
+      "platforms": ["paddle0", "paddle1"],
+      "config": "config/tasks/pong/agents/commander_paddle_agent.yml",
+      "policy": "config/tasks/pong/policies/ppo_config.yml"
+    }
+  ]
+}

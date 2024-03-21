@@ -18,7 +18,7 @@ import jsonargparse
 from corl.evaluation.util.storage import Storage
 
 
-def get_args(path: typing.Optional[str] = None) -> typing.Type[jsonargparse.Namespace]:
+def get_args(path: str | None = None) -> jsonargparse.Namespace:
     """
     Obtain running arguments for the storage process.
 
@@ -34,20 +34,15 @@ def get_args(path: typing.Optional[str] = None) -> typing.Type[jsonargparse.Name
     """
 
     parser = jsonargparse.ArgumentParser()
-    parser.add_argument('--cfg', action=jsonargparse.ActionConfigFile, help='the means by which to specify a yaml config to storage')
-    parser.add_argument('--storage_utility', type=typing.List[Storage], help='storage class to use')
+    parser.add_argument("--cfg", action=jsonargparse.ActionConfigFile, help="the means by which to specify a yaml config to storage")
+    parser.add_argument("--storage_utility", type=list[Storage], help="storage class to use")
     parser.add_argument(
-        '--artifacts_location_config',
-        type=typing.Dict[str, typing.Any],
-        help='where are the eval_data_location, metric_file_location, event_table_location, agent_checkpoints '
+        "--artifacts_location_config",
+        type=dict[str, typing.Any],
+        help="where are the eval_data_location, metric_file_location, event_table_location, agent_checkpoints ",
     )
-    if path:
-        args = parser.parse_path(path)
-        instantiate = parser.instantiate_classes(args)
-    else:
-        args = parser.parse_args()
-        instantiate = parser.instantiate_classes(args)
-    return instantiate
+    args = parser.parse_path(path) if path else parser.parse_args()
+    return parser.instantiate_classes(args)
 
 
 def main(instantiated_args):
@@ -59,8 +54,8 @@ def main(instantiated_args):
     instantiated_args: jsonargparse.Namespace
         contains running arguments for the storage process.
     """
-    for storage in instantiated_args['storage_utility']:
-        storage.load_artifacts_location(instantiated_args['artifacts_location_config'])
+    for storage in instantiated_args["storage_utility"]:
+        storage.load_artifacts_location(instantiated_args["artifacts_location_config"])
         storage.store()
 
 

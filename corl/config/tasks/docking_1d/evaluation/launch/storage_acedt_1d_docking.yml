@@ -1,0 +1,17 @@
+storage_utility:
+  - class_path: act3_corl.evaluation.acedt.eval_acedt_storage.EvalAcedtBottleStorage
+    init_args:
+      bottle_location: <BOTTLE_LOCATION>
+      agent_type: docking1d
+      team: CoRL_dev_team
+      experiment_name: 1d_docking
+      experiment_description: train a docking agent
+       
+
+artifacts_location_config: 
+  eval_data_location: <LOCATION_TO_EVAL_DATA>
+  metrics_file_location: <LOCATION_TO_METRICS_FILE>
+  agent_checkpoints: 
+    blue0: <BLUE0-CHECKPOINT>
+  visualizations_location: <FOLDER LOCATION OF VISUALIZAIONS>
+  

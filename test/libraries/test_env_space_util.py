@@ -10,73 +10,67 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
 from collections import OrderedDict
-import gym
+
+import gymnasium
 import numpy as np
-import copy
 import pytest
-from gym import spaces
+from gymnasium import spaces
 
-from corl.libraries.env_space_util import EnvSpaceUtil, SingleLayerDict, convert_gym_space, convert_sample
+from corl.libraries.env_space_util import EnvSpaceUtil, SingleLayerDict, convert_gymnasium_space, convert_sample
+from corl.libraries.units import corl_get_ureg
 
-gym_default_observation_space = spaces.Dict(
+gymnasium_default_observation_space = spaces.Dict(
     {
-        "sensors":
-        spaces.Dict(
+        "sensors": spaces.Dict(
             {
-                "position": spaces.Box(low=-100, high=100, shape=(3, )),
+                "position": spaces.Box(low=-100, high=100, shape=(3,)),
                 "velocity": spaces.Box(low=np.array([-1] * 3), high=np.array([1] * 3)),
-                "front_cam": spaces.Tuple((
-                    spaces.Box(low=0, high=1, shape=(10, 10, 3)),
-                    spaces.Box(low=0, high=1, shape=(10, 10, 3)),
-                )),
+                "front_cam": spaces.Tuple(
+                    (
+                        spaces.Box(low=0, high=1, shape=(10, 10, 3)),
+                        spaces.Box(low=0, high=1, shape=(10, 10, 3)),
+                    )
+                ),
                 "rear_cam": spaces.Box(low=0, high=1, shape=(10, 10, 3)),
             }
         ),
-        "ext_controller":
-        spaces.MultiDiscrete((5, 2, 2)),
-        "inner_state":
-        spaces.Dict(
+        "ext_controller": spaces.MultiDiscrete((5, 2, 2)),
+        "inner_state": spaces.Dict(
             {
                 "charge": spaces.Discrete(100),
                 "system_checks": spaces.MultiBinary(10),
-                "job_status": spaces.Dict({
-                    "task": spaces.Discrete(5),
-                    "progress": spaces.Box(low=0, high=100, shape=()),
-                }),
+                "job_status": spaces.Dict(
+                    {
+                        "task": spaces.Discrete(5),
+                        "progress": spaces.Box(low=0, high=100, shape=()),
+                    }
+                ),
             }
         ),
     }
 )
 
-gym_space_dict_of_boxes = gym.spaces.Dict(
+gymnasium_space_dict_of_boxes = gymnasium.spaces.Dict(
     {
-        tuple([
-            "control1",
-        ]): gym.spaces.Box(low=1, high=10, shape=(1, )),
-        tuple([
-            "control2",
-        ]): gym.spaces.Box(low=np.array([1]), high=np.array([10])),
-        tuple([
-            "control3",
-        ]): gym.spaces.Box(low=1, high=10, shape=()),
-        tuple([
-            "control4",
-            "control5",
-        ]): gym.spaces.Box(low=np.array([1, -10]), high=np.array([10, 1])),
+        ("control1",): gymnasium.spaces.Box(low=1, high=10, shape=(1,)),
+        ("control2",): gymnasium.spaces.Box(low=np.array([1]), high=np.array([10])),
+        ("control3",): gymnasium.spaces.Box(low=1, high=10, shape=()),
+        ("control4", "control5"): gymnasium.spaces.Box(low=np.array([1, -10]), high=np.array([10, 1])),
     }
 )
 
+
 def _check_nested_dict_keys(expected, actual):
     """Recursive function that checks the order of all keys and nested keys of a dict"""
-    if isinstance(expected, (dict, OrderedDict)) and isinstance(actual, (dict, OrderedDict)):
+    if isinstance(expected, dict | OrderedDict) and isinstance(actual, dict | OrderedDict):
         keys_expected = list(expected.keys())
         keys_actual = list(actual.keys())
         np.testing.assert_equal(
-            actual=keys_actual, desired=keys_expected,
-            err_msg=f'Order of the keys have changed. {keys_expected} != {keys_actual}')
+            actual=keys_actual, desired=keys_expected, err_msg=f"Order of the keys have changed. {keys_expected} != {keys_actual}"
+        )
 
-        values_expected = [value for value in expected.values() if isinstance(value, (dict, OrderedDict))]
-        values_actual = [value for value in actual.values() if isinstance(value, (dict, OrderedDict))]
+        values_expected = [value for value in expected.values() if isinstance(value, dict | OrderedDict)]
+        values_actual = [value for value in actual.values() if isinstance(value, dict | OrderedDict)]
         np.testing.assert_equal(len(values_expected), len(values_actual))
         for nested_dict_expected, nested_dict_actual in zip(values_expected, values_actual):
             _check_nested_dict_keys(nested_dict_expected, nested_dict_actual)
@@ -84,9 +78,9 @@ def _check_nested_dict_keys(expected, actual):
 
 def test_observation_pass_fail():
     """
-    copied the example from gym.spaces and made sure that works. then checked if observation is messed with it throws error
+    copied the example from gymnasium.spaces and made sure that works. then checked if observation is messed with it throws error
     """
-    observation_space = gym_default_observation_space
+    observation_space = gymnasium_default_observation_space
     observation = observation_space.sample()
     EnvSpaceUtil.deep_sanity_check_space_sample(space=observation_space, sample=observation)
 
@@ -103,13 +97,14 @@ def test_observation_type_mismatch():
     """
     observation_space = spaces.Dict(
         {
-            "sensors":
-            spaces.Dict(
+            "sensors": spaces.Dict(
                 {
-                    "front_cam": spaces.Tuple((
-                        spaces.Box(low=0, high=1, shape=(3, )),
-                        spaces.Box(low=0, high=1, shape=(3, )),
-                    )),
+                    "front_cam": spaces.Tuple(
+                        (
+                            spaces.Box(low=0, high=1, shape=(3,)),
+                            spaces.Box(low=0, high=1, shape=(3,)),
+                        )
+                    ),
                     "rear_cam": spaces.Box(low=0, high=1, shape=(10, 10, 3)),
                 }
             ),
@@ -127,11 +122,15 @@ def test_observation_box_as_list():
     """
     We must handle treating boxes as both numpy arrays and lists
     """
-    observation_space = spaces.Dict({
-        "sensors": spaces.Dict({
-            "rear_cam": spaces.Box(low=0, high=1, shape=(3, )),
-        }),
-    })
+    observation_space = spaces.Dict(
+        {
+            "sensors": spaces.Dict(
+                {
+                    "rear_cam": spaces.Box(low=0, high=1, shape=(3,)),
+                }
+            ),
+        }
+    )
     observation = observation_space.sample()
     # mess with the space and assert it throws error
     observation["sensors"]["rear_cam"] = [0.1, 0.2, 0.3]
@@ -139,7 +138,7 @@ def test_observation_box_as_list():
 
 
 def test_scale_space():
-    observation_space = gym_default_observation_space
+    observation_space = gymnasium_default_observation_space
     scale: float = 2.0
     scaled_space = EnvSpaceUtil.scale_space(observation_space, scale=scale)
     assert np.allclose(
@@ -153,7 +152,7 @@ def test_scale_space():
 
 
 def test_zero_mean_space_sample():
-    observation_space = gym_default_observation_space
+    observation_space = gymnasium_default_observation_space
     zero_mean_space = EnvSpaceUtil.zero_mean_space(observation_space)
     test_mean = (zero_mean_space["sensors"]["position"].low + zero_mean_space["sensors"]["position"].high) / 2.0
     assert np.allclose(np.zeros(shape=zero_mean_space["sensors"]["position"].shape), test_mean)
@@ -163,17 +162,17 @@ def test_zero_mean_space_sample():
 
 
 def test_normalize_space():
-    observation_space = gym_default_observation_space
+    observation_space = gymnasium_default_observation_space
     out_max = 0.5
     out_min = -0.5
     scaled_space = EnvSpaceUtil.normalize_space(observation_space, out_max=out_max, out_min=out_min)
 
-    assert isinstance(scaled_space, gym.spaces.Space)
+    assert isinstance(scaled_space, gymnasium.spaces.Space)
     assert np.allclose(scaled_space["sensors"]["position"].low, np.array([out_min] * 3))
 
 
 def test_get_zero_sample():
-    observation_space = gym_default_observation_space
+    observation_space = gymnasium_default_observation_space
     zero_space = EnvSpaceUtil.get_zero_sample_from_space(observation_space)
     assert np.allclose(
         np.zeros(observation_space["sensors"]["position"].shape),
@@ -182,14 +181,14 @@ def test_get_zero_sample():
 
 
 def test_get_mean_sample():
-    observation_space = gym_default_observation_space
+    observation_space = gymnasium_default_observation_space
     mean_space_sample = EnvSpaceUtil.get_mean_sample_from_space(observation_space)
     test_mean = (observation_space["sensors"]["position"].low + observation_space["sensors"]["position"].high) / 2.0
     assert np.allclose(test_mean, mean_space_sample["sensors"]["position"])
 
 
 def test_add_sample():
-    observation_space = gym_default_observation_space
+    observation_space = gymnasium_default_observation_space
     obs1 = observation_space.sample()
     obs2 = observation_space.sample()
     obsadd = EnvSpaceUtil.add_space_samples(observation_space, obs1, obs2)
@@ -200,26 +199,35 @@ def test_add_sample():
 
 
 def test_clip_space_sample():
-    observation_space = gym_default_observation_space
+    observation_space = gymnasium_default_observation_space
+    _Quantity = corl_get_ureg().Quantity
     obs1 = observation_space.sample()
     obs2 = observation_space.sample()
     obsadd = EnvSpaceUtil.add_space_samples(observation_space, obs1, obs2)
     for _ in range(50):
         obsadd = EnvSpaceUtil.add_space_samples(observation_space, obsadd, obs2)
-    clipped_ins = EnvSpaceUtil.clip_space_sample_to_space(obsadd, observation_space)
-    assert observation_space.contains(clipped_ins)
-    assert np.all(np.less_equal(
-        clipped_ins["sensors"]["position"],
-        observation_space["sensors"]["position"].high,
-    ))
-    assert np.all(np.greater_equal(
-        clipped_ins["sensors"]["position"],
-        observation_space["sensors"]["position"].low,
-    ))
+    import tree
+
+    obsass_w_units = tree.map_structure(lambda x: _Quantity(x, "dimensionless"), obsadd)
+    clipped_ins = EnvSpaceUtil.clip_space_sample_to_space(obsass_w_units, observation_space)
+    ununited = tree.map_structure(lambda x: x.m, clipped_ins)
+    assert observation_space.contains(ununited)
+    assert np.all(
+        np.less_equal(
+            clipped_ins["sensors"]["position"].m,
+            observation_space["sensors"]["position"].high,
+        )
+    )
+    assert np.all(
+        np.greater_equal(
+            clipped_ins["sensors"]["position"].m,
+            observation_space["sensors"]["position"].low,
+        )
+    )
 
 
 def test_scale_sample_from_space():
-    observation_space = gym_default_observation_space
+    observation_space = gymnasium_default_observation_space
     obs_sample = observation_space.sample()
     out_max = 0.5
     out_min = -0.5
@@ -237,7 +245,7 @@ def test_scale_sample_from_space():
 
 
 def test_unscale_sample_from_space():
-    observation_space = gym_default_observation_space
+    observation_space = gymnasium_default_observation_space
     out_max = 0.5
     out_min = -0.5
     scaled_space = EnvSpaceUtil.normalize_space(observation_space, out_max=out_max, out_min=out_min)
@@ -252,14 +260,18 @@ def test_unscale_sample_from_space():
         out_min=out_min,
     )
 
-    assert np.all(np.less_equal(
-        unscaled_sample["sensors"]["position"],
-        observation_space["sensors"]["position"].high,
-    ))
-    assert np.all(np.greater_equal(
-        unscaled_sample["sensors"]["position"],
-        observation_space["sensors"]["position"].low,
-    ))
+    assert np.all(
+        np.less_equal(
+            unscaled_sample["sensors"]["position"],
+            observation_space["sensors"]["position"].high,
+        )
+    )
+    assert np.all(
+        np.greater_equal(
+            unscaled_sample["sensors"]["position"],
+            observation_space["sensors"]["position"].low,
+        )
+    )
 
 
 def test_deep_merge_dict():
@@ -294,9 +306,9 @@ def test_observation_multidiscrete_as_np_integer():
         # mess with the space type and assert it throws an error
         (1, 1, 1),
         # mess with the space shape and assert it throws an error
-        np.ones(shape=(2, )),
+        np.ones(shape=(2,)),
         # mess with the space bounds and assert it throws an error
-        np.ones(shape=(3, )) * 5
+        np.ones(shape=(3,)) * 5,
     ]
 
     for bad_value in bad_values:
@@ -319,10 +331,10 @@ def test_observation_multibinary_as_np_integer():
         # mess with the space type and assert it throws an error
         (1, 1, 1),
         # mess with the space size and assert it throws an error
-        # Apparently this will pass because gym thinks this is valid... comment until confirm gym does this correctly
+        # Apparently this will pass because gymnasium thinks this is valid... comment until confirm gymnasium does this correctly
         # np.ones(shape=(2,)),
         # mess with the space bounds and assert it throws an error
-        np.ones(shape=(3, )) * 5
+        np.ones(shape=(3,)) * 5,
     ]
 
     for bad_value in bad_values:
@@ -335,58 +347,93 @@ def test_observation_multibinary_as_np_integer():
 @pytest.mark.parametrize(
     "input_space, output_type, valid",
     [
-        pytest.param(gym_default_observation_space, SingleLayerDict, True, id='MultiNestedDict -> SingleLayerDict'),
-        pytest.param(spaces.Dict({'parent_key': spaces.Dict({'child_key': spaces.Discrete(3)})}), spaces.Discrete, True, id='NestDictSingleDiscrete -> Discrete'),
-        pytest.param(gym_default_observation_space, spaces.Box, True, id='MultiNestedDict -> Box'),
-        pytest.param(gym_space_dict_of_boxes, spaces.Box, True, id='DictOfBoxes -> Box'),
-        pytest.param(spaces.MultiDiscrete([3,10]), spaces.Box, True, id='MultiDiscrete -> Box'),
-        pytest.param(spaces.Tuple((spaces.Discrete(3), spaces.Discrete(10))), spaces.Box, True, id='Tuple -> Box'),
-        pytest.param(spaces.MultiBinary([3,2]), spaces.Box, True, id='MultiBinary -> Box'),
-        pytest.param(spaces.Dict({'key_1':spaces.Discrete(3), 'key_2': spaces.Discrete(10)}), spaces.Discrete, False, id='DictMultiDiscrete -> Discrete'),
-        pytest.param(spaces.Dict({'key': spaces.Tuple((spaces.Discrete(3), spaces.Discrete(10)))}), spaces.Discrete, False, id='TupleMultiDiscrete -> Discrete'),
-        pytest.param(spaces.Dict({'key': spaces.Box(low=-100, high=100, shape=(3,))}), spaces.Discrete, False, id='Box -> Discrete'),
-        pytest.param(spaces.Dict({'key': spaces.MultiDiscrete([3,2])}), spaces.Discrete, False, id='MultiDiscrete -> Discrete'),
-        pytest.param(spaces.Dict({'key': spaces.MultiBinary([3,2])}), spaces.Discrete, False, id='MultiBinary -> Discrete')
+        pytest.param(gymnasium_default_observation_space, SingleLayerDict, True, id="MultiNestedDict -> SingleLayerDict"),
+        pytest.param(
+            spaces.Dict({"parent_key": spaces.Dict({"child_key": spaces.Discrete(3)})}),
+            spaces.Discrete,
+            True,
+            id="NestDictSingleDiscrete -> Discrete",
+        ),
+        pytest.param(gymnasium_default_observation_space, spaces.Box, True, id="MultiNestedDict -> Box"),
+        pytest.param(gymnasium_space_dict_of_boxes, spaces.Box, True, id="DictOfBoxes -> Box"),
+        pytest.param(spaces.MultiDiscrete([3, 10]), spaces.Box, True, id="MultiDiscrete -> Box"),
+        pytest.param(spaces.Tuple((spaces.Discrete(3), spaces.Discrete(10))), spaces.Box, True, id="Tuple -> Box"),
+        pytest.param(spaces.MultiBinary([3, 2]), spaces.Box, True, id="MultiBinary -> Box"),
+        pytest.param(
+            spaces.Dict({"key_1": spaces.Discrete(3), "key_2": spaces.Discrete(10)}),
+            spaces.Discrete,
+            False,
+            id="DictMultiDiscrete -> Discrete",
+        ),
+        pytest.param(
+            spaces.Dict({"key": spaces.Tuple((spaces.Discrete(3), spaces.Discrete(10)))}),
+            spaces.Discrete,
+            False,
+            id="TupleMultiDiscrete -> Discrete",
+        ),
+        pytest.param(spaces.Dict({"key": spaces.Box(low=-100, high=100, shape=(3,))}), spaces.Discrete, False, id="Box -> Discrete"),
+        pytest.param(spaces.Dict({"key": spaces.MultiDiscrete([3, 2])}), spaces.Discrete, False, id="MultiDiscrete -> Discrete"),
+        pytest.param(spaces.Dict({"key": spaces.MultiBinary([3, 2])}), spaces.Discrete, False, id="MultiBinary -> Discrete"),
     ],
 )
-def test_convert_gym_space_output_type(input_space, output_type, valid):
+def test_convert_gymnasium_space_output_type(input_space, output_type, valid):
     """
-    Test converting gym spaces
+    Test converting gymnasium spaces
     """
     if valid:
-        output = convert_gym_space(input_space=input_space, output_type=output_type)
+        output = convert_gymnasium_space(input_space=input_space, output_type=output_type)
         assert isinstance(output, output_type)
     else:
         with pytest.raises(ValueError) as exec_info:
-            convert_gym_space(input_space=input_space, output_type=output_type)
+            convert_gymnasium_space(input_space=input_space, output_type=output_type)
         print(exec_info)
+
 
 @pytest.mark.parametrize(
     "input_space, output_type",
     [
-        pytest.param(spaces.Dict({'parent_key': spaces.Dict({'child_key': spaces.Discrete(10)})}), spaces.Discrete, id='DictSingleDiscrete -> Discrete'),
-        pytest.param(spaces.Dict({'parent_key': spaces.Dict({'child_key': spaces.Discrete(10)})}), SingleLayerDict, id='DictSingleDiscrete -> SingleLayerDict'),
-        pytest.param(spaces.Dict({'key': spaces.Box(low=-5, high=5, shape=(3,), dtype=int)}), spaces.Box, id='DictSingleBox -> spaces.Box'),
-        pytest.param(spaces.Dict(
-            {'parent_key':
-                spaces.Dict({
-                    'child_key_2':
-                        spaces.Dict({
-                            'grandchild_key_b': spaces.Discrete(20),
-                            'grandchild_key_c': spaces.Discrete(200),
-                            'grandchild_key_a': spaces.Discrete(2)}),
-                    'child_key_1':
-                        spaces.Dict({
-                            'grandchild_key_bb': spaces.Discrete(20),
-                            'grandchild_key_cc': spaces.Discrete(200),
-                            'grandchild_key_aa': spaces.Discrete(2)})}
-                         )}),
-            SingleLayerDict, id='DictNestedDiscretes -> SingleLayerDict')
+        pytest.param(
+            spaces.Dict({"parent_key": spaces.Dict({"child_key": spaces.Discrete(10)})}),
+            spaces.Discrete,
+            id="DictSingleDiscrete -> Discrete",
+        ),
+        pytest.param(
+            spaces.Dict({"parent_key": spaces.Dict({"child_key": spaces.Discrete(10)})}),
+            SingleLayerDict,
+            id="DictSingleDiscrete -> SingleLayerDict",
+        ),
+        pytest.param(spaces.Dict({"key": spaces.Box(low=-5, high=5, shape=(3,), dtype=int)}), spaces.Box, id="DictSingleBox -> spaces.Box"),
+        pytest.param(
+            spaces.Dict(
+                {
+                    "parent_key": spaces.Dict(
+                        {
+                            "child_key_2": spaces.Dict(
+                                {
+                                    "grandchild_key_b": spaces.Discrete(20),
+                                    "grandchild_key_c": spaces.Discrete(200),
+                                    "grandchild_key_a": spaces.Discrete(2),
+                                }
+                            ),
+                            "child_key_1": spaces.Dict(
+                                {
+                                    "grandchild_key_bb": spaces.Discrete(20),
+                                    "grandchild_key_cc": spaces.Discrete(200),
+                                    "grandchild_key_aa": spaces.Discrete(2),
+                                }
+                            ),
+                        }
+                    )
+                }
+            ),
+            SingleLayerDict,
+            id="DictNestedDiscretes -> SingleLayerDict",
+        ),
     ],
 )
 def test_convert_sample(input_space, output_type):
     """Test converting samples"""
-    output_space = convert_gym_space(input_space=input_space, output_type=output_type)
+    output_space = convert_gymnasium_space(input_space=input_space, output_type=output_type)
 
     sample = input_space.sample()
 
@@ -403,14 +450,15 @@ def test_convert_sample(input_space, output_type):
     # Will fail if the keys of the dictionaries differ.
     _check_nested_dict_keys(expected=sample, actual=reverted_sample)
 
+
 @pytest.mark.parametrize(
     "dict_1, dict_2, should_fail",
     [
-        pytest.param({3: {4:5, 1:2}, 4:4}, OrderedDict({3: OrderedDict({4:5, 1:2}), 4:4}), False, id='SameOrder-DifferentDictType-1'),
-        pytest.param({3: {4:5, 1:2}, 4:4}, OrderedDict({3: {4:5, 1:2}, 4:4}), False, id='SameOrder-DifferentDictType-2'),
-        pytest.param({3: {4:5, 1:2}, 4:4}, {3: OrderedDict({4:5, 1:2}), 4:4}, False, id='SameOrder-DifferentDictType-3'),
-        pytest.param({3: {4:5, 1:2}, 4:4}, {3: {1:2, 4:5}, 4:4}, True, id='DifferentOrder-PythonDicts'),
-        pytest.param(OrderedDict({3: {4:5, 1:2}, 4:4}), OrderedDict({3: {1:2, 4:5}, 4:4}), True, id='DifferentOrder-OrderedDicts'),
+        pytest.param({3: {4: 5, 1: 2}, 4: 4}, OrderedDict({3: OrderedDict({4: 5, 1: 2}), 4: 4}), False, id="SameOrder-DifferentDictType-1"),
+        pytest.param({3: {4: 5, 1: 2}, 4: 4}, OrderedDict({3: {4: 5, 1: 2}, 4: 4}), False, id="SameOrder-DifferentDictType-2"),
+        pytest.param({3: {4: 5, 1: 2}, 4: 4}, {3: OrderedDict({4: 5, 1: 2}), 4: 4}, False, id="SameOrder-DifferentDictType-3"),
+        pytest.param({3: {4: 5, 1: 2}, 4: 4}, {3: {1: 2, 4: 5}, 4: 4}, True, id="DifferentOrder-PythonDicts"),
+        pytest.param(OrderedDict({3: {4: 5, 1: 2}, 4: 4}), OrderedDict({3: {1: 2, 4: 5}, 4: 4}), True, id="DifferentOrder-OrderedDicts"),
     ],
 )
 def test_check_nested_dict_keys(dict_1, dict_2, should_fail):

@@ -12,13 +12,18 @@ Contains abstract interfaces defining how to record an Evaluation outcome
 """
 import typing
 from abc import abstractmethod
+from pathlib import Path
 
 from corl.evaluation.evaluation_outcome import EvaluationOutcome
 
 
 class IRecord:
-    """Interface that represents a record that can save and load EvaluationOutcomes
-    """
+    """Interface that represents a record that can save and load EvaluationOutcomes"""
+
+    @property
+    @abstractmethod
+    def absolute_path(self) -> Path:
+        """Get the absolute path related to this record"""
 
     @abstractmethod
     def save(self, outcome: EvaluationOutcome) -> None:
@@ -37,7 +42,7 @@ class IRecord:
         """
 
 
-T = typing.TypeVar('T', bound=IRecord)
+T = typing.TypeVar("T", bound=IRecord)
 
 
 class IRecorder(typing.Generic[T]):
@@ -48,5 +53,4 @@ class IRecorder(typing.Generic[T]):
 
     @abstractmethod
     def resolve(self) -> T:
-        """Resolve the recorder and generate a Record
-        """
+        """Resolve the recorder and generate a Record"""

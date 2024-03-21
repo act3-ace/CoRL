@@ -12,7 +12,6 @@ This module extends corl.simulators.base_platform.BasePlatform to create a paddl
 used to interact with the pong
 """
 
-import typing
 from enum import Enum
 
 import pygame
@@ -22,15 +21,16 @@ from corl.simulators.base_platform import BasePlatform, BasePlatformValidator
 
 class PaddleType(str, Enum):
     """
-    Enumeration descriping the paddle side [left or right]
+    Enumeration describing the paddle side [left or right]
     """
-    LEFT = 'left'
-    RIGHT = 'right'
+
+    LEFT = "left"
+    RIGHT = "right"
 
 
 class PaddlePlatformValidator(BasePlatformValidator):
-    """Paddle platform validator
-    """
+    """paddle platform validator"""
+
     paddle_type: PaddleType
 
 
@@ -49,11 +49,11 @@ class PaddlePlatform(BasePlatform):
         in the pong game
     platform_config : dict
         Platform-specific configuration dictionary
-    paddle: Paddle
+    paddle: paddle
         The specific paddle object from the simulator
     """
 
-    def __init__(self, platform_name, parts_list, paddle_type, paddle):  # pylint: disable=W0613
+    def __init__(self, platform_name, parts_list, paddle_type, paddle) -> None:
         self.config: PaddlePlatformValidator
         super().__init__(
             platform_name=platform_name,
@@ -63,9 +63,9 @@ class PaddlePlatform(BasePlatform):
         self._last_move = pygame.K_0
         self.paddle = paddle
 
-    @property
-    def get_validator(self) -> typing.Type[PaddlePlatformValidator]:
-        """Retursn the paddle type associated with this platform
+    @staticmethod
+    def get_validator() -> type[PaddlePlatformValidator]:
+        """Returns the paddle type associated with this platform
 
         Returns
         -------
@@ -76,7 +76,7 @@ class PaddlePlatform(BasePlatform):
 
     @property
     def paddle_type(self) -> PaddleType:
-        """Retursn the paddle type associated with this platform
+        """Returns the paddle type associated with this platform
 
         Returns
         -------
@@ -101,7 +101,7 @@ class PaddlePlatform(BasePlatform):
 
     @property
     def operable(self):
-        """ a paddle without collision is useless so we mark it inoperable
+        """a paddle without collision is useless so we mark it inoperable
         allows us to test inoperable code paths in commander pong
         """
         return self.paddle.collision_on

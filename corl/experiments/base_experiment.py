@@ -11,31 +11,32 @@ limitation or restriction. See accompanying README and LICENSE for details.
 """
 
 import abc
-import argparse
-import collections
 import typing
+from collections.abc import MutableMapping
 
-from pydantic import BaseModel, PyObject, validator
+from pydantic import BaseModel, FilePath, ImportString, TypeAdapter, field_validator
 
 from corl.agents.base_agent import AgentParseBase, AgentParseInfo
+from corl.libraries.file_path import CorlDirectoryPath
 from corl.parsers.agent_and_platform import CorlAgentConfigArgs, CorlPlatformConfigArgs
 from corl.parsers.yaml_loader import load_file
 from corl.policies.base_policy import BasePolicyValidator
 
 
-class BaseAutoDetect:
-    """Base class interface for setting rllib config if in auto mode
+class ExperimentFileParse(BaseModel):
+    """[summary]
+    experiment_class: The experiment class to run
+    config: the configuration to pass to that experiment
     """
 
-    def autodetect_system(self) -> str:
-        """gets the default system based on user defined function
-
-        Returns
-        -------
-        str
-            the base system to use
-        """
-        return "local"
+    config: FilePath
+    compute_platform: str = "local"
+    platform_config: list[CorlPlatformConfigArgs]
+    agent_config: list[CorlAgentConfigArgs]
+    environment: str = "default"
+    name: str | None = None
+    output: CorlDirectoryPath | None = None
+    debug: bool = False
 
 
 class BaseExperimentValidator(BaseModel):
@@ -52,10 +53,10 @@ class BaseExperiment(abc.ABC):
     """
 
     def __init__(self, **kwargs) -> None:
-        self.config: BaseExperimentValidator = self.get_validator(**kwargs)
+        self.config: BaseExperimentValidator = self.get_validator()(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[BaseExperimentValidator]:
+    @staticmethod
+    def get_validator() -> type[BaseExperimentValidator]:
         """
         Get the validator for this experiment class,
         the kwargs sent to the experiment class will
@@ -65,7 +66,7 @@ class BaseExperiment(abc.ABC):
         return BaseExperimentValidator
 
     @property
-    def get_policy_validator(self) -> typing.Type[BasePolicyValidator]:
+    def get_policy_validator(self) -> type[BasePolicyValidator]:
         """
         Get the policy validator for this experiment class,
         the kwargs sent to the experiment class will
@@ -75,17 +76,16 @@ class BaseExperiment(abc.ABC):
         return BasePolicyValidator
 
     @abc.abstractmethod
-    def run_experiment(self, args: argparse.Namespace):
+    def run_experiment(self, args: ExperimentFileParse):
         """
         Runs the experiment associated with this experiment class
 
         Arguments:
-            args {argparse.Namespace} -- The args provided by the argparse
+            args {ExperimentFileParse} -- The args provided by the argparse
                                             in corl.train_rl
         """
 
-    def create_agents(self, platform_configs: typing.List[CorlPlatformConfigArgs],
-                      agent_configs: typing.List[CorlAgentConfigArgs]) -> typing.Tuple[dict, dict]:
+    def create_agents(self, platform_configs: list[CorlPlatformConfigArgs], agent_configs: list[CorlAgentConfigArgs]) -> tuple[dict, dict]:
         """Create the requested agents and add them to the environment configuration.
 
         Parameters
@@ -97,8 +97,9 @@ class BaseExperiment(abc.ABC):
         """
         platforms = {}
         for platform_config in platform_configs:
-            assert platform_config.name not in platforms, 'duplicate platforms not allowed'
-            platform_configuration = load_file(platform_config.config)
+            assert platform_config.name not in platforms, "duplicate platforms not allowed"
+            platform_configuration = platform_config.config
+
             platforms[platform_config.name] = platform_configuration
 
         agents = {}
@@ -110,19 +111,20 @@ class BaseExperiment(abc.ABC):
                     f"{platforms}"
                 )
 
-            config = load_file(agent_config.config)
+            config = agent_config.config
+            policy_config = agent_config.policy
 
             parsed_agent = AgentParseBase(**config)
-            policy_config = load_file(agent_config.policy)
-            parsed_policy = self.get_policy_validator(**policy_config)
+            _ = self.get_policy_validator(**policy_config)
 
-            agents[agent_config.name
-                   ] = AgentParseInfo(class_config=parsed_agent, platform_names=agent_config.platforms, policy_config=parsed_policy)
+            agents[agent_config.name] = AgentParseInfo(
+                class_config=parsed_agent, platform_names=agent_config.platforms, policy_config=policy_config
+            )
 
         return agents, platforms
 
     @staticmethod
-    def create_other_platforms(other_platforms_config: typing.Sequence[typing.Tuple[str, str]]) -> dict:
+    def create_other_platforms(other_platforms_config: typing.Sequence[tuple[str, str]]) -> dict:
         """Create the requested other platforms and add them to the environment configuration.
 
         Parameters
@@ -153,16 +155,14 @@ class BaseExperiment(abc.ABC):
             """
             Given a path, recursively generate a new dict or dict-of-dicts entry for target.
             """
-            new_dict = {}
             if len(local_path) == 1:
                 return {local_path[0]: value}
 
-            new_dict = {local_path.pop(0): _build_config_dict_entry(local_path, value)}
-            return new_dict
+            return {local_path.pop(0): _build_config_dict_entry(local_path, value)}
 
         if isinstance(target, list):
             target.append(_build_config_dict_entry(path, func(arg)))
-        elif isinstance(target, collections.abc.MutableMapping):
+        elif isinstance(target, MutableMapping):
             embedded_dict = target
             for key in path:
                 if key == path[-1]:
@@ -173,7 +173,7 @@ class BaseExperiment(abc.ABC):
             raise TypeError(f"Unsupported type: {type(target).__name__}")
 
     @staticmethod
-    def process_cli_args(config: dict, cli_args: argparse.Namespace):
+    def process_cli_args(config: dict, cli_args: ExperimentFileParse):
         """Modifies/overrides config fields with command line arguments."""
 
 
@@ -182,25 +182,14 @@ class ExperimentParse(BaseModel):
     experiment_class: The experiment class to run
     config: the configuration to pass to that experiment
     """
-    experiment_class: PyObject
-    auto_system_detect_class: typing.Optional[PyObject] = None
-    config: typing.Dict[str, typing.Any]
 
-    @validator('experiment_class')
-    def check_experiment_class(cls, v):
-        """
-        Validates the experiment class actually subclasses BaseExperiment Class
-        """
-        if not issubclass(v, BaseExperiment):
-            raise ValueError(f"Experiment functors must subclass BaseExperiment, but experiment {v}")
-        return v
+    experiment_class: type[BaseExperiment]
+    config: dict[str, typing.Any]
 
-    @validator('auto_system_detect_class')
-    def check_auto_system_detect_class(cls, v):
-        """
-        Validates the auto system detect class actually subclasses BaseAutoDetect Class
-        """
-        if v is not None:
-            if not issubclass(v, BaseAutoDetect):
-                raise ValueError(f"Experiment functors must subclass BaseAutoDetect, but experiment {v}")
+    @field_validator("experiment_class", mode="before")
+    @classmethod
+    def construct_experiment_class(cls, v):
+        """Convert string to callable"""
+        if not isinstance(v, type):
+            return TypeAdapter(ImportString).validate_python(v)
         return v

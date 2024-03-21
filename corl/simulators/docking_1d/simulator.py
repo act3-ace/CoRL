@@ -3,7 +3,6 @@ This module defines the Docking1dSimulator class which maintains environment obj
 and progresses a simulated training episode via the step() method.
 """
 
-import typing
 
 import numpy as np
 
@@ -19,6 +18,7 @@ class Docking1dSimulatorValidator(BaseSimulatorValidator):
 
     step_size: A float representing how many simulated seconds pass each time the simulator updates
     """
+
     step_size: float
 
 
@@ -32,7 +32,8 @@ class Docking1dSimulatorResetValidator(BaseSimulatorResetValidator):
         Contains individual initialization dicts for each agent.
         Key is platform name, value is platform's initialization dict.
     """
-    platform_config: typing.Optional[typing.Dict] = {}
+
+    platform_config: dict | None = {}
 
 
 class Docking1dSimulator(BaseSimulator):
@@ -51,9 +52,9 @@ class Docking1dSimulator(BaseSimulator):
     def get_reset_validator(self):
         return Docking1dSimulatorResetValidator
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self._state: BaseSimulatorState = None
+        self._state: BaseSimulatorState | None = None
         self.clock = 0.0
 
     def reset(self, config):
@@ -61,8 +62,8 @@ class Docking1dSimulator(BaseSimulator):
         self.clock = 0.0
 
         # construct entities ("Gets the platform object associated with each simulation entity.")
-        self.sim_entities = {}  # pylint: disable=attribute-defined-outside-init
-        for agent_id, agent_config in self.config.agent_configs.items():
+        self.sim_entities = {}
+        for agent_id in self.config.agent_configs:
             agent_reset_config = config.platforms.get(agent_id, {})
             self.sim_entities[agent_id] = Deputy1D(name=agent_id, **agent_reset_config)
 
@@ -78,7 +79,7 @@ class Docking1dSimulator(BaseSimulator):
 
     def step(self, platforms_to_action):
         for agent_id, platform in self._state.sim_platforms.items():
-            action = np.array(platform.get_applied_action(), dtype=np.float32)
+            action = np.asarray(platform.get_applied_action().m, dtype=np.float32)
             entity = self.sim_entities[agent_id]
             entity.step(action=action, step_size=self.config.step_size)
             platform.sim_time = self.clock
@@ -103,10 +104,10 @@ class Docking1dSimulator(BaseSimulator):
             for sensor in plat.sensors.values():
                 sensor.calculate_and_cache_measurement(state=self._state)
 
-    def mark_episode_done(self, done_info, episode_state):
+    def mark_episode_done(self, done_info, episode_state, metadata):
         pass
 
-    def save_episode_information(self, dones, rewards, observations):
+    def save_episode_information(self, dones, rewards, observations, observation_units):
         pass
 
 

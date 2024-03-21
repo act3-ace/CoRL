@@ -15,17 +15,17 @@ import collections
 import typing
 
 
-def get_dictionary_subset(data_dict: typing.Union[typing.Dict, typing.OrderedDict], keys: typing.List) -> typing.OrderedDict:
+def get_dictionary_subset(data_dict: dict | typing.OrderedDict, keys: typing.Collection) -> typing.OrderedDict:
     """
-    Create dictionary of input tupe with subset of values
+    Create dictionary of input tuple with subset of values
 
     Parameters
     ----------
     data_dict typing.Union[typing.Dict, typing.OrderedDict]: src dictionary
-    keys list: list of keys defining subset
+    keys Collection: collection of keys defining subset
 
     Returns
     -------
-    dictionary of input tupe with subset of values
+    dictionary of input tuple with subset of values
     """
     return collections.OrderedDict({key: data_dict[key] for key in keys if key in data_dict})

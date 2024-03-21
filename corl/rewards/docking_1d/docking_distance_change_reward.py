@@ -4,12 +4,12 @@ This module implements the Reward Functions and Reward Validators specific to th
 
 from collections import OrderedDict
 
+import gymnasium
 import numpy as np
 from numpy_ringbuffer import RingBuffer
 
-from corl.libraries.environment_dict import RewardDict
-from corl.libraries.state_dict import StateDict
 from corl.rewards.reward_func_base import RewardFuncBase, RewardFuncBaseValidator
+from corl.simulators.base_simulator_state import BaseSimulatorState
 from corl.simulators.common_platform_utils import get_platform_by_name, get_sensor_by_name
 
 
@@ -27,13 +27,13 @@ class DockingDistanceChangeReward(RewardFuncBase):
     This RewardFuncBase extension is responsible for calculating the reward associated with a change in agent position.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         self.config: DockingDistanceChangeRewardValidator
         super().__init__(**kwargs)
         self._dist_buffer = RingBuffer(capacity=2, dtype=float)
 
-    @property
-    def get_validator(self):
+    @staticmethod
+    def get_validator() -> type[DockingDistanceChangeRewardValidator]:
         """
         Method to return class's Validator.
         """
@@ -44,11 +44,11 @@ class DockingDistanceChangeReward(RewardFuncBase):
         observation: OrderedDict,
         action,
         next_observation: OrderedDict,
-        state: StateDict,
-        next_state: StateDict,
-        observation_space: StateDict,
-        observation_units: StateDict,
-    ) -> RewardDict:
+        state: BaseSimulatorState,
+        next_state: BaseSimulatorState,
+        observation_space: gymnasium.Space,
+        observation_units: OrderedDict,
+    ) -> float:
         """
         This method calculates the current position of the agent and compares it to the previous position. The
         difference is used to return a proportional reward.
@@ -72,11 +72,9 @@ class DockingDistanceChangeReward(RewardFuncBase):
 
         Returns
         -------
-        reward : RewardDict
+        reward
             The agent's reward for their change in distance.
         """
-
-        reward = RewardDict()
         val = 0
 
         deputy = get_platform_by_name(next_state, self.config.platform_names[0])
@@ -84,12 +82,10 @@ class DockingDistanceChangeReward(RewardFuncBase):
         deputy_position = position_sensor.get_measurement()
         chief_position = np.array([0])  # hardcoded to origin
 
-        distance = abs(chief_position - deputy_position)
+        distance = abs(chief_position - deputy_position.m)
         self._dist_buffer.append(distance[0])
 
         if len(self._dist_buffer) == 2:
-            val = self.config.scale * (self._dist_buffer[0] - self._dist_buffer[1])
+            val = self.config.scale * ((self._dist_buffer[0] - self._dist_buffer[1]) < 0)
 
-        reward[self.config.agent_name] = val
-
-        return reward
+        return val

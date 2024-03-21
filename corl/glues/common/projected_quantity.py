@@ -8,16 +8,16 @@ This is a US Government Work not subject to copyright protection in the US.
 The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
-Sensors for OpenAIGymSimulator
+Sensors for GymnasiumSimulator
 """
 import typing
 from collections import OrderedDict
-from functools import lru_cache
+from functools import cached_property
 
-import gym
 import numpy as np
 
 from corl.glues.base_dict_wrapper import BaseDictWrapperGlue
+from corl.libraries.property import BoxProp, DictProp
 
 
 class ProjectedQuantity(BaseDictWrapperGlue):
@@ -34,60 +34,45 @@ class ProjectedQuantity(BaseDictWrapperGlue):
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        if 'quantity' not in self.glues().keys():
-            raise KeyError('Missing key: quantity')
 
-    @lru_cache(maxsize=1)
-    def get_unique_name(self) -> str:
+        if "quantity" not in self.glues():
+            raise KeyError("Missing key: quantity")
+
         wrapped_name = self.glues()["quantity"].get_unique_name()
 
+        self._uname: str = ""
         if wrapped_name is None:
-            return "ProjectedQuantity"
-        return "Projected_" + wrapped_name
+            self._uname = "ProjectedQuantity"
+        else:
+            self._uname = f"Projected_{wrapped_name}"
 
-    @lru_cache(maxsize=1)
-    def observation_space(self):
-        tmp = self.glues()["quantity"].observation_space()
-        if not isinstance(tmp, gym.spaces.Dict):
-            raise RuntimeError("projected_quantity glue recieved an invalid observation from the glue it is wrapping")
-        wrapped_space = list(tmp.spaces.values())[0]
+    def get_unique_name(self) -> str:
+        return self._uname
+
+    @cached_property
+    def observation_prop(self):
+        if "quantity" not in self.glues():
+            raise KeyError("Missing key: quantity")
+
+        tmp = self.glues()["quantity"].observation_prop
+        if not isinstance(tmp, DictProp):
+            raise RuntimeError("projected_quantity glue received an invalid Prop from the glue it is wrapping")
+        wrapped_space = next(iter(tmp.spaces.values()))
         max_wrapped_obs = np.amax(np.array([np.abs(wrapped_space.low), np.abs(wrapped_space.high)]))
 
-        d = gym.spaces.dict.Dict()
-        d.spaces[self.Fields.PROJECTED_QUANTITY] = gym.spaces.Box(-max_wrapped_obs, max_wrapped_obs, shape=(1, ), dtype=np.float32)
-
-        return d
-
-    @lru_cache(maxsize=1)
-    def observation_units(self):
-        """
-        Returns Dict space with the units of the 'quantity' glue
-        """
-        d = gym.spaces.dict.Dict()
-        quantity_glue = self.glues()['quantity']
-        try:
-            d.spaces[self.Fields.PROJECTED_QUANTITY] = quantity_glue.config.output_units
-        except AttributeError:
-            d.spaces[self.Fields.PROJECTED_QUANTITY] = quantity_glue.observation_units()
-        return d
+        return DictProp(
+            spaces={self.Fields.PROJECTED_QUANTITY: BoxProp(low=[-max_wrapped_obs], high=[max_wrapped_obs], unit=wrapped_space.get_units())}
+        )
 
     def get_observation(self, other_obs: OrderedDict, obs_space, obs_units) -> typing.OrderedDict[str, np.ndarray]:
         d = OrderedDict()
 
         observations = {
-            k: list(v.get_observation(other_obs, obs_space, obs_units).values())[0]  # type: ignore
-            for k, v in self.glues().items()
-        }  # type: ignore[union-attr]
+            k: next(iter(v.get_observation(other_obs, obs_space, obs_units).values())).m for k, v in self.glues().items()  # type: ignore
+        }
 
-        projected_value = observations.pop('quantity')
+        projected_value = observations.pop("quantity")
         projected_value *= np.prod(np.cos(list(observations.values())))
 
-        d[self.Fields.PROJECTED_QUANTITY] = projected_value
-
+        d[self.Fields.PROJECTED_QUANTITY] = self.observation_prop[self.Fields.PROJECTED_QUANTITY].create_quantity(projected_value)
         return d
-
-    def action_space(self):
-        ...
-
-    def apply_action(self, action, observation, action_space, obs_space, obs_units):
-        ...

@@ -1,86 +1,55 @@
-"""
--------------------------------------------------------------------------------
-The Autonomous Capabilities Team (ACT3)/Autonomous Air Combat Operations
-Deep Reinforcement Learning (D-RL) Environment
+from typing import Annotated
 
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
--------------------------------------------------------------------------------
-"""
-
-from corl.libraries import units
+import numpy as np
 import pytest
+from pydantic import BaseModel, ValidationError
+
+from corl.libraries.units import Quantity, corl_get_ureg, corl_quantity, is_compatible, set_req_unit
 
 
 @pytest.mark.parametrize(
-    'initial_value, initial_units, resolved_units',
+    "u1_val, u1_unit, u2_val, u2_unit, truth",
     [
-        pytest.param(float(1.1), 'feet', units.Distance.Feet),
-        pytest.param(int(1), units.Speed.Knots, units.Speed.Knots),
-        pytest.param(True, units.Angle.Degree, units.Angle.Degree),
-        pytest.param('test_string', None, units.NoneUnitType.NoneUnit)
-    ]
+        pytest.param(5, "degree", 5, "meter", False),
+        pytest.param(5, "degree", 5, "dimensionless", False),
+        pytest.param(2, "radian", 2, "dimensionless", False),
+        pytest.param(1, "radian", 1, "radian", True),
+        pytest.param(1, "radian", 1, "degree", True),
+        pytest.param(1, "g0", 2, "standard_gravity", True),
+    ],
 )
-def test_storage_types(initial_value, initial_units, resolved_units):
-    val = units.ValueWithUnits(value=initial_value, units=initial_units)
-    assert type(val.value) == type(initial_value)
-    assert val.value == initial_value
-    assert val.units == resolved_units
-
-
-units_to_test = []
-for dim in units.Dimensions:
-    for unit in dim:
-        for str_unit in unit.value[1]:
-            units_to_test.append(pytest.param(str_unit, unit, id=f'{unit.name}_{str_unit}'))
-
-@pytest.mark.parametrize('test_str,truth', units_to_test)
-def test_storage_strings(test_str, truth):
-    test_unit = units.GetUnitFromStr(test_str)
-    assert test_unit == truth
-
-
-# These should be the "most usual" conversion so that anyone reading this file can confirm that the
-# test is proper.
-@pytest.mark.parametrize(
-    'initial_value, initial_units, converted_value, converted_units',
-    [
-        pytest.param(1.0, units.Distance.Feet, 12 * 2.54 / 100, units.Distance.Meter, id='feet_to_meter'),
-        pytest.param(1.0, units.Distance.Nautical_Mile, 1852, units.Distance.Meter, id='nautical_mile_to_meter'),
-        pytest.param(180.0, units.Angle.Degree, 3.14159, units.Angle.Rad, id='degree_to_radian'),
-        pytest.param(1800.0, units.Time.Second, 0.5, units.Time.Hour, id='second_to_hour'),
-        pytest.param(1.0, units.Speed.Meter_per_Sec, 1.94384, units.Speed.Knots, id='m/s_to_knots'),
-        pytest.param(12 * 2.54, units.Speed.Meter_per_Sec, 6000, units.Speed.Feet_per_Min, id='m/s_to_ft/min'),
-        pytest.param(12 * 2.54, units.Speed.Meter_per_Sec, 100, units.Speed.Feet_per_Sec, id='m/s_to_ft/s'),
-        pytest.param(90.0, units.AngularSpeed.degrees_per_sec, 3.14159 / 2, units.AngularSpeed.radians_per_sec, id='deg/s_to_rad/s'),
-        pytest.param(1.94384, units.Acceleration.knots_per_sec, 1, units.Acceleration.meter_per_sec_2, id='knot/s_to_m/s2'),
-        pytest.param(9.80665, units.Acceleration.meter_per_sec_2, 1.0, units.Acceleration.standard_gravity, id='m/s2_to_g'),
-        pytest.param(1.0, units.Weight.Kilogram, 2.20462, units.Weight.Pound, id='kg_to_lb'),
-    ]
-)
-def test_conversion(initial_value, initial_units, converted_value, converted_units):
-    val = units.ValueWithUnits(value=initial_value, units=initial_units)
-    assert val.as_units(converted_units) == pytest.approx(converted_value)
+def test_unit_compatibility_quantity(u1_val, u1_unit, u2_val, u2_unit, truth):
+    q1 = corl_quantity()(u1_val, u1_unit)
+    q2 = corl_quantity()(u2_val, u2_unit)
+    assert q1.is_compatible_with(q2.units) == truth
+    assert is_compatible(q1, q2) == truth
+    assert is_compatible(q1, u2_unit) == truth
+    assert is_compatible(q2, u1_unit) == truth
 
 
 @pytest.mark.parametrize(
-    'initial_value, initial_units, case, principal_value',
+    "value,unit,base_unit,passes_validation,validated_value",
     [
-        pytest.param(-270, units.Angle.Degree, units.ValueWithUnits.PrincipalValueNormalization.Positive, 90),
-        pytest.param(-135, units.Angle.Degree, units.ValueWithUnits.PrincipalValueNormalization.Positive, 225),
-        pytest.param(135, units.Angle.Degree, units.ValueWithUnits.PrincipalValueNormalization.Positive, 135),
-        pytest.param(270, units.Angle.Degree, units.ValueWithUnits.PrincipalValueNormalization.Positive, 270),
-        pytest.param(405, units.Angle.Degree, units.ValueWithUnits.PrincipalValueNormalization.Positive, 45),
-        pytest.param(-270, units.Angle.Degree, units.ValueWithUnits.PrincipalValueNormalization.Centered, 90),
-        pytest.param(-135, units.Angle.Degree, units.ValueWithUnits.PrincipalValueNormalization.Centered, -135),
-        pytest.param(135, units.Angle.Degree, units.ValueWithUnits.PrincipalValueNormalization.Centered, 135),
-        pytest.param(270, units.Angle.Degree, units.ValueWithUnits.PrincipalValueNormalization.Centered, -90),
-        pytest.param(405, units.Angle.Degree, units.ValueWithUnits.PrincipalValueNormalization.Centered, 45),
-    ]
+        pytest.param(5, "degree", "meter", False, None),
+        pytest.param(5, "degree", "dimensionless", False, None),
+        pytest.param(2, "radian", "dimensionless", False, None),
+        pytest.param(1, "radian", "radian", True, 1),
+        pytest.param(1, "radian", "degree", True, 57.29577951),
+        pytest.param(1, "g0", "standard_gravity", True, 1),
+        pytest.param(1, "g0", None, True, 1),
+    ],
 )
-def test_normalize(initial_value, initial_units, case, principal_value):
-    val = units.ValueWithUnits(value=initial_value, units=initial_units)
-    val.normalize_to_principal_value(case)
-    assert val.value == pytest.approx(principal_value)
+def test_quantity_validator(value, unit, base_unit, passes_validation, validated_value):
+    class TestValidator(BaseModel):
+        test_value: Annotated[Quantity, set_req_unit(base_unit)]
+
+    try:
+        validated = TestValidator(test_value={"value": value, "unit": unit, "dtype": "float32"})
+        assert np.isclose(validated.test_value.m, validated_value)
+        expected_units = base_unit if base_unit is not None else unit
+        assert corl_get_ureg().get_unit(validated.test_value.units) == corl_get_ureg().get_unit(expected_units)
+        assert passes_validation is True
+    except ValidationError:
+        assert passes_validation is False
+    except KeyError:
+        assert passes_validation is False

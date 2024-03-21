@@ -10,21 +10,21 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
 
-import typing
-from collections import deque
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
-class BaseSimulatorState(BaseModel):
+class BaseSimulatorState(BaseModel, extra=Extra.forbid):
     """
     Pydantic model containing a BaseClass for the state a simulator should return
     Other simulators may subclass this to return custom information
     """
-    sim_platforms: typing.Dict
+
+    sim_platforms: dict
     sim_time: float
-    user_data: typing.Dict = {}
-    episode_history: typing.Optional[deque]
-    episode_state: typing.Dict = {}
-    agent_episode_state: typing.Dict = {}
-    sim_update_rate: int = 1
+    user_data: dict = {}
+    # episode_history: defaultdict[str, deque] = defaultdict(partial(deque, maxlen=1000))
+    episode_state: dict = {}
+    agent_episode_state: dict = {}
+    simulator_info: dict = {}
+    sim_update_rate_hz: float = 1

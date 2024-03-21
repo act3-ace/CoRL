@@ -1,4 +1,0 @@
-source_folder: /home/vgangal/workspace/eval_framework_out/corl/docking1d/
-metrics_config: config/evaluation/metrics/1d_docking.yml
-alerts_config: config/evaluation/alerts/base_alerts.yml
-out_pickle: metrics.pkl

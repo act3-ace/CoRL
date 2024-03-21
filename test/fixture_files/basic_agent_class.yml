@@ -105,12 +105,10 @@
             "name": "AltitudeTarget",
             "functor": "corl.glues.common.target_value.TargetValue",
             "config":{
-                "target_value": 5000,
-                "unit": "meters",
+                "target_value": {"value": 5000, "unit": meters},
                 "limit": {
-                    "minimum": 2000,
-                    "maximum": 10000,
-                    "unit": meters
+                    "minimum": {"value": 2000, "unit": meters},
+                    "maximum": {"value": 10000, "unit": meters},
                 }
             },
         },
@@ -118,25 +116,23 @@
             "name": "HeadingTarget",
             "functor": "corl.glues.common.target_value.TargetValue",
             "config":{
-                "target_value": 0.785398,
+                "target_value": {"value": 0.785398, "unit": rad},
                 "unit": "radians",
                 "limit": {
-                    "minimum": -3.2,
-                    "maximum": 3.2,
-                    "unit": radians
+                    "minimum": {"value": -3.2, "unit": radians},
+                    "maximum": {"value": 3.2, "unit": radians},
                 }
             }
         },
         {
-            "name": "KcasTarget",
+            "name": "knotTarget",
             "functor": "corl.glues.common.target_value.TargetValue",
             "config":{
-                "target_value": 250,
-                "unit": "KCAS",
+                "target_value": {"value": 250, "unit": knot},
+                "unit": "knot",
                 "limit": {
-                    "minimum": 100,
-                    "maximum": 500,
-                    "unit": KCAS
+                    "minimum": {"value": 100, "unit": knot},
+                    "maximum": {"value": 500, "unit": knot},
                 }
             }
         },
@@ -149,12 +145,11 @@
                 },
             },
             "config":{
-                "target_value": 5000,
-                "unit": "meters",
+                "target_value": {"value": 5000, "unit": meters},
+                "unit": "meter",
                 "limit": {
-                    "minimum": -5000,
-                    "maximum": 5000,
-                    "unit": meters
+                    "minimum": {"value": -5000, "unit": meters},
+                    "maximum": {"value": 5000, "unit": meters},
                 }
             }
         },
@@ -167,14 +162,12 @@
                 },
             }
             "config":{
-                "target_value": 0.785398,
-                "unit": "radians",
+                "target_value": {"value": 0.785398, "unit": radians},
                 "is_rad": True,
                 "is_wrap": True,
                 "limit": {
-                    "minimum": -6.4,
-                    "maximum": 6.4,
-                    "unit": "radians"
+                    "minimum": {"value": -6.4, "unit": radians},
+                    "maximum": {"value": 6.4, "unit": radians},
                 }
             }
         },
@@ -187,12 +180,11 @@
                 },
             },
             "config":{
-                "target_value": 250,
+                "target_value": {"value": 250, "unit": knots},
                 "unit": "knots",
                 "limit": {
-                    "minimum": -500,
-                    "maximum": 500,
-                    "unit": "knots"
+                    "minimum": {"value": -500, "unit": knots},
+                    "maximum": {"value": 500, "unit": knots},
                 }
             }
         },

@@ -1,0 +1,4 @@
+# This config defines parameters used to initialize the agent, including platform parts, initial state
+# (simulator_reset_parameters), glues, dones, and rewards.
+
+"test": true

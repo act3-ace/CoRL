@@ -10,7 +10,6 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
 
-import typing
 
 from corl.episode_parameter_providers import EpisodeParameterProvider, ParameterModel, Randomness
 
@@ -18,5 +17,8 @@ from corl.episode_parameter_providers import EpisodeParameterProvider, Parameter
 class SimpleParameterProvider(EpisodeParameterProvider):
     """EpisodeParameterProvider that does nothing but return the default."""
 
-    def _do_get_params(self, rng: Randomness) -> typing.Tuple[ParameterModel, typing.Union[int, None]]:
-        return self.config.parameters, None
+    def reset(self):
+        ...
+
+    def _do_get_params(self, rng: Randomness, env_epp_ctx: dict | None) -> tuple[ParameterModel, int | None, dict | None]:
+        return self.config.parameters, None, env_epp_ctx

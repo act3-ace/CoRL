@@ -18,9 +18,8 @@ Enum = typing.TypeVar("Enum")
 
 
 @dataclasses.dataclass
-class Discrete(typing.Generic[Enum], TerminalMetric):
-    """Terminal Metric to contain a value of an enumeration
-    """
+class Discrete(typing.Generic[Enum], TerminalMetric):  # noqa: PLW1641
+    """Terminal Metric to contain a value of an enumeration"""
 
     value: Enum
 

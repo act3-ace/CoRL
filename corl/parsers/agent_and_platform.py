@@ -9,51 +9,47 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
-import typing
+from pathlib import Path
+from typing import Annotated, Any
 
-import jsonargparse
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel, BeforeValidator
+
+from corl.parsers.yaml_loader import load_file
 
 
-@dataclass
-@jsonargparse.typing.final
-class CorlPlatformConfigArgs:
+def try_load_file(value: dict[str, Any] | (str | Path)) -> dict[str, Any]:
+    if isinstance(value, str | Path):
+        return load_file(value)
+    return value
+
+
+class CorlPlatformConfigArgs(BaseModel):
     """
     name: name of the platform
     config: path to the config file this platform should be configured with
     """
+
     name: str
-    config: str
+    config: Annotated[dict[str, Any], BeforeValidator(try_load_file)]
 
 
-@dataclass
-@jsonargparse.typing.final
-class CorlPlatformsConfigArgs:
+class CorlPlatformsConfigArgs(BaseModel):
     """
     platform_config: list of platforms
     """
-    platform_config: typing.List[CorlPlatformConfigArgs]
+
+    platform_config: list[CorlPlatformConfigArgs]
 
 
-@dataclass
-@jsonargparse.typing.final
-class CorlAgentConfigArgs:
+class CorlAgentConfigArgs(BaseModel):
     """
     name: name of the agent
     platforms: a list of platforms the agent at least partially controls
     config: path to the agent config for this agent
     policy: path to the policy config for this agent
     """
+
     name: str
-    platforms: typing.List[str]
-    config: str
-    policy: str
-
-
-@dataclass
-@jsonargparse.typing.final
-class CorlAgentsConfigArgs:
-    """
-    agent_config: list of agents
-    """
-    agent_config: typing.List[CorlAgentConfigArgs]
+    platforms: list[str]
+    config: Annotated[dict[str, Any], BeforeValidator(try_load_file)]
+    policy: Annotated[dict[str, Any], BeforeValidator(try_load_file)]

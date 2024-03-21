@@ -9,7 +9,6 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
-import typing
 
 from corl.evaluation.metrics.generator import MetricGeneratorAggregator
 from corl.evaluation.metrics.metric import Metric
@@ -18,8 +17,7 @@ from corl.evaluation.util.condition import Condition
 
 
 class CriteriaRate(MetricGeneratorAggregator):
-    """Aggregate a metric by determining the rate which a criteria is established
-    """
+    """Aggregate a metric by determining the rate which a criteria is established"""
 
     condition: Condition
 
@@ -27,7 +25,7 @@ class CriteriaRate(MetricGeneratorAggregator):
         super().__init__(**data)
         self.condition = Condition(**data["condition"])
 
-    def generate_metric(self, params: typing.Union[typing.List[Metric], Metric], **kwargs) -> Metric:
+    def generate_metric(self, params: list[Metric] | Metric, **kwargs) -> Metric:
         """Generate the metric
 
         Arguments:
@@ -40,10 +38,5 @@ class CriteriaRate(MetricGeneratorAggregator):
         if isinstance(params, Metric):
             raise RuntimeError("Metrics given to Criteria Rate must be a list (that is an aggregation of lower scope)")
 
-        occurrence = 0
-        for item in params:
-            if self.condition.func(item):  # type: ignore # I don't know why mypy doesn't like this statement
-                occurrence += 1
-
-        metric = Rate(occurrence, len(params))
-        return metric
+        occurrence = sum(bool(self.condition.func(item)) for item in params)
+        return Rate(occurrence, len(params))

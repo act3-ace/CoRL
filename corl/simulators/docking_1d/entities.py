@@ -4,26 +4,26 @@ calculate state transitions between time steps, given applied controls. In this 
 a 1D Double Integrator.
 """
 
-from typing import Optional, Tuple, Union
+import typing
 
 import numpy as np
 import scipy.integrate
 import scipy.spatial
-from pydantic import BaseModel
-
-from corl.libraries.units import ValueWithUnits
+from pydantic import BaseModel, ConfigDict
 
 
 class Deputy1dValidator(BaseModel):
     """
     This module validates that Deputy1D configs contain a name and initial state values.
     """
+
     name: str
-    x: ValueWithUnits = ValueWithUnits(value=0)
-    xdot: ValueWithUnits = ValueWithUnits(value=0)
+    x: typing.Any = None
+    xdot: typing.Any = None
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-class Deputy1D:
+class Deputy1D:  # noqa: PLW1641
     """
     1D point mass spacecraft with a +/- thruster and Double Integrator dynamics
 
@@ -50,7 +50,7 @@ class Deputy1D:
         self.name = self.config.name
         self.dynamics = Docking1dDynamics(m=m, integration_method=integration_method)
 
-        self.control_default = np.zeros((1, ))
+        self.control_default = np.zeros((1,))
         self.control_min = -1.0
         self.control_max = 1.0
 
@@ -60,8 +60,7 @@ class Deputy1D:
     def __eq__(self, other):
         if isinstance(other, Deputy1D):
             eq = (self.velocity == other.velocity).all()
-            eq = eq and (self.position == other.position).all()
-            return eq
+            return eq and (self.position == other.position).all()
         return False
 
     @classmethod
@@ -89,11 +88,10 @@ class Deputy1D:
 
         if action is None:
             control = self.control_default.copy()
+        elif isinstance(action, np.ndarray):
+            control = action.copy()
         else:
-            if isinstance(action, np.ndarray):
-                control = action.copy()
-            else:
-                raise ValueError("action must be type np.ndarray")
+            raise ValueError("action must be type np.ndarray")
 
         # enforce control bounds
         control = np.clip(control, self.control_min, self.control_max)
@@ -103,8 +101,7 @@ class Deputy1D:
 
     def _build_state(self):
         # builds initial state?
-        state = np.array([self.config.x.value, self.config.xdot.value], dtype=np.float32)
-        return state
+        return np.array([self.config.x.m, self.config.xdot.m], dtype=np.float32)
 
     @property
     def state(self) -> np.ndarray:
@@ -162,16 +159,16 @@ class Docking1dDynamics:
         When ndarray, each element defines the angle wrap center of the corresponding state element.
         Wrapping not applied when element is NaN.
     integration_method : string
-        Numerical integration method used by dyanmics solver. One of ['RK45', 'Euler'].
+        Numerical integration method used by dynamics solver. One of ['RK45', 'Euler'].
         'RK45' is slow but very accurate.
         'Euler' is fast but very inaccurate.
     """
 
     def __init__(
         self,
-        state_min: Union[float, np.ndarray] = -np.inf,
-        state_max: Union[float, np.ndarray] = np.inf,
-        angle_wrap_centers: Optional[np.ndarray] = None,
+        state_min: float | np.ndarray = -np.inf,
+        state_max: float | np.ndarray = np.inf,
+        angle_wrap_centers: np.ndarray | None = None,
         m: float = 12.0,
         integration_method: str = "RK45",
     ):
@@ -182,7 +179,7 @@ class Docking1dDynamics:
         self.A, self.B = self._gen_dynamics_matrices()
         self.integration_method = integration_method
 
-    def step(self, step_size: float, state: np.ndarray, control: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def step(self, step_size: float, state: np.ndarray, control: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """
         Computes the dynamics state transition from the current state and control input
 
@@ -202,7 +199,7 @@ class Docking1dDynamics:
         """
 
         if self.integration_method == "RK45":
-            sol = scipy.integrate.solve_ivp(self.compute_state_dot, (0, step_size), state, args=(control, ))
+            sol = scipy.integrate.solve_ivp(self.compute_state_dot, (0, step_size), state, args=(control,))
 
             next_state = sol.y[:, -1]  # save last timestep of integration solution
             state_dot = self.compute_state_dot(step_size, next_state, control)
@@ -218,12 +215,11 @@ class Docking1dDynamics:
         if self.angle_wrap_centers is not None:
             wrap_idxs = np.logical_not(np.isnan(self.angle_wrap_centers))
 
-            wrapped_state[wrap_idxs] = \
-                ((wrapped_state[wrap_idxs] + np.pi) % (2 * np.pi)) - np.pi + self.angle_wrap_centers[wrap_idxs]
+            wrapped_state[wrap_idxs] = ((wrapped_state[wrap_idxs] + np.pi) % (2 * np.pi)) - np.pi + self.angle_wrap_centers[wrap_idxs]
 
         return wrapped_state
 
-    def compute_state_dot(self, t: float, state: np.ndarray, control: np.ndarray) -> np.ndarray:  # pylint: disable=unused-argument
+    def compute_state_dot(self, t: float, state: np.ndarray, control: np.ndarray) -> np.ndarray:
         """
         Computes the instataneous time derivative of the state vector
 

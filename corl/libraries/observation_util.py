@@ -9,11 +9,12 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
-from typing import Callable, Dict, OrderedDict, Tuple, Union
+from collections import OrderedDict
+from collections.abc import Callable
 
 import numpy as np
 
-ObsType = Union[np.ndarray, Tuple, Dict]
+ObsType = np.ndarray | tuple | dict
 
 
 def mutate_observations(observations: OrderedDict, mutate_fn: Callable[[str, str, ObsType], ObsType]) -> OrderedDict:
@@ -42,7 +43,6 @@ def mutate_observations(observations: OrderedDict, mutate_fn: Callable[[str, str
             mutated_obs = mutate_fn(agent_id, obs_name, obs)
 
             if mutated_obs is not None:
-
                 if agent_id not in mutated_observation_dict:
                     mutated_observation_dict[agent_id] = OrderedDict()
 
@@ -71,6 +71,5 @@ def filter_observations(observations: OrderedDict, filter_fn: Callable[[str, str
         the filtered observation samples
     """
     return mutate_observations(
-        observations,
-        lambda agent_id, obs_name, obs: obs if filter_fn(agent_id, obs_name, obs) else None  # type: ignore
-    )  # type: ignore
+        observations, lambda agent_id, obs_name, obs: obs if filter_fn(agent_id, obs_name, obs) else None  # type: ignore
+    )

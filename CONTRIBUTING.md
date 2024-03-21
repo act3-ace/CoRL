@@ -6,30 +6,31 @@ First off, thanks for taking the time to contribute!
 
 ### Reporting Bugs
 
-Bugs are tracked as [GitHub](https://github.com/act3-ace/CoRL/issues) issues. Create an issue and provide 
+Bugs are tracked as [GitHub](https://github.com/act3-ace/CoRL/issues) issues. Create an issue and provide
 the following information by filling in the `Bug` template.
 
-Explain the problem and include additional details to help maintainers 
+Explain the problem and include additional details to help maintainers
 reproduce the problem:
+
 - Use a clear and descriptive title for the issue to identify the problem.
-- Describe the exact steps which reproduce the problem in as many details as 
+- Describe the exact steps which reproduce the problem in as many details as
   possible.
-- Provide specific examples to demonstrate the steps. 
-- Describe the behavior you observed after following the steps and point out 
+- Provide specific examples to demonstrate the steps.
+- Describe the behavior you observed after following the steps and point out
   what exactly is the problem with that behavior.
 - Explain which behavior you expected to see instead and why.
 
 ### Suggesting Enhancements
 
-Enhancement suggestions are tracked as [GitHub](https://github.com/act3-ace/CoRL/issues) issues. Create an 
+Enhancement suggestions are tracked as [GitHub](https://github.com/act3-ace/CoRL/issues) issues. Create an
 issue and provide the following information by filling in the `Enhancement`
 template:
 
 - Use a clear and descriptive title for the issue to identify the suggestion.
-- Provide a step-by-step description of the suggested enhancement in as many 
+- Provide a step-by-step description of the suggested enhancement in as many
   details as possible.
 - Provide specific examples to demonstrate the steps.
-- Describe the current behavior and explain which behavior you expected to see 
+- Describe the current behavior and explain which behavior you expected to see
   instead and why.
 
 ## Styleguides
@@ -37,6 +38,6 @@ template:
 ### Documentation Styleguide
 
 - Use [GitHub Markdown](https://help.github.com/en/categories/writing-on-github)
-- Documentation has a column limit of 80 characters (some exceptions include 
+- Documentation has a column limit of 80 characters (some exceptions include
   tables, URLs, code excerpts)
 - Use space characters for indentation (do not use tab characters)

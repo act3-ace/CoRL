@@ -1,0 +1,10 @@
+config: config/tasks/gymnasium/tasks/cartpole_v1.yml
+platform_config:
+  - name: blue0
+    config: config/tasks/gymnasium/platforms/gymnasium_platform.yml
+agent_config:
+  - name: blue0_ctrl
+    platforms: [blue0]
+    config: config/tasks/gymnasium/agents/gymnasium_agent_repeated.yml
+    policy: config/policy/ppo/default_config.yml
+compute_platform: local

@@ -10,39 +10,37 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
 import abc
-import typing
 from collections import OrderedDict
 
-from corl.libraries.environment_dict import RewardDict
-from corl.libraries.state_dict import StateDict
+import gymnasium
+from pydantic import ConfigDict
+
 from corl.rewards.reward_func_base import RewardFuncBase, RewardFuncBaseValidator
+from corl.simulators.base_simulator_state import BaseSimulatorState
 
 
 class BaseWrapperRewardValidator(RewardFuncBaseValidator):
     """
     wrapped - the wrapped reward instance
     """
-    wrapped: RewardFuncBase
 
-    class Config:  # pylint: disable=C0115, R0903
-        arbitrary_types_allowed = True
+    wrapped: RewardFuncBase
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class BaseWrapperReward(RewardFuncBase):
-    """A base object that rewards can inherit in order to "wrap" a single reward instance
-    """
+    """A base object that rewards can inherit in order to "wrap" a single reward instance"""
 
     def __init__(self, **kwargs) -> None:
         self.config: BaseWrapperRewardValidator
         super().__init__(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[BaseWrapperRewardValidator]:
+    @staticmethod
+    def get_validator() -> type[BaseWrapperRewardValidator]:
         return BaseWrapperRewardValidator
 
     def reward(self) -> RewardFuncBase:
-        """Get the wrapped reward instance
-        """
+        """Get the wrapped reward instance"""
         return self.config.wrapped
 
     @abc.abstractmethod
@@ -51,9 +49,9 @@ class BaseWrapperReward(RewardFuncBase):
         observation: OrderedDict,
         action,
         next_observation: OrderedDict,
-        state: StateDict,
-        next_state: StateDict,
-        observation_space: StateDict,
-        observation_units: StateDict,
-    ) -> RewardDict:
+        state: BaseSimulatorState,
+        next_state: BaseSimulatorState,
+        observation_space: gymnasium.Space,
+        observation_units: OrderedDict,
+    ) -> float:
         ...

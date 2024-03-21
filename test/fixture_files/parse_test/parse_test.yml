@@ -1,0 +1,6 @@
+# This config defines parameters used to initialize the agent, including platform parts, initial state
+# (simulator_reset_parameters), glues, dones, and rewards.
+
+root: !include "config/policy/ppo/default_config.yml"
+relative: !include "./parse_test2.yml"
+site_pkg: !include corl_tmp_pkg/config/test_config.yml

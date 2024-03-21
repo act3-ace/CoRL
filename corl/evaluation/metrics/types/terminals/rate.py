@@ -19,14 +19,12 @@ from corl.evaluation.metrics.metric import TerminalMetric
 
 @dataclasses.dataclass
 class Rate(TerminalMetric):
-    """Terminal Metric to represent the number of occurrences of an event vs total
-    """
+    """Terminal Metric to represent the number of occurrences of an event vs total"""
 
     occurrence: int
     total: int
 
     def __add__(self, rhs: typing.Any) -> Rate:
-
         if isinstance(rhs, Rate):
             return Rate(self.occurrence + rhs.occurrence, self.total + rhs.total)
         raise NotImplementedError()
@@ -35,7 +33,6 @@ class Rate(TerminalMetric):
         raise RuntimeError("Can not divide a Rate metric")
 
     def __lt__(self, rhs: typing.Any) -> bool:
-
         if isinstance(rhs, Rate):
             raise NotImplementedError()
         if isinstance(rhs, int):
@@ -45,7 +42,6 @@ class Rate(TerminalMetric):
         raise RuntimeError(f"Unknown how to compute lt operator between Rate and {type(rhs)}")
 
     def __gt__(self, rhs: typing.Any) -> bool:
-
         if isinstance(rhs, Rate):
             raise NotImplementedError()
         if isinstance(rhs, int):
@@ -55,7 +51,6 @@ class Rate(TerminalMetric):
         raise RuntimeError(f"Unknown how to compute lt operator between Rate and {type(rhs)}")
 
     def __sub__(self, rhs: typing.Any) -> Rate:
-
         if isinstance(rhs, Rate):
             raise NotImplementedError()
         if isinstance(rhs, int):

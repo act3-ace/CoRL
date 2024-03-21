@@ -8,14 +8,13 @@ This is a US Government Work not subject to copyright protection in the US.
 The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
-Abstaction Class for 6DOF platform types that can provide
+Abstraction Class for 6DOF platform types that can provide
 some properties for common usage
 """
 import abc
 
-import numpy as np
-
 import corl.simulators.six_dof.base_six_dof_properties as six_dof_props
+from corl.libraries.units import Quantity
 from corl.simulators.base_platform import BasePlatform
 
 
@@ -28,7 +27,7 @@ class Base6DOFPlatform(BasePlatform):
 
     @property
     @abc.abstractmethod
-    def position(self) -> np.ndarray:
+    def lat_lon(self) -> Quantity:
         """
         The position of the object in space. Details on the position format are provided by position_properties
 
@@ -38,11 +37,25 @@ class Base6DOFPlatform(BasePlatform):
             The position of the object in space
         """
 
-    position_properties = six_dof_props.LatLonAltProp()
+    position_properties = six_dof_props.LatLonProp()
 
     @property
     @abc.abstractmethod
-    def orientation(self) -> np.ndarray:
+    def altitude(self) -> Quantity:
+        """
+        The position of the object in space. Details on the position format are provided by position_properties
+
+        Returns
+        -------
+        np.ndarray
+            The position of the object in space
+        """
+
+    altitude_properties = six_dof_props.AltitudePropMeters()
+
+    @property
+    @abc.abstractmethod
+    def orientation(self) -> Quantity:
         """
         The orientation of the platform. For orientation formatting see orientation_properties
 
@@ -56,7 +69,7 @@ class Base6DOFPlatform(BasePlatform):
 
     @property
     @abc.abstractmethod
-    def velocity_ned(self) -> np.ndarray:
+    def velocity_ned(self) -> Quantity:
         """get the velocity in true airspeed NED (m/s)
 
         Returns:
@@ -70,7 +83,7 @@ class Base6DOFPlatform(BasePlatform):
 
     @property
     @abc.abstractmethod
-    def acceleration_ned(self) -> np.ndarray:
+    def acceleration_ned(self) -> Quantity:
         """gets the acceleration in the NED
 
         Returns:
@@ -81,11 +94,12 @@ class Base6DOFPlatform(BasePlatform):
 
     @property
     @abc.abstractmethod
-    def speed(self) -> np.ndarray:
+    def speed(self) -> Quantity:
         """Get the speed of the platform
 
         Returns:
             np.ndarray -- The true airspeed of the platform in m/s
         """
 
-    speed_properties = six_dof_props.TrueAirSpeedProp(name="speed", high=[1700.0], unit=["mpstas"], description="true airspeed in m/s")
+    # TODO FIX THIS
+    speed_properties = six_dof_props.TrueAirSpeedProp(name="speed", high=[1700.0], unit="mpstas", description="true airspeed in m/s")

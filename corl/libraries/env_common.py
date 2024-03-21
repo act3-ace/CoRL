@@ -11,12 +11,10 @@ limitation or restriction. See accompanying README and LICENSE for details.
 Environment Common Module
 """
 
-# pylint: disable=too-few-public-methods
-
 
 class EnvCommonValues:
-    """Environment Common Values
-    """
+    """Environment Common Values"""
+
     METERS_TO_FEET = 3.28084
     FEET_TO_METERS = 0.3048
     MACH_TO_METERS_PER_SECOND = 343
@@ -32,8 +30,8 @@ class EnvCommonValues:
 
 
 class EnvCommonStrings:
-    """Environment Common Strings
-    """
+    """Environment Common Strings"""
+
     SLANT_RANGE_RATE = "range_change_rate"
     SLANT_RANGE = "range"
     ASPECT_ANGLE = "aspect_angle"

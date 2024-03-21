@@ -25,14 +25,14 @@ class StatusCode(MetricGeneratorTerminalEventScope):
     Metric: Discrete
     Scope: Event
     """
+
     done_condition: str
 
     def generate_metric(self, params: EpisodeArtifact, **kwargs) -> Metric:
-
         if "agent_id" not in kwargs:
-            raise RuntimeError("Expecting \"agent_id\" to be provided")
+            raise RuntimeError('Expecting "agent_id" to be provided')
 
-        agent_id = kwargs["agent_id"].split('.')[0]
+        agent_id = kwargs["agent_id"].split(".")[0]
 
         return Discrete[DoneStatusCodes](params.episode_state[agent_id][self.done_condition])
 
@@ -44,10 +44,9 @@ class DonesVec(MetricGeneratorTerminalEventScope):
     Scope: Event
     """
 
-    def generate_metric(self, params: EpisodeArtifact, **kwargs) -> Metric:
-
+    def generate_metric(self, params: EpisodeArtifact, **kwargs) -> Metric:  # noqa: PLR6301
         if "agent_id" not in kwargs:
-            raise RuntimeError("Expecting \"agent_id\" to be provided")
+            raise RuntimeError('Expecting "agent_id" to be provided')
 
         agent_id = kwargs["agent_id"]
 

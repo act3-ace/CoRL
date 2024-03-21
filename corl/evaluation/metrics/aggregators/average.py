@@ -19,10 +19,9 @@ from corl.evaluation.metrics.types.terminals.void import Void
 
 
 class Average(MetricGeneratorAggregator):
-    """Aggregate by averaging. That is sum total and divide by number of occurrences
-    """
+    """Aggregate by averaging. That is sum total and divide by number of occurrences"""
 
-    def generate_metric(self, params: typing.Union[typing.List[Metric], Metric], **kwargs) -> Metric:
+    def generate_metric(self, params: list[Metric] | Metric, **kwargs) -> Metric:  # noqa: PLR6301
         """Generate the metric
 
         Arguments:
@@ -32,9 +31,8 @@ class Average(MetricGeneratorAggregator):
             Metric -- Computed Metric
         """
 
-        arr: typing.List[typing.Any]
+        arr: list[typing.Any]
         if isinstance(params, NonTerminalMetric):
-
             if isinstance(params, Vector):
                 arr = params.arr
             else:
@@ -45,24 +43,16 @@ class Average(MetricGeneratorAggregator):
         else:
             RuntimeError("Must either given a NonTerminalMetric or a list of terminals")
 
-        total: typing.Optional[Metric] = None
+        total: Metric | None = None
         occurrence: int = 0
         for item in arr:
-
             if isinstance(item, Void):
                 continue
 
             if isinstance(item, TimedValue):
-                item = item.value
+                item = item.value  # noqa: PLW2901
 
-            if total is None:
-                total = item
-            else:
-                total = total + item
-
+            total = item if total is None else total + item
             occurrence += 1
 
-        if total is None:
-            return Void()
-        average = total / occurrence
-        return average
+        return Void() if total is None else total / occurrence

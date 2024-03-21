@@ -16,8 +16,7 @@ from corl.simulators.base_platform import BasePlatform
 
 
 class PlatformSerializer(ABC):
-    """Abstract class to define how to serialize a platform for saving
-    """
+    """Abstract class to define how to serialize a platform for saving"""
 
     @abstractmethod
     def serialize(self, platform: BasePlatform) -> dict:

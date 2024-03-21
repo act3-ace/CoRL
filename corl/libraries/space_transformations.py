@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 """
 ---------------------------------------------------------------------------
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
@@ -15,28 +14,28 @@ this file is a mypy nightmare due to lots of typing unions and complex types
 do not trust mypy, trust the unit tests
 """
 import abc
-import typing
+from typing import Annotated
 
-import gym
-from pydantic import BaseModel, PyObject, validator
+import gymnasium
+from pydantic import AfterValidator, BaseModel, ImportString
 
-from corl.libraries.env_space_util import EnvSpaceUtil, convert_gym_space, convert_sample
+from corl.libraries.env_space_util import EnvSpaceUtil, convert_gymnasium_space, convert_sample
 
 
 class SpaceTransformationBase(abc.ABC):
     """
     SpaceTransformationBase provides an anstract class to transform space decfintions
-    designed ot be used to change space and the boundary of the agent and policy for
+    designed to be used to change space and the boundary of the agent and policy for
     policies that requires specific space types
     """
 
-    def __init__(self, input_space: gym.Space, config: typing.Dict) -> None:
-        self.config = self.get_validator(**config)
-        self._input_space: gym.Space = input_space
-        self._output_space: gym.Space = self.convert_space(self._input_space)
+    def __init__(self, input_space: gymnasium.Space, config: dict) -> None:
+        self.config = self.get_validator()(**config)
+        self._input_space: gymnasium.Space = input_space
+        self._output_space: gymnasium.Space = self.convert_space(self._input_space)
 
     @abc.abstractmethod
-    def convert_space(self, input_space: gym.Space) -> gym.Space:
+    def convert_space(self, input_space: gymnasium.Space) -> gymnasium.Space:
         """
         Converts input space to transformed space
         """
@@ -57,66 +56,62 @@ class SpaceTransformationBase(abc.ABC):
         raise NotImplementedError
 
     @property
-    def input_space(self, ) -> gym.Space:
+    def input_space(self) -> gymnasium.Space:
         """
         Original input space
         """
         return self._input_space
 
     @property
-    def output_space(self, ) -> gym.Space:
+    def output_space(self) -> gymnasium.Space:
         """
         Transformed space
         """
         return self._output_space
 
-    @property
-    def get_validator(self) -> typing.Type[BaseModel]:
+    @staticmethod
+    def get_validator() -> type[BaseModel]:
         """
         Validator for subclass configuration
         """
         return BaseModel
 
 
+def verify_gym_space(val):
+    assert issubclass(val, gymnasium.Space), f"Invalid output_type {val} in gymnasium.Space"
+    return val
+
+
 class SpaceTypeConversionValidator(BaseModel):
     """
     Validator for direct space type conversion
     """
-    output_type: PyObject
 
-    @validator("output_type")
-    def validate_output_type(cls, val):
-        """
-        Validate output type is a gym.Space
-        """
-        if issubclass(val, gym.Space):
-            return val
-
-        raise TypeError(f"Invalid output_type {val} in gym.Space")
+    output_type: Annotated[ImportString, AfterValidator(verify_gym_space)]
 
 
 class SpaceTypeConversion(SpaceTransformationBase):
     """
     SpaceTypeConversion is a SpaceTransformationBase that attempts to convert
-    a space into specificed gym.Space types
+    a space into specified gymnasium.Space types
     """
 
-    def __init__(self, input_space: gym.Space, config: typing.Dict) -> None:
+    def __init__(self, input_space: gymnasium.Space, config: dict) -> None:
         self.config: SpaceTypeConversionValidator
         super().__init__(input_space, config)
 
-    @property
-    def get_validator(self) -> typing.Type[SpaceTypeConversionValidator]:
+    @staticmethod
+    def get_validator() -> type[SpaceTypeConversionValidator]:
         """
         SpaceTypeConversionValidator used with SpaceTypeConversion
         """
         return SpaceTypeConversionValidator
 
-    def convert_space(self, input_space: gym.Space) -> gym.Space:
+    def convert_space(self, input_space: gymnasium.Space) -> gymnasium.Space:
         """
         Converts input space to space defined by output_type
         """
-        return convert_gym_space(input_space, self.config.output_type)  # type: ignore
+        return convert_gymnasium_space(input_space, self.config.output_type)
 
     def convert_sample(self, sample: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
         """

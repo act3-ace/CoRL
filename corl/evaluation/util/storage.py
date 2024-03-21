@@ -11,7 +11,6 @@ limitation or restriction. See accompanying README and LICENSE for details.
 Module contains a storage interface which can be extended to implement various kinds of storage for the evaluation framework.
 """
 
-import typing
 from abc import ABC, abstractmethod
 
 
@@ -24,7 +23,7 @@ class Storage(ABC):
         ...
 
     @abstractmethod
-    def load_artifacts_location(self, config: typing.Dict[str, str]):
+    def load_artifacts_location(self, config: dict[str, str]):
         """
         Load information about the locations of various artifacts
         """

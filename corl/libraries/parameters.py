@@ -11,68 +11,70 @@ limitation or restriction. See accompanying README and LICENSE for details.
 Structures that hold parameters and the ability to update them.
 """
 import abc
-import enum
 import typing
 import warnings
+from typing import runtime_checkable
 
 import numpy as np
 from numpy.random import Generator, RandomState
-from pydantic import BaseModel, PositiveFloat, StrictInt, validator
+from pydantic import BaseModel, ConfigDict, PositiveFloat, StrictInt, TypeAdapter, field_validator, model_validator
 from scipy import stats
-from typing_extensions import Protocol, runtime_checkable
+from typing_extensions import Protocol
 
-from corl.libraries import units
 from corl.libraries.factory import Factory
-from corl.libraries.units import ValueWithUnits
+from corl.libraries.units import Quantity, corl_get_ureg
 
-Number = typing.Union[StrictInt, float]
-Randomness = typing.Union[Generator, RandomState]
+Number = StrictInt | float
+Randomness = Generator | RandomState
+OtherVars = typing.Mapping[tuple[str, ...], Quantity]
 
 
 @runtime_checkable
 class _ConstraintCallbackType(Protocol):
-
     def __call__(self, old_arg: Number, new_arg: Number) -> Number:
         ...
 
 
 class ParameterValidator(BaseModel):
     """Validator class for Parameter"""
-    units: typing.Optional[enum.Enum]
-    update: typing.Dict[str, typing.Any] = {}
-    simulator: typing.Dict[str, typing.Any] = {}
-    episode_parameter_provider: typing.Dict[str, typing.Any] = {}
-    dependent_parameters: typing.List[str] = []
 
-    @validator('units', pre=True)
-    def units_validator(cls, v):
+    units: str = "dimensionless"
+    update: dict[str, typing.Any] = {}
+    simulator: dict[str, typing.Any] = {}
+    episode_parameter_provider: dict[str, typing.Any] = {}
+    dependent_parameters: dict[str, tuple[str, ...]] = {}
+
+    @field_validator("dependent_parameters", mode="before")
+    @classmethod
+    def dependent_parameters_check(cls, v):
         """Validate the units field"""
-        return units.GetUnitFromStr(v) if v is not None else None
+        v2 = TypeAdapter(dict[str, str | typing.Sequence[str]]).validate_python(v)
+        return {key: ("reference_store", item) if isinstance(item, str) else tuple(item) for key, item in v2.items()}
 
 
 class Parameter(abc.ABC):
     """Parameter class"""
 
     def __init__(self, **kwargs) -> None:
-        self.config: ParameterValidator = self.get_validator(**kwargs)
+        self.config: ParameterValidator = self.get_validator()(**kwargs)
 
         # Create and save updaters
-        self.updaters: typing.Dict[str, typing.Any] = {}
+        self.updaters: dict[str, typing.Any] = {}
         for name, val in self.config.update.items():
             factory = Factory(**val)
             self.updaters[name] = factory.build(param=self, name=name, constraint=self.get_constraint(name=name))
 
-    @property
-    def get_validator(self) -> typing.Type[ParameterValidator]:
+    @staticmethod
+    def get_validator() -> type[ParameterValidator]:
         """Get the validator class for this Parameter"""
         return ParameterValidator
 
-    def get_constraint(self, name: str) -> typing.Optional[_ConstraintCallbackType]:  # pylint: disable=unused-argument
+    def get_constraint(self, name: str) -> _ConstraintCallbackType | None:  # noqa: PLR6301
         """Get the constraint function for this Parameter's updater config"""
         return None
 
     @abc.abstractmethod
-    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
+    def get_value(self, rng: Randomness, other_vars: OtherVars) -> str | Quantity:
         """Get the value of the parameter.
 
         In order to avoid inconsistent operation between cases where the value is serialized (such as from the ray object store) or not,
@@ -86,10 +88,100 @@ class Parameter(abc.ABC):
         other_vars: variables previously processed, will contain any variables this parameter is dependent on
         """
 
+    # @staticmethod
+    # def _serialize(v) -> str:
+    #     return str(v)
+
+    # @classmethod
+    # def __get_pydantic_core_schema__(cls, source, handler):
+    #     serializer = core_schema.plain_serializer_function_ser_schema(cls._serialize, when_used='json')
+    #     if cls is source:
+    #         # Treat bare usage of ImportString (`schema is None`) as the same as ImportString[Any]
+    #         return core_schema.no_info_plain_validator_function(
+    #             function=cls.validate, serialization=serializer
+    #         )
+    #     else:
+    #         return core_schema.no_info_before_validator_function(
+    #             function=cls.validate, schema=handler(source), serialization=serializer
+    #         )
+
+    # @classmethod
+    # def validate(cls, v):
+    #     if isinstance(v, Parameter):
+    #         return v
+    #     if not isinstance(v, dict):
+    #         # msg = "Quantity validator input must either be a Quantity or Dict"
+    #         # raise TypeError(msg)
+    #         return v
+
+    #     return tmp
+
+
+class ParameterWrapperValidator(BaseModel):
+    """Validator class for Parameter"""
+
+    wrapped: dict[str, Parameter]
+    # simulator: typing.Dict[str, typing.Any] = {}
+    # episode_parameter_provider: typing.Dict[str, typing.Any] = {}
+    dependent_parameters: dict[str, tuple[str, ...]] = {}
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+class ParameterWrapper(abc.ABC):
+    """ParameterWrapper class"""
+
+    def __init__(self, **kwargs) -> None:
+        self.config: ParameterWrapperValidator = self.get_validator()(**kwargs)
+
+    @staticmethod
+    def get_validator() -> type[ParameterWrapperValidator]:
+        """Get the validator class for this Parameter"""
+        return ParameterWrapperValidator
+
+    def get_constraint(self, name: str) -> _ConstraintCallbackType | None:  # noqa: PLR6301
+        """Get the constraint function for this Parameter's updater config"""
+        return None
+
+    @abc.abstractmethod
+    def get_value(self, rng: Randomness, other_vars: OtherVars) -> dict[str, str | Quantity]:
+        """Get the value of the parameters this Wrapper holds.
+
+        This return object should contain a mapping to each parameter this wrapper wraps
+
+        *IMPORTANT NOTE ON USE
+        The environment will truncate the parameter tuple off the end and insert the string of the
+        parameter key dict
+
+        self.config.wrapped = {
+            lat: ConstantParam(foo)
+            lon: ConstantParam(bar)
+        }
+
+        ie: (group1, latlon (name of parameter)) -> (group1, lat) and (group2, lon)
+        # END NOTE
+
+        Parameters
+        ----------
+        rng : Union[Generator, RandomState]
+            Random number generator from which to draw random values.
+        other_vars: variables previously processed, will contain any variables this parameter is dependent on
+        """
+
+
+class PassthroughParameterWrapper(ParameterWrapper):
+    """
+    This parameter wrapper simply takes outputs the parameters it wraps
+    into a dict
+    """
+
+    def get_value(self, rng, other_vars):
+        return {k: v.get_value(rng, other_vars) for k, v in self.config.wrapped.items()}
+
 
 class ConstantParameterValidator(ParameterValidator):
     """Validator class for ConstantParameter"""
-    value: typing.Union[Number, str]
+
+    value: Number | str
 
 
 class ConstantParameter(Parameter):
@@ -99,25 +191,27 @@ class ConstantParameter(Parameter):
         self.config: ConstantParameterValidator
         super().__init__(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[ConstantParameterValidator]:
+    @staticmethod
+    def get_validator() -> type[ConstantParameterValidator]:
         return ConstantParameterValidator
 
-    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
-        return units.ValueWithUnits(value=self.config.value, units=self.config.units)
+    def get_value(self, rng: Randomness, other_vars: OtherVars):
+        if isinstance(self.config.value, str):
+            return self.config.value
+        return corl_get_ureg().Quantity(value=self.config.value, units=self.config.units)
 
 
 class UniformParameterValidator(ParameterValidator):
     """Validator class for UniformParameter"""
+
     low: Number
     high: Number
 
-    @validator("high")
-    def high_validator(cls, v, values):
+    @model_validator(mode="after")
+    def high_validator(self):
         """Validate the high field"""
-        if v < values['low']:
-            raise ValueError('Upper bound must not be smaller than lower bound')
-        return v
+        assert self.high > self.low, "Upper bound must not be smaller than lower bound"
+        return self
 
 
 class UniformParameter(Parameter):
@@ -127,122 +221,160 @@ class UniformParameter(Parameter):
         self.config: UniformParameterValidator
         super().__init__(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[UniformParameterValidator]:
+    @staticmethod
+    def get_validator() -> type[UniformParameterValidator]:
         return UniformParameterValidator
 
-    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
-        return units.ValueWithUnits(value=rng.uniform(self.config.low, self.config.high), units=self.config.units)
+    def get_value(self, rng: Randomness, other_vars: OtherVars):
+        return corl_get_ureg().Quantity(value=rng.uniform(self.config.low, self.config.high), units=self.config.units)
 
-    def get_constraint(self, name: str) -> typing.Optional[_ConstraintCallbackType]:
-        if name == 'low':
+    def get_constraint(self, name: str) -> _ConstraintCallbackType | None:
+        if name == "low":
             return self._min_with_high
-        if name == 'high':
+        if name == "high":
             return self._max_with_low
-        raise ValueError("Unknown contraint name")
+        raise ValueError("Unknown constraint name")
 
-    def _min_with_high(self, old_arg: Number, new_arg: Number) -> Number:  # pylint: disable=unused-argument
+    def _min_with_high(self, old_arg: Number, new_arg: Number) -> Number:
         if new_arg > self.config.high:
-            warnings.warn('Could not fully update UniformParameter lower bound as it exceeds higher bound')
+            warnings.warn("Could not fully update UniformParameter lower bound as it exceeds higher bound")
             return self.config.high
         return new_arg
 
-    def _max_with_low(self, old_arg: Number, new_arg: Number) -> Number:  # pylint: disable=unused-argument
+    def _max_with_low(self, old_arg: Number, new_arg: Number) -> Number:
         if new_arg < self.config.low:
-            warnings.warn('Could not fully update UniformParameter lower bound as it goes below the lower bound')
+            warnings.warn("Could not fully update UniformParameter lower bound as it goes below the lower bound")
             return self.config.low
         return new_arg
 
 
+class StepUniformParameterValidator(UniformParameterValidator):
+    """Validator class for UniformParameter"""
+
+    step: Number
+
+
+class StepUniformParameter(Parameter):
+    """A parameter that draws from a uniform distribution plus step."""
+
+    def __init__(self, **kwargs) -> None:
+        self.config: UniformParameterValidator
+        super().__init__(**kwargs)
+        if self.config.low == self.config.high:
+            self._choices = [self.config.low]
+        else:
+            self._choices = list(range(self.config.low, self.config.high, self.config.step))  # type: ignore
+        if self.config.high not in self._choices:
+            self._choices.append(self.config.high)
+
+    @staticmethod
+    def get_validator() -> type[StepUniformParameterValidator]:
+        return StepUniformParameterValidator
+
+    def get_value(self, rng: Randomness, other_vars: OtherVars):
+        return corl_get_ureg().Quantity(value=rng.choice(self._choices), units=self.config.units)
+
+
 class TruncatedNormalParameterValidator(ParameterValidator):
     """Validator class for TruncatedNormalParameter"""
+
     mu: Number
     std: PositiveFloat
     half_width_factor: PositiveFloat
 
 
 class TruncatedNormalParameter(Parameter):
-    """A parameter that draws from a truncated normal distribution.
-    """
+    """A parameter that draws from a truncated normal distribution."""
 
     def __init__(self, **kwargs) -> None:
         self.config: TruncatedNormalParameterValidator
         super().__init__(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[TruncatedNormalParameterValidator]:
+    @staticmethod
+    def get_validator() -> type[TruncatedNormalParameterValidator]:
         return TruncatedNormalParameterValidator
 
-    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
+    def get_value(self, rng: Randomness, other_vars: OtherVars) -> Quantity:
         low = self.config.mu - self.config.half_width_factor * self.config.std
         high = self.config.mu + self.config.half_width_factor * self.config.std
         value = stats.truncnorm.rvs(
-            (low - self.config.mu) / self.config.std, (high - self.config.mu) / self.config.std,
+            (low - self.config.mu) / self.config.std,
+            (high - self.config.mu) / self.config.std,
             loc=self.config.mu,
             scale=self.config.std,
             size=1,
-            random_state=rng
+            random_state=rng,
         )[0]
-        return units.ValueWithUnits(value=value, units=self.config.units)
+        return corl_get_ureg().Quantity(value=value, units=self.config.units)
 
-    def get_constraint(self, name: str) -> typing.Optional[_ConstraintCallbackType]:
-        if name == 'std':
+    def get_constraint(self, name: str) -> _ConstraintCallbackType | None:
+        if name == "std":
             return self._std_positive
-        if name == 'half_width_factor':
+        if name == "half_width_factor":
             return self._half_width_factor_positive
-        raise ValueError("Unknown contraint name")
+        raise ValueError("Unknown constraint name")
 
     @staticmethod
     def _generic_positive(variable: str, old_arg: Number, new_arg: Number) -> Number:
         if new_arg < 0:
-            warnings.warn(f'Could not update TruncatedNormalParameter {variable} because it is not strictly positive')
+            warnings.warn(f"Could not update TruncatedNormalParameter {variable} because it is not strictly positive")
             return old_arg
         return new_arg
 
     def _std_positive(self, old_arg: Number, new_arg: Number) -> Number:
-        return self._generic_positive(variable='standard deviation', old_arg=old_arg, new_arg=new_arg)
+        return self._generic_positive(variable="standard deviation", old_arg=old_arg, new_arg=new_arg)
 
     def _half_width_factor_positive(self, old_arg: Number, new_arg: Number) -> Number:
-        return self._generic_positive(variable='half width factor', old_arg=old_arg, new_arg=new_arg)
+        return self._generic_positive(variable="half width factor", old_arg=old_arg, new_arg=new_arg)
 
 
 class ChoiceParameterValidator(ParameterValidator):
     """Validator for ChoiceParameter"""
+
     choices: typing.Sequence[typing.Any]
 
 
 class ChoiceParameter(Parameter):
     """A parameter drawn uniformly from a collection of discrete values.
-        This parameter does not support updaters.
+    This parameter does not support updaters.
 
-        Parameters
-        ----------
-        hparams : dict
-            The hyperparameters that define this parameter.  In addition to the structure specified by the base class Parameter, there needs
-            to be the following fields, expressed as YAML:
+    Parameters
+    ----------
+    hparams : dict
+        The hyperparameters that define this parameter.  In addition to the structure specified by the base class Parameter, there needs
+        to be the following fields, expressed as YAML:
 
-            ```yaml
-            choices: Sequence[Any]
-            ```
+        ```yaml
+        choices: Sequence[Any]
+        ```
     """
 
     def __init__(self, **kwargs) -> None:
         self.config: ChoiceParameterValidator
         super().__init__(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[ChoiceParameterValidator]:
+    @staticmethod
+    def get_validator() -> type[ChoiceParameterValidator]:
         return ChoiceParameterValidator
 
-    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
-        return units.ValueWithUnits(value=rng.choice(self.config.choices), units=self.config.units)
+    def get_value(self, rng: Randomness, other_vars: OtherVars):
+        val = rng.choice(self.config.choices)
+        if isinstance(val, str):
+            return val
+        return corl_get_ureg().Quantity(value=val, units=self.config.units)
 
 
 class OverridableParameterWrapper(Parameter):
     """A Parameter that wraps another parameter and can override its output."""
 
-    def __init__(self, base: Parameter) -> None:  # pylint: disable=super-init-not-called
+    def __init__(self, base: Parameter | ParameterWrapper) -> None:
         # Base class API
+        if isinstance(base, ParameterWrapper):
+            raise RuntimeError(
+                "OverridableParameterWrapper Does not support ParameterWrapper"
+                "Evaluation test cases should be fully defined and should probably not use"
+                "parameter wrappers"
+            )
         self.config = base.config
         self.updaters = base.updaters
 
@@ -250,44 +382,47 @@ class OverridableParameterWrapper(Parameter):
         self.base = base
         self.override_value: typing.Any = None
 
-    @property
-    def get_validator(self) -> typing.NoReturn:
+    @staticmethod
+    def get_validator() -> typing.NoReturn:
         """OverridableParameterWrapper is not parsed using validators."""
         raise NotImplementedError()
 
-    def get_constraint(self, name: str) -> typing.Optional[_ConstraintCallbackType]:
+    def get_constraint(self, name: str) -> _ConstraintCallbackType | None:
         return self.base.get_constraint(name=name)
 
-    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
+    def get_value(self, rng: Randomness, other_vars: OtherVars):
+        base_value = self.base.get_value(rng, other_vars)
 
         if self.override_value is not None:
-            return ValueWithUnits(value=self.override_value, units=self.config.units)
+            if isinstance(self.override_value, str):
+                return self.override_value
+            assert isinstance(base_value, Quantity)
+            if isinstance(self.override_value, Quantity):
+                return self.override_value.to(base_value.u)
+            return corl_get_ureg().Quantity(value=self.override_value, units=base_value.u)
 
-        return self.base.get_value(rng, {})
+        return base_value
 
 
 class UpdaterValidator(BaseModel):
     """Validator class for Updater"""
+
     name: str
     param: Parameter
     constraint: _ConstraintCallbackType = lambda old_arg, new_arg: new_arg
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    class Config:
-        """pydantic Config class"""
-        arbitrary_types_allowed = True
-
-    @validator('param')
-    def param_hasattr(cls, v, values):
+    @field_validator("param")
+    def param_hasattr(cls, v, info):
         """Validator for param field"""
-        assert hasattr(v.config, values['name']), f'Attribute {values["name"]} does not exist'
+        assert hasattr(v.config, info.data["name"]), f'Attribute {info.data["name"]} does not exist'
         return v
 
-    @validator('constraint', pre=True)
+    @field_validator("constraint", mode="before")
+    @classmethod
     def constraint_not_none(cls, v):
         """Conversion for constraint of None to identity"""
-        if v is None:
-            return lambda old_arg, new_arg: new_arg
-        return v
+        return (lambda old_arg, new_arg: new_arg) if v is None else v
 
 
 class Updater(abc.ABC):
@@ -295,7 +430,7 @@ class Updater(abc.ABC):
 
     def __init__(self, **kwargs) -> None:
         # Validate and save updater configuration data
-        self.config: UpdaterValidator = self.get_validator(**kwargs)
+        self.config: UpdaterValidator = self.get_validator()(**kwargs)
 
     def __call__(self, *, reverse: bool = False) -> None:
         """Perform an update of the hyperparameter according to the functionality of the updater.
@@ -344,8 +479,8 @@ class Updater(abc.ABC):
             the original value.  Not all `Updater` subclasses allow reverse updates.  The default is False.
         """
 
-    @property
-    def get_validator(self) -> typing.Type[UpdaterValidator]:
+    @staticmethod
+    def get_validator() -> type[UpdaterValidator]:
         """Get the validator for this class"""
         return UpdaterValidator
 
@@ -384,18 +519,19 @@ class Updater(abc.ABC):
 
 class BoundStepUpdaterValidator(UpdaterValidator):
     """Validator class for BoundStepUpdater"""
+
     bound_type: typing.Literal["min", "max"]
     bound: Number
     step: Number
 
-    @validator('step')
-    def step_validator(cls, v, values):
+    @model_validator(mode="after")
+    def step_validator(self):
         """Validator for step field"""
-        if v >= 0 and values['bound_type'] == 'min':
-            raise ValueError('Step must be negative for minimum bound')
-        if v <= 0 and values['bound_type'] == 'max':
-            raise ValueError('Step must be positive for maximum bound')
-        return v
+        if self.step >= 0 and self.bound_type == "min":
+            raise ValueError("Step must be negative for minimum bound")
+        if self.step <= 0 and self.bound_type == "max":
+            raise ValueError("Step must be positive for maximum bound")
+        return self
 
 
 class BoundStepUpdater(Updater):
@@ -415,18 +551,18 @@ class BoundStepUpdater(Updater):
 
         self._bound_func: typing.Callable
         self._reverse_bound_func: typing.Callable
-        if self.config.bound_type == 'min':
+        if self.config.bound_type == "min":
             self._bound_func = max
             self._reverse_bound_func = min
-        elif self.config.bound_type == 'max':
+        elif self.config.bound_type == "max":
             self._bound_func = min
             self._reverse_bound_func = max
         else:
             raise ValueError(f'Unknown bound type {self.config["bound_type"]}')
         self._at_bound: bool = False
 
-    @property
-    def get_validator(self) -> typing.Type[BoundStepUpdaterValidator]:
+    @staticmethod
+    def get_validator() -> type[BoundStepUpdaterValidator]:
         """Get validator for BoundStepUpdater"""
         return BoundStepUpdaterValidator
 
@@ -442,7 +578,7 @@ class BoundStepUpdater(Updater):
 
         return output
 
-    def supports_reverse_update(self) -> bool:
+    def supports_reverse_update(self) -> bool:  # noqa: PLR6301
         return True
 
     def update_to_bound(self) -> None:
@@ -456,12 +592,12 @@ class BoundStepUpdater(Updater):
         return self.config.bound
 
     def create_config(self) -> dict:
-        return {'bound': self.config.bound, 'step': self.config.step, 'bound_type': self.config.bound_type}
+        return {"bound": self.config.bound, "step": self.config.step, "bound_type": self.config.bound_type}
 
 
 class RandomSignUniformParameter(UniformParameter):
     """A parameter that draws from a uniform distribution where the value is assigned a random sign.
-    The range of the parameter is [-high, -low], [low, high]. """
+    The range of the parameter is [-high, -low], [low, high]."""
 
-    def get_value(self, rng: Randomness, other_vars: typing.Dict[str, typing.Any]) -> units.ValueWithUnits:
-        return units.ValueWithUnits(value=rng.uniform(self.config.low, self.config.high) * rng.choice([-1, 1]), units=self.config.units)
+    def get_value(self, rng: Randomness, other_vars: OtherVars):
+        return corl_get_ureg().Quantity(value=rng.uniform(self.config.low, self.config.high) * rng.choice([-1, 1]), units=self.config.units)

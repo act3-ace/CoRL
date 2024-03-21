@@ -1,0 +1,97 @@
+# -------------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# -------------------------------------------------------------------------------
+version: "3.8"
+
+services:
+  # <<<Purpose>>> --- Startup service for the CoRL develop image.
+  develop:
+    image: *****/***-docker-all/act3-rl/corl/develop:latest
+    working_dir: /opt/project
+    user: ${UID}:${GID}
+
+    environment:
+      SSH_AUTH_SOCK: ${SSH_AUTH_SOCK}
+      DISPLAY: ${DISPLAY}
+
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: corl-dev
+
+    volumes:
+      # passing through this file allows opening windows from the container in your host computer
+      # *** NOTE THIS IS LINUX SPECIFIC ITEM *** Updates needed for Virtual based setups
+      - "/tmp/.X11-unix:/tmp/.X11-unix:rw"
+      #
+      # for development, link the host folder containing code to /opt/project in container
+      - "$CODE_PATH/:/opt/project"
+      #
+      # for development, link the host folder containing data to /tmp/data/corl in container
+      - "$DATA_PATH:/tmp/data/corl"
+      #
+      # copy in command history
+      - "corl-bashhistory:/commandhistory"
+      #
+      # VSCODE items
+      # - "vscode-server-extensions:/home/$NEW_USER/.vscode-server/extensions"
+      # - "vscode-server-extensions-insiders:/home/$NEW_USER/.vscode-server-insiders/extensions"
+
+    ports:
+      - 8888:8888
+      - 8000:8000  # mkdocs
+      - 6006:6006  # Tensorboard
+
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: 1
+#              capabilities: [gpu]
+
+  #########################################################################################
+  # Deploy images (END)
+  #########################################################################################
+
+  # -----------------------------------------------------------------------------
+  # Example Runs in Container (START)
+  # -----------------------------------------------------------------------------
+
+  run_docking_1d_example: &run_docking_1d_example
+    extends:
+      file: docker-compose.yml # Reference the base Compose file
+      service: develop   # Specify the service to extend
+    command: python -m corl.train_rl --cfg config/tasks/docking_1d/experiments/docking_1d.yml --compute-platform local
+
+
+  run_docking_1d_example_eval: &run_docking_1d_example_eval
+    extends:
+        file: docker-compose.yml # Reference the base Compose file
+        service: develop   # Specify the service to extend
+    command: python -m corl.eval_launch --cfg config/tasks/docking_1d/evaluation/launch/eval_1d_docking.yml
+
+  # -----------------------------------------------------------------------------
+  # Example Runs in Container (END)
+  # -----------------------------------------------------------------------------
+
+#########################################################################################
+# Volumes Stores
+#########################################################################################
+volumes:
+  corl-bashhistory:
+  vscode-server-extensions:
+  vscode-server-extensions-insiders:
+
+#########################################################################################
+# Network
+#########################################################################################
+networks:
+  default:
+    name: act3

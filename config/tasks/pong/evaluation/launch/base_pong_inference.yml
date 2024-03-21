@@ -1,0 +1,15 @@
+# connection:
+#   type: corl.evaluation.launchers.rest_eval_connection.RestEvalConnection
+
+evaluator:
+  type: corl.evaluation.runners.inference.inference.Inference
+  config:
+    algorithm_runner:
+      exit_on_end: True
+
+experiment:
+  !merge
+    - !include ./base_pong_evaluate.yml
+    - !include ./inference.yml
+
+run_forever: False

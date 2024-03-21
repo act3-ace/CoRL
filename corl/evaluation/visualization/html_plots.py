@@ -19,6 +19,7 @@ import pandas as pd
 # from dash import Dash, dcc, html, Input, Output
 try:
     import plotly.express as px
+
     html_plots = True
 except ImportError as e:
     print("HTMl Plots unavailable: ", e)
@@ -29,20 +30,19 @@ from corl.evaluation.metrics.types.nonterminals.vector import Vector
 
 # from corl.evaluation.visualization.plot_configuration import PlotConfiguration, RangeMetric, RangePlot
 from corl.evaluation.visualization.visualization import Visualization
-from corl.libraries import units
+from corl.libraries.units import Quantity
 
 FUTURE = typing.Any
 
 
 class HMTLPlots(Visualization):
-    """Visualizer that prints to stdout
-    """
+    """Visualizer that prints to stdout"""
 
     def __init__(
         self,  # plot_configurations: typing.List[PlotConfiguration],
         *args,
         **kwargs,
-    ):  # pylint: disable=keyword-arg-before-vararg
+    ):
         """Setup a Jupyter notebook visualization
 
         Parameters
@@ -61,9 +61,8 @@ class HMTLPlots(Visualization):
     def generate_plot(
         self,
         df,
-    ):
-        """Generate html plot using plotly
-        """
+    ) -> None:
+        """Generate html plot using plotly"""
 
         filename = str(df.columns[0])
 
@@ -73,9 +72,9 @@ class HMTLPlots(Visualization):
         if len(df.columns) == 1:
             title = filename
             participant_name, event_data, metric = filename.split("--")
-            directory_path = os.path.join(self.out_folder, f"test_case_{str(event_data)}", "plots", str(participant_name))
+            directory_path = os.path.join(self.out_folder, f"test_case_{event_data!s}", "plots", str(participant_name))
         else:
-            all_names: typing.List[str] = list(df.columns)
+            all_names: list[str] = list(df.columns)
 
             # we now have a list of names, how should we combine?
             # We are going to assume the format is participant--test_case--metric
@@ -96,26 +95,22 @@ class HMTLPlots(Visualization):
         print("My current directory is : " + directory_path)
         fig.write_html(os.path.join(directory_path, str(metric) + ".html"))
 
-    def __extract_evaluation_metric_as_dataframes(self) -> typing.Dict[str, FUTURE]:
-        """This function creates a plot for each metric that contains all the runs, for each participant
-        """
+    def __extract_evaluation_metric_as_dataframes(self) -> dict[str, FUTURE]:
+        """This function creates a plot for each metric that contains all the runs, for each participant"""
         participant_dict: dict = {}
         metric_dict: dict = {}
 
         for participant in self._post_processed_data.participants:
             print(str(participant))
-            for event in self._post_processed_data.participants[participant].events:  # type: ignore
-
+            for event in self._post_processed_data.participants[participant].events:
                 # Search for metric on each event of the participant
                 for metric, value in event.metrics.items():
-
                     # Can only plot a
                     if isinstance(value, Vector) and len(value.arr) > 0 and isinstance(value.arr[0], TimedValue):
+                        arr: list[TimedValue] = value.arr  # type: ignore
 
-                        arr: typing.List[TimedValue] = value.arr  # type: ignore
-
-                        if isinstance((arr[0].value.value), units.ValueWithUnits):  # type: ignore
-                            data = list(zip([x.time.value for x in arr], [x.value.value.value for x in arr]))  # type: ignore
+                        if isinstance((arr[0].value.value), Quantity):  # type: ignore
+                            data = list(zip([x.time.value for x in arr], [x.value.value.m for x in arr]))  # type: ignore
                         elif isinstance((value.arr[0].value.value[0]), float):  # type: ignore
                             data = list(zip([x.time.value for x in arr], [x.value.value[0] for x in arr]))  # type: ignore
                         else:
@@ -125,8 +120,8 @@ class HMTLPlots(Visualization):
 
                         label = str(participant) + "--" + str(event.data.test_case) + "--" + str(metric)
 
-                        df = pd.DataFrame(data, columns=['time', label])
-                        df.set_index('time', inplace=True)
+                        df = pd.DataFrame(data, columns=["time", label])
+                        df.set_index("time", inplace=True)
                         if metric not in metric_dict:
                             print("New metric found: " + str(metric))
                             metric_dict[metric] = []
@@ -135,7 +130,7 @@ class HMTLPlots(Visualization):
                             print("Metric " + str(metric) + " already exists. Append")
                             metric_dict[metric].append(df)
 
-            # copy the dict so you wont lose data once its cleared
+            # copy the dict so you won't lose data once its cleared
             complete_dict = metric_dict.copy()
             # clear metric_dict so it will be empty for the next participant
             metric_dict.clear()
@@ -147,9 +142,8 @@ class HMTLPlots(Visualization):
 
         return participant_dict
 
-    def visualize(self):  # pylint:disable=too-many-branches,too-many-statements # I am okay with this method being long
-        """Execute visualization
-        """
+    def visualize(self):  # I am okay with this method being long
+        """Execute visualization"""
 
         # plot_list = self.__extract_event_metric_as_dataframes()
         # for range_df in plot_list:
@@ -160,14 +154,12 @@ class HMTLPlots(Visualization):
 
         for plot_data in plot_dict.values():
             for metric in plot_data:
-
-                # create aggregate dataframe to aggregate accross test cases
-                aggregate_df = pd.DataFrame(columns=['time'])
-                aggregate_df.set_index('time', inplace=True)
+                # create aggregate dataframe to aggregate across test cases
+                aggregate_df = pd.DataFrame(columns=["time"])
+                aggregate_df.set_index("time", inplace=True)
 
                 # Iterate over test cases
                 for item in plot_data[metric]:
-
                     # generate individual test case plot
                     self.generate_plot(item)
 

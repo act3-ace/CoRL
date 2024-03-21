@@ -14,8 +14,8 @@ import typing
 
 
 class ExtractorSet(typing.NamedTuple):
-    """Class defining the set of extractors to pull information about a specific observation
-    """
+    """Class defining the set of extractors to pull information about a specific observation"""
+
     value: typing.Callable
     space: typing.Callable
     unit: typing.Callable
@@ -23,23 +23,23 @@ class ExtractorSet(typing.NamedTuple):
 
 def ObservationExtractor(
     observation,
-    fields: typing.List[str],
-    indices: typing.Union[int, typing.List[int]] = None,
+    fields: list[str],
+    indices: int | list[int] | None = None,
 ):
-    """ This function extracts a metric produced by a specific glue in observation space of an agent
+    """This function extracts a metric produced by a specific glue in observation space of an agent
 
     ---- Arguments ----
     observation         - A dict of an agent's observations
     platforms           - The platforms the glue is observing, needed to compute the glue's prefix
     fields              - Fields the extractor will attempt to walk through
-    indicies            - These will be accessed after the fields have been accessed, allowing
+    indices            - These will be accessed after the fields have been accessed, allowing
                           users to reduce arrays to single values
     ---- Raises ----
-    RuntimeError        - Thrown when the fields do not exists in the glue's measurments
+    RuntimeError        - Thrown when the fields do not exists in the glue's measurements
     """
     if indices is None:
         indices = []
-    if not isinstance(indices, typing.List):
+    if not isinstance(indices, list):
         indices = [indices]
 
     value = observation
@@ -56,7 +56,7 @@ def ObservationExtractor(
 
 def ObservationSpaceExtractor(
     observation_space,
-    fields: typing.List[str],
+    fields: list[str],
 ):
     """Extract the observation space from a glue
 

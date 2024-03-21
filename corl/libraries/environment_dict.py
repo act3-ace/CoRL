@@ -27,7 +27,7 @@ class Callback:
     Callback provides basic callback processing for all reward and done functions
     """
 
-    def __init__(self, funcs: typing.Optional[typing.Sequence[typing.Callable]] = None) -> None:
+    def __init__(self, funcs: typing.Sequence[typing.Callable] | None = None) -> None:
         """
         __init__ constructor
 
@@ -36,7 +36,7 @@ class Callback:
         funcs : typing.List[typing.Callable], optional
             List of callale functions, by default None
         """
-        self._process_callbacks: typing.List[typing.Callable] = []
+        self._process_callbacks: list[typing.Callable] = []
         self._logger = logging.getLogger(Callback.__name__)
         if funcs:
             self.register_funcs(funcs)
@@ -52,15 +52,12 @@ class Callback:
         """
         # MTB - 10/15/2020 - There seems to be an issue with this when combining multiple reward sets
         # if func is a callable the expression func in self._process_callbacks will always return True
-        if isinstance(func, Callback):
+        if isinstance(func, Callback) or func not in self._process_callbacks:
             self._process_callbacks.append(func)
         else:
-            if func not in self._process_callbacks:
-                self._process_callbacks.append(func)
-            else:
-                warnings.warn("Ignoring a duplicate callback given")
+            warnings.warn("Ignoring a duplicate callback given")
 
-    def register_funcs(self, funcs: typing.Optional[typing.Sequence[typing.Callable]]):
+    def register_funcs(self, funcs: typing.Sequence[typing.Callable] | None):
         """
         register_func registers a list of functions to the list of valid functions
 
@@ -105,7 +102,7 @@ class Callback:
                 func.reset()
 
     @property
-    def process_callbacks(self) -> typing.List[typing.Callable]:
+    def process_callbacks(self) -> list[typing.Callable]:
         """
         process_callbacks gets the current callbacks
 
@@ -132,6 +129,7 @@ class EnvDict(StateDict, Callback):
     [type]
         [description]
     """
+
     # list of items to exclude when generating the keys, items, values
     EXCLUDE_KEYS = [
         "_default_kwargs",
@@ -146,8 +144,8 @@ class EnvDict(StateDict, Callback):
 
     def __init__(
         self,
-        processing_funcs: typing.Sequence[typing.Callable] = None,
-        reduce_fn: typing.Callable = None,
+        processing_funcs: typing.Sequence[typing.Callable] | None = None,
+        reduce_fn: typing.Callable | None = None,
         reduce_fn_kwargs=None,
         **kwargs,
     ) -> None:
@@ -170,7 +168,7 @@ class EnvDict(StateDict, Callback):
         StateDict.__init__(self, **kwargs)
         Callback.__init__(self, processing_funcs)
 
-    def __call__(self, *args, **kwargs) -> typing.Tuple[OrderedDict, OrderedDict]:
+    def __call__(self, *args, **kwargs) -> tuple[OrderedDict, OrderedDict]:
         """
         __call__ Callable function for the environment dictionary type
 
@@ -218,19 +216,19 @@ class EnvDict(StateDict, Callback):
 
                 try:
                     name = func.__name__
-                except:  # noqa: E722 # pylint: disable=bare-except
+                except:  # noqa: E722
                     name = func.name  # type: ignore
 
                 # This only affects the info dictionary that is returned.  As the code below merges the output for all agents together,
                 # the __all__ entry would be overwritten to only provide the information of the last agent, which could be confusing or
                 # inaccurate.  Therefore, remove __all__ from the returned information.
-                if '__all__' in ret:
-                    del ret['__all__']
+                if "__all__" in ret:
+                    del ret["__all__"]
 
-                if name in ret_info.keys():
+                if name in ret_info:
                     common_keys = set(ret.keys()) & set(ret_info[name].keys())
                     if common_keys:
-                        raise self.DuplicateName(f'{name} has common keys: {common_keys}')
+                        raise self.DuplicateName(f"{name} has common keys: {common_keys}")
                     ret_info[name].update(**ret)
                 else:
                     ret_info[name] = ret
@@ -239,7 +237,7 @@ class EnvDict(StateDict, Callback):
         return self._reduce(r, **self._reduce_fn_kwargs), ret_info  # type: ignore
 
     @property
-    def _filtered_process_callbacks(self) -> typing.List[typing.Callable]:
+    def _filtered_process_callbacks(self) -> list[typing.Callable]:
         """Set of callbacks that have been filtered by subclass logic.
 
         Default implementation is all callbacks
@@ -285,8 +283,7 @@ class EnvDict(StateDict, Callback):
 
     def _filtered_self(self):
         tmp = {k: v for k, v in super().items() if k not in self.EXCLUDE_KEYS}
-        tmp = StateDict(tmp)
-        return tmp
+        return StateDict(tmp)
 
     def keys(self):
         return self._filtered_self().keys()
@@ -330,101 +327,6 @@ class EnvDict(StateDict, Callback):
                 d1[k1] = copy.deepcopy(d2[k2])
 
 
-class RewardDict(EnvDict):
-    """[summary]
-
-    Parameters
-    ----------
-    EnvDict : [type]
-        [description]
-
-    Returns
-    -------
-    [type]
-        [description]
-    """
-    SCALE_KEY = "SCALE"
-
-    def __init__(
-        self,
-        processing_funcs: typing.Sequence[typing.Callable] = None,
-        reduce_fn: typing.Callable = None,
-        reduce_fn_kwargs=None,
-        **kwargs,
-    ) -> None:
-        super().__init__(processing_funcs=processing_funcs, reduce_fn=reduce_fn, reduce_fn_kwargs=reduce_fn_kwargs, **kwargs)
-
-        self._agent_filter: typing.Optional[typing.Iterable[str]] = None
-
-    @property
-    def _filtered_process_callbacks(self) -> typing.List[typing.Callable]:
-        if self._agent_filter is None:
-            return super()._filtered_process_callbacks
-
-        # Avoid circular import
-        from corl.rewards.reward_func_base import RewardFuncBase  # pylint: disable=import-outside-toplevel
-
-        # TODO: Make it so that RewardFuncBase has agent_id as part of its base class API
-        # Need to disable yapf because it puts this all on a single line, which then fails pylint because the line is too long.
-        # yapf: disable
-        return [x for x in self._process_callbacks
-                if not isinstance(x, RewardFuncBase) or x._agent_id in self._agent_filter]  # pylint: disable=protected-access
-        # yapf: enable
-
-    def set_alive_agents(self, alive_agents: typing.Iterable[str]) -> None:
-        """Specify which agents are alive
-
-        This is used to determine which callbacks to call.
-
-        Parameters
-        ----------
-        alive_agents : typing.Iterable[str]
-            Agents that are currently alive.
-        """
-        self._agent_filter = alive_agents
-
-    def __call__(self, *args, **kwargs) -> typing.Tuple[OrderedDict, OrderedDict]:
-        """
-        __call__ Callable function for the done dictionary type
-
-        Returns
-        -------
-        typing.Tuple[OrderedDict, OrderedDict]
-            The done information
-        """
-        r = super().__call__(*args, **kwargs)
-        tmp = OrderedDict()
-        for key0, value0 in r[1].items():
-            assert len(value0) == 1
-            for value1 in value0.values():
-                tmp[key0] = value1
-
-        return (r[0], tmp)
-
-    def _reduce(self, r, **kwargs):
-        scale = 1.0
-        if RewardDict.SCALE_KEY in kwargs:
-            scale = kwargs[RewardDict.SCALE_KEY]
-            del kwargs[RewardDict.SCALE_KEY]
-        self._reduce_fn = self._reduce_fn or np.sum
-        tmp = StateDict.stack_values(r)
-        tmp = {k: self._reduce_fn(v, **kwargs) / scale for k, v in tmp.items()}
-
-        return OrderedDict(sorted(tmp.items()))
-
-    def set_scale_down(self, scale: int):
-        """
-        set_scale_down sets a value for the reward dict to scale
-        down the rewards by
-
-        Parameters
-        ----------
-        scale : int
-            The value to divide all rewards in the reward dict by
-        """
-        self._reduce_fn_kwargs[RewardDict.SCALE_KEY] = scale
-
-
 class DoneDict(EnvDict):
     """[summary]
 
@@ -436,16 +338,16 @@ class DoneDict(EnvDict):
 
     def __init__(
         self,
-        processing_funcs: typing.List[typing.Callable] = None,
-        reduce_fn: typing.Callable = None,
+        processing_funcs: list[typing.Callable] | None = None,
+        reduce_fn: typing.Callable | None = None,
         reduce_fn_kwargs=None,
         **kwargs,
     ) -> None:
         super().__init__(processing_funcs=processing_funcs, reduce_fn=reduce_fn, reduce_fn_kwargs=reduce_fn_kwargs, **kwargs)
 
-        self._agent_filter: typing.Optional[typing.Iterable[str]] = None
+        self._agent_filter: typing.Iterable[str] | None = None
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs) -> tuple[OrderedDict[typing.Any, typing.Any], OrderedDict[typing.Any, typing.Any]]:
         """
         __call__ Callable function for the done dictionary type
 
@@ -473,12 +375,12 @@ class DoneDict(EnvDict):
         return (r[0], tmp)
 
     @property
-    def _filtered_process_callbacks(self) -> typing.List[typing.Callable]:
+    def _filtered_process_callbacks(self) -> list[typing.Callable]:
         if self._agent_filter is None:
             return super()._filtered_process_callbacks
 
         # Avoid circular import
-        from corl.dones.done_func_base import DoneFuncBase  # pylint: disable=import-outside-toplevel
+        from corl.dones.done_func_base import DoneFuncBase
 
         return [x for x in self._process_callbacks if not isinstance(x, DoneFuncBase) or x.agent in self._agent_filter]
 

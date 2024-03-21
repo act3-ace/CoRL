@@ -14,14 +14,17 @@ AvailablePlatforms
 import logging
 import typing
 from collections import OrderedDict
-from functools import lru_cache
+from functools import cached_property
 
-import gym
-from pydantic import validator
+import numpy as np
+from gymnasium.spaces import Dict
+from pydantic import field_validator
 
 from corl.glues.base_glue import BaseAgentControllerGlue
 from corl.glues.base_wrapper import BaseWrapperGlue, BaseWrapperGlueValidator
 from corl.libraries.env_space_util import EnvSpaceUtil
+from corl.libraries.property import DictProp
+from corl.libraries.units import corl_get_ureg
 
 
 class DeltaActionValidator(BaseWrapperGlueValidator):
@@ -32,10 +35,11 @@ class DeltaActionValidator(BaseWrapperGlueValidator):
                     e.g. A throttle DeltaAction.apply_action([0.2]) with step_size=[.05] would move the
                     absolute throttle position to 0.01 higher than it was at the end of the last step.
     """
+
     step_size: float = 1.0
     is_wrap: bool
 
-    @validator("step_size")
+    @field_validator("step_size")
     @classmethod
     def check_step_scale(cls, v):
         """
@@ -60,64 +64,54 @@ class DeltaAction(BaseWrapperGlue):
 
         self._logger = logging.getLogger(DeltaAction.__name__)
 
-        self.step_size = EnvSpaceUtil.convert_config_param_to_space(
-            action_space=self.glue().action_space(), parameter=self.config.step_size
-        )
+        wrapped_aspace = self.glue().action_space
+        assert wrapped_aspace is not None
+        self.step_size = EnvSpaceUtil.convert_config_param_to_space(action_space=wrapped_aspace, parameter=self.config.step_size)
 
         self._is_wrap = self.config.is_wrap
 
         self.saved_action_deltas: EnvSpaceUtil.sample_type = OrderedDict()
-        for space_name, space in self.action_space().items():
-            self.saved_action_deltas[space_name] = space.low
+        assert isinstance(self.action_space, Dict)
+        for space_name in self.action_space:
+            self.saved_action_deltas[space_name] = corl_get_ureg().Quantity(
+                np.array([0], dtype=self.action_prop.spaces[space_name].dtype), self.action_prop.spaces[space_name].get_units()
+            )
 
         inner_glue: BaseAgentControllerGlue = typing.cast(BaseAgentControllerGlue, self.glue())
         if not isinstance(inner_glue, BaseAgentControllerGlue):
             raise TypeError(f"Inner glue is not a BaseAgentControllerGlue, but rather {type(inner_glue).__name__}")
 
-    @property
-    def get_validator(self) -> typing.Type[DeltaActionValidator]:
+        wrapped_glue_name = self.glue().get_unique_name()
+        self._uname = None if wrapped_glue_name is None else f"{wrapped_glue_name}Delta"
+
+    @staticmethod
+    def get_validator() -> type[DeltaActionValidator]:
         """Return validator"""
         return DeltaActionValidator
 
-    @lru_cache()
     def get_unique_name(self) -> str:
-        """Class method that retreives the unique name for the glue instance
-        """
-        wrapped_glue_name = self.glue().get_unique_name()
-        if wrapped_glue_name is None:
-            return None
-        return wrapped_glue_name + "Delta"
+        """Class method that retrieves the unique name for the glue instance"""
+        return self._uname
 
     def get_observation(self, other_obs: OrderedDict, obs_space, obs_units) -> EnvSpaceUtil.sample_type:
         """Get observation"""
         return {"absolute": self.glue().get_observation(other_obs, obs_space, obs_units), "delta": self.saved_action_deltas}
 
-    @lru_cache()
-    def observation_space(self):
-        """Observation space"""
-        tmp = self.glue().observation_space()
-        if not tmp:
-            raise RuntimeError("delta_controller was given a glue to wrap that has no observation space")
-        return gym.spaces.Dict({"absolute": tmp, "delta": self.action_space()})
+    @cached_property
+    def observation_prop(self):
+        return DictProp(spaces={"absolute": self.glue().observation_prop, "delta": self.action_prop})
 
-    @lru_cache()
-    def action_space(self):
-        """
-        Build the action space for the controller, weapons, etc.
-        """
-
+    @cached_property
+    def action_prop(self):
         # get the action space from the parent
-        original_action_space = self.glue().action_space()
-
-        # log the original action space
-        self._logger.debug(f"action_space: {original_action_space}")
-
+        original_action_space = self.glue().action_prop
+        assert original_action_space is not None
         # zero mean the space so we can scale it easier
-        zero_mean_space: gym.spaces.Dict = EnvSpaceUtil.zero_mean_space(original_action_space)
+        zero_mean_space = original_action_space.zero_mean()
 
         # scale the size of the unbiased space
-        for space_name, space in zero_mean_space.items():
-            zero_mean_space[space_name] = EnvSpaceUtil.scale_space(space, scale=self.step_size[space_name])
+        for space_name, space in zero_mean_space.spaces.items():
+            zero_mean_space.spaces[space_name] = space.scale(scale=self.step_size[space_name])
 
         return zero_mean_space
 
@@ -125,7 +119,7 @@ class DeltaAction(BaseWrapperGlue):
         self, action: EnvSpaceUtil.sample_type, observation: EnvSpaceUtil.sample_type, action_space, obs_space, obs_units
     ) -> None:
         """
-        Apply the action for the controller, weapons, etc.
+        Apply the action for the controllers
         """
 
         self._logger.debug(f"apply_action: {action}")
@@ -136,18 +130,20 @@ class DeltaAction(BaseWrapperGlue):
 
         last_absolute_action = inner_glue.get_applied_control()
 
+        assert self.action_space is not None
         absolute_action = EnvSpaceUtil.add_space_samples(
-            space_template=self.action_space(),
+            space_template=self.action_space,
             space_sample1=action,
             space_sample2=last_absolute_action,
         )
-        absolute_action = EnvSpaceUtil.clip_space_sample_to_space(absolute_action, inner_glue.action_space(), self._is_wrap)
+        assert inner_glue.action_space is not None
+        absolute_action = EnvSpaceUtil.clip_space_sample_to_space(absolute_action, inner_glue.action_space, self._is_wrap)
 
         self.saved_action_deltas = action
 
         inner_glue.apply_action(absolute_action, observation, action_space, obs_space, obs_units)
 
-    def get_info_dict(self):
+    def get_info_dict(self):  # noqa: PLR6301
         """
         Get the user specified metadata/metrics/etc.
         """

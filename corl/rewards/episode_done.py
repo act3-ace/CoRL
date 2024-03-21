@@ -14,18 +14,20 @@ import enum
 import typing
 from collections import OrderedDict
 from functools import partial
+from typing import Annotated
 
+import gymnasium
 import numpy as np
-from pydantic import BaseModel, NonNegativeFloat, PositiveFloat, validator
+from pydantic import AfterValidator, BaseModel, NonNegativeFloat, PositiveFloat
 
 from corl.dones.done_func_base import DoneStatusCodes
-from corl.libraries.environment_dict import RewardDict
-from corl.libraries.state_dict import StateDict
 from corl.rewards.reward_func_base import RewardFuncBase, RewardFuncBaseValidator
+from corl.simulators.base_simulator_state import BaseSimulatorState
 
 
 class NegativeExponentialScaling(BaseModel):
     """Validation entry for negative exponential scaling."""
+
     scale: NonNegativeFloat
     eps: PositiveFloat
 
@@ -37,6 +39,7 @@ class EpisodeDoneRewardValidator(RewardFuncBaseValidator):
     skip_win_lose_sanity_check: notes if the done condition should skip the sanity check checking for
         both WIN and LOSS in an episodes done results, in case it was intentional
     """
+
     consolidate: bool = False
     skip_win_lose_sanity_check: bool = True
 
@@ -48,11 +51,11 @@ class EpisodeDoneReward(RewardFuncBase):
         self.config: EpisodeDoneRewardValidator
         super().__init__(**kwargs)
         self._counter = 0
-        self._already_recorded: typing.Set[str] = set()
-        self._status_codes: typing.Dict[DoneStatusCodes, typing.List[str]] = {x: [] for x in DoneStatusCodes}
+        self._already_recorded: set[str] = set()
+        self._status_codes: dict[DoneStatusCodes, list[str]] = {x: [] for x in DoneStatusCodes}
 
-    @property
-    def get_validator(self) -> typing.Type[EpisodeDoneRewardValidator]:
+    @staticmethod
+    def get_validator() -> type[EpisodeDoneRewardValidator]:
         return EpisodeDoneRewardValidator
 
     @staticmethod
@@ -71,7 +74,7 @@ class EpisodeDoneReward(RewardFuncBase):
         return 0
 
     @abc.abstractmethod
-    def get_scaling_method(self, done_name, done_code) -> typing.Callable[[int], float]:
+    def get_scaling_method(self, done_name, done_code) -> typing.Callable[[tuple[int, float]], float]:
         """Get the scaling method for a particular done name and code."""
         raise NotImplementedError()
 
@@ -80,14 +83,12 @@ class EpisodeDoneReward(RewardFuncBase):
         observation: OrderedDict,
         action,
         next_observation: OrderedDict,
-        state: StateDict,
-        next_state: StateDict,
-        observation_space,
-        observation_units
-    ) -> RewardDict:
-
-        reward = RewardDict()
-        reward[self.config.agent_name] = 0
+        state: BaseSimulatorState,
+        next_state: BaseSimulatorState,
+        observation_space: gymnasium.Space,
+        observation_units: OrderedDict,
+    ) -> float:
+        reward: float = 0.0
 
         done_state = next_state.agent_episode_state.get(self.config.agent_name, {})
         for done_name, done_code in done_state.items():
@@ -96,36 +97,39 @@ class EpisodeDoneReward(RewardFuncBase):
             self._already_recorded.add(done_name)
             self._status_codes[done_code].append(done_name)
 
-        if not self.config.skip_win_lose_sanity_check:
-            if len(self._status_codes[DoneStatusCodes.WIN]) > 0 and len(self._status_codes[DoneStatusCodes.LOSE]) > 0:
-                raise RuntimeError(
-                    "EpisodeDoneReward found both WIN and LOSS set during this episode, "
-                    "if this is intended set skip_sanity_check=True"
-                )
+        if (
+            not self.config.skip_win_lose_sanity_check
+            and len(self._status_codes[DoneStatusCodes.WIN]) > 0
+            and len(self._status_codes[DoneStatusCodes.LOSE]) > 0
+        ):
+            raise RuntimeError(
+                "EpisodeDoneReward found both WIN and LOSS set during this episode, if this is intended set skip_sanity_check=True"
+            )
 
         # this will loop starting from win and go down
         consolidate_break = False
         for done_status in DoneStatusCodes:
             for done_name in self._status_codes[done_status]:
-                reward[self.config.agent_name] += self.get_scaling_method(done_name, done_status)(self._counter)
+                reward += self.get_scaling_method(done_name, done_status)(self._counter)  # type: ignore[arg-type]
                 if self.config.consolidate:
                     consolidate_break = True
                     break
             if consolidate_break:
                 break
 
-        self._counter += 1 / next_state.sim_update_rate
+        self._counter += int(1 / next_state.sim_update_rate_hz)
 
         return reward
 
 
 class EpisodeDoneStateRewardValidator(EpisodeDoneRewardValidator):
     """Validation for EpisodeDoneStateReward."""
-    win: typing.Union[NegativeExponentialScaling, float] = 0
-    partial_win: typing.Union[NegativeExponentialScaling, float] = 0
-    draw: typing.Union[NegativeExponentialScaling, float] = 0
-    partial_loss: typing.Union[NegativeExponentialScaling, float] = 0
-    lose: typing.Union[NegativeExponentialScaling, float] = 0
+
+    win: NegativeExponentialScaling | float = 0
+    partial_win: NegativeExponentialScaling | float = 0
+    draw: NegativeExponentialScaling | float = 0
+    partial_loss: NegativeExponentialScaling | float = 0
+    lose: NegativeExponentialScaling | float = 0
 
 
 class EpisodeDoneStateReward(EpisodeDoneReward):
@@ -139,37 +143,38 @@ class EpisodeDoneStateReward(EpisodeDoneReward):
         for code in DoneStatusCodes:
             code_name = code.name.lower()
             if not hasattr(self.config, code_name):
-                raise RuntimeError(f'Unknown done status code: {code_name}')
+                raise RuntimeError(f"Unknown done status code: {code_name}")
             code_data = getattr(self.config, code_name)
             if isinstance(code_data, NegativeExponentialScaling):
                 self._status_code_func[code_name] = partial(self.exp_scaling, scale=code_data.scale, eps=code_data.eps)
             else:
                 self._status_code_func[code_name] = partial(self.constant_scaling, scale=code_data)
 
-    @property
-    def get_validator(self) -> typing.Type[EpisodeDoneStateRewardValidator]:
+    @staticmethod
+    def get_validator() -> type[EpisodeDoneStateRewardValidator]:
         return EpisodeDoneStateRewardValidator
 
-    def get_scaling_method(self, done_name, done_code) -> typing.Callable[[int], float]:
+    def get_scaling_method(self, done_name, done_code) -> typing.Callable[[int], float]:  # type: ignore[override]
         return self._status_code_func[done_code.name.lower()]
 
 
 class _MissingMethod(enum.Enum):
-    zero = 'zero'
-    raise_exception = 'raise'
+    zero = "zero"
+    raise_exception = "raise"
+
+
+def not_empty(v):
+    """Ensure that some done condition is specified."""
+    if len(v) == 0:
+        raise ValueError("Rewarded dones cannot be empty")
+    return v
 
 
 class EpisodeDoneNameRewardValidator(EpisodeDoneRewardValidator):
     """Validation for EpisodeDoneNameReward."""
-    rewarded_dones: typing.Dict[str, typing.Union[NegativeExponentialScaling, float]] = {}
-    missing_method: _MissingMethod = _MissingMethod.zero
 
-    @validator('rewarded_dones', always=True)
-    def not_empty(cls, v):
-        """Ensure that some done condition is specified."""
-        if len(v) == 0:
-            raise ValueError('Rewarded dones cannot be empty')
-        return v
+    rewarded_dones: Annotated[dict[str, NegativeExponentialScaling | float], AfterValidator(not_empty)] = {}
+    missing_method: _MissingMethod = _MissingMethod.zero
 
 
 class EpisodeDoneNameReward(EpisodeDoneReward):
@@ -186,11 +191,11 @@ class EpisodeDoneNameReward(EpisodeDoneReward):
             else:
                 self._done_name_func[name] = partial(self.constant_scaling, scale=args)
 
-    @property
-    def get_validator(self) -> typing.Type[EpisodeDoneNameRewardValidator]:
+    @staticmethod
+    def get_validator() -> type[EpisodeDoneNameRewardValidator]:
         return EpisodeDoneNameRewardValidator
 
-    def get_scaling_method(self, done_name, done_code) -> typing.Callable[[int], float]:
+    def get_scaling_method(self, done_name, done_code) -> typing.Callable[[int], float]:  # type: ignore[override]
         if self.config.missing_method == _MissingMethod.zero:
             return self._done_name_func.get(done_name, self.zero_scaling)
 

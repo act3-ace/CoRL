@@ -5,7 +5,7 @@ This module defines functions that determine terminal conditions for the 1D Dock
 import numpy as np
 
 from corl.dones.done_func_base import DoneFuncBase, DoneFuncBaseValidator, DoneStatusCodes
-from corl.libraries.environment_dict import DoneDict
+from corl.libraries.units import Quantity
 from corl.simulators.common_platform_utils import get_platform_by_name, get_sensor_by_name
 
 
@@ -15,23 +15,25 @@ class DockingDoneValidator(DoneFuncBaseValidator):
     computations in the SuccessfulDockingDoneFunction.
     """
 
-    docking_region_radius: float
-    velocity_threshold: float
+    docking_region_radius: Quantity
+    velocity_threshold: Quantity
     position_sensor_name: str
     velocity_sensor_name: str
 
 
 class DockingDoneFunction(DoneFuncBase):
     """
-    A done function that determines if deputy has successfully docked with the cheif or not.
+    A done function that determines if deputy has successfully docked with the chief or not.
     """
+
+    REQUIRED_UNITS = {"docking_region_radius": "meter", "velocity_threshold": "meter / second"}
 
     def __init__(self, **kwargs) -> None:
         self.config: DockingDoneValidator
         super().__init__(**kwargs)
 
-    @property
-    def get_validator(self):
+    @staticmethod
+    def get_validator() -> type[DockingDoneValidator]:
         """
         Parameters
         ----------
@@ -64,9 +66,7 @@ class DockingDoneFunction(DoneFuncBase):
             dictionary containing the condition condition for the current agent
 
         """
-
-        done = DoneDict()
-        deputy = get_platform_by_name(next_state, self.config.agent_name)
+        deputy = get_platform_by_name(next_state, self.config.platform_name)
 
         position_sensor = get_sensor_by_name(deputy, self.config.position_sensor_name)
         velocity_sensor = get_sensor_by_name(deputy, self.config.velocity_sensor_name)
@@ -77,21 +77,20 @@ class DockingDoneFunction(DoneFuncBase):
         chief_position = np.array([0])
         docking_region_radius = self.config.docking_region_radius
 
-        distance = abs(position - chief_position)
-        in_docking = distance <= docking_region_radius
+        distance = abs(position.m - chief_position).item()
+        in_docking = distance <= docking_region_radius.m
 
-        max_velocity_exceeded = self.config.velocity_threshold > velocity
+        max_velocity_exceeded = self.config.velocity_threshold.m < abs(velocity.m).item()
 
         successful_dock = in_docking and not max_velocity_exceeded
-        crash = (in_docking and max_velocity_exceeded) or position < 0  # pylint: disable=R1706
+        crash = in_docking and max_velocity_exceeded
 
-        done[self.platform] = False
+        done = False
         if crash:
-            done[self.platform] = True
+            done = True
             next_state.episode_state[self.platform][self.name] = DoneStatusCodes.LOSE
         elif successful_dock:
-            done[self.platform] = True
+            done = True
             next_state.episode_state[self.platform][self.name] = DoneStatusCodes.WIN
 
-        self._set_all_done(done)
         return done

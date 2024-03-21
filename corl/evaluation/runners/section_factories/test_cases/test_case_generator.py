@@ -12,7 +12,6 @@ Generate test cases from configuration
 """
 import itertools
 import logging
-import typing
 
 import pandas as pd
 from numpy.random import BitGenerator, Generator
@@ -22,7 +21,7 @@ from corl.evaluation.runners.section_factories.test_cases import config_parser
 
 
 def create_test_cases(config: config_parser.RESOLVED_VARIABLE_STRUCTURE_VALUE) -> pd.DataFrame:
-    """ Create the Cartesian product of test cases from a configuration.
+    """Create the Cartesian product of test cases from a configuration.
 
     Parameters
     ----------
@@ -41,7 +40,7 @@ def create_test_cases(config: config_parser.RESOLVED_VARIABLE_STRUCTURE_VALUE) -
     for v in config.values():
         num_cases *= len(v)
     if num_cases > 1000000:
-        logger.warning('Number of test cases: %s', num_cases)
+        logger.warning("Number of test cases: %s", num_cases)
 
     keys = sorted(config.keys())
     values = [config[key] for key in keys]
@@ -49,7 +48,7 @@ def create_test_cases(config: config_parser.RESOLVED_VARIABLE_STRUCTURE_VALUE) -
     return pd.DataFrame(itertools.product(*values), columns=keys)
 
 
-def sample(bgen: BitGenerator, test_cases: pd.DataFrame, amount: typing.Union[int, float]) -> pd.DataFrame:
+def sample(bgen: BitGenerator, test_cases: pd.DataFrame, amount: int | float) -> pd.DataFrame:
     """Sample test cases by count or percentage.
 
     Parameters
@@ -67,12 +66,7 @@ def sample(bgen: BitGenerator, test_cases: pd.DataFrame, amount: typing.Union[in
         Sampled test cases, with fewer rows according to amount provided.
     """
 
-    if amount >= 1:
-        test_cases = test_cases.sample(n=int(amount), random_state=bgen)
-    else:
-        test_cases = test_cases.sample(frac=amount, random_state=bgen)
-
-    return test_cases
+    return test_cases.sample(n=int(amount), random_state=bgen) if amount >= 1 else test_cases.sample(frac=amount, random_state=bgen)
 
 
 def generate_random(gen: Generator, config: config_parser.RANDOMIZE, value: pd.Series, variable: str) -> pd.Series:
@@ -112,24 +106,24 @@ def generate_random(gen: Generator, config: config_parser.RANDOMIZE, value: pd.S
 
     value = value.copy()
 
-    distribution = str(config['distribution']).lower()
+    distribution = str(config["distribution"]).lower()
 
-    if distribution == 'uniform':
-        if set(config.keys()) != set(['distribution', 'width']):
-            raise ValueError(f'{variable} does not contain proper parameters for uniform distribution')
+    if distribution == "uniform":
+        if set(config.keys()) != {"distribution", "width"}:
+            raise ValueError(f"{variable} does not contain proper parameters for uniform distribution")
 
-        extent = float(config['width']) / 2
+        extent = float(config["width"]) / 2
         value += gen.uniform(low=-extent, high=extent, size=len(value))
 
-    elif distribution == 'angular_uniform':
-        if set(config.keys()) != set(['distribution', 'width', 'min', 'max']):
-            raise ValueError(f'{variable} does not contain proper parameters for angular uniform distribution')
+    elif distribution == "angular_uniform":
+        if set(config.keys()) != {"distribution", "width", "min", "max"}:
+            raise ValueError(f"{variable} does not contain proper parameters for angular uniform distribution")
 
-        extent = float(config['width']) / 2
+        extent = float(config["width"]) / 2
         value += gen.uniform(low=-extent, high=extent, size=len(value))
 
-        max_val = float(config['max'])
-        min_val = float(config['min'])
+        max_val = float(config["max"])
+        min_val = float(config["min"])
         period = max_val - min_val
 
         while any(value > max_val):
@@ -137,11 +131,11 @@ def generate_random(gen: Generator, config: config_parser.RANDOMIZE, value: pd.S
         while any(value < min_val):
             value.loc[value < min_val] += period
 
-    elif distribution == 'normal':
-        if set(config.keys()) != set(['distribution', 'scale']):
-            raise ValueError(f'{variable} does not contain proper parameters for normal distribution')
+    elif distribution == "normal":
+        if set(config.keys()) != {"distribution", "scale"}:
+            raise ValueError(f"{variable} does not contain proper parameters for normal distribution")
 
-        value += gen.normal(loc=0, scale=float(config['scale']), size=len(value))
+        value += gen.normal(loc=0, scale=float(config["scale"]), size=len(value))
 
     else:
         raise ValueError(f'{variable} contains unknown distribution {config["distribution"]}')
@@ -178,9 +172,8 @@ def randomize_test_cases(
 
     test_cases = test_cases.copy()
 
-    unknown_columns = set(config.keys()) - set(test_cases.columns)
-    if unknown_columns:
-        raise ValueError(f'Unknown columns: {unknown_columns}')
+    if unknown_columns := set(config.keys()) - set(test_cases.columns):
+        raise ValueError(f"Unknown columns: {unknown_columns}")
 
     for col, col_config in config.items():
         test_cases.loc[:, col] = test_cases.loc[:, col].astype(float)

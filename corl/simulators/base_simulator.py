@@ -13,10 +13,13 @@ limitation or restriction. See accompanying README and LICENSE for details.
 import typing
 from abc import ABC, abstractmethod
 
-from pydantic import BaseModel, PyObject, ValidationError, parse_obj_as, validate_arguments
+from pydantic import BaseModel, ImportString, TypeAdapter, ValidationError, validate_call
+from ray.rllib import BaseEnv
+from ray.rllib.evaluation.episode_v2 import EpisodeV2
+from ray.rllib.policy import Policy
+from ray.rllib.utils.typing import PolicyID
 
 from corl.libraries.factory import Factory
-from corl.libraries.units import ValueWithUnits
 from corl.simulators.base_platform import BasePlatform
 from corl.simulators.base_simulator_state import BaseSimulatorState
 
@@ -31,8 +34,9 @@ class AgentConfig(BaseModel):
     Arguments:
         BaseModel: [description]
     """
-    platform_config: typing.Union[typing.Dict[str, typing.Any], BaseModel]
-    parts_list: typing.List[typing.Tuple[PyObject, typing.Dict[str, typing.Any]]]
+
+    platform_config: dict[str, typing.Any] | BaseModel
+    parts_list: list[tuple[ImportString, dict[str, typing.Any]]]
 
 
 class BaseSimulatorValidator(BaseModel):
@@ -42,6 +46,7 @@ class BaseSimulatorValidator(BaseModel):
     agent_configs: the mapping of agent names to a dict describing the platform
     frame_rate: the rate the simulator should run at (in Hz)
     """
+
     worker_index: int = 0
     vector_index: int = 0
     agent_configs: typing.Mapping[str, AgentConfig]
@@ -57,26 +62,22 @@ class BaseSimulatorResetValidator(BaseModel):
 
     Subclasses can redefine `platforms` to make the `typing.Any` more restrictive.  It must remain a dictionary with keys named for
     the platforms in the simulation.
+
+    agent_configs_reset: the mapping of agent names to a dict describing the platform to be used during sim reset
     """
-    platforms: typing.Dict[str, typing.Any] = {}
+
+    platforms: dict[str, typing.Any] = {}
+    agent_configs_reset: typing.Mapping[str, AgentConfig] = {}
 
 
-@validate_arguments
-def validation_helper_units_and_parameters(value: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
-    """Recursively inspect a dictionary, converting ValueWithUnits and Factory"""
+@validate_call
+def validation_helper_units_and_parameters(value: dict[str, typing.Any]) -> dict[str, typing.Any]:
+    """Recursively inspect a dictionary, converting Factory"""
 
-    output: typing.Dict[str, typing.Any] = {}
+    output: dict[str, typing.Any] = {}
     for k, v in value.items():
         try:
-            elem = parse_obj_as(ValueWithUnits, v)
-        except ValidationError:
-            pass
-        else:
-            output[k] = elem
-            continue
-
-        try:
-            factory = parse_obj_as(Factory, v)
+            factory = TypeAdapter(Factory).validate_python(v)
         except ValidationError:
             pass
         else:
@@ -95,6 +96,86 @@ def validation_helper_units_and_parameters(value: typing.Dict[str, typing.Any]) 
     return output
 
 
+class SimulatorDefaultCallbacks:
+    """This class allows the simulator to add simulator specific operation into the environment callbacks.
+
+    These methods are called at the end of corl.environment.default_env_rllib_callbacks.EnvironmentDefaultCallbacks methods of the same
+    name.
+    """
+
+    def on_episode_start(
+        self,
+        *,
+        worker,
+        base_env: BaseEnv,
+        policies: dict[PolicyID, Policy],
+        episode: EpisodeV2,
+        **kwargs,
+    ) -> None:
+        """Callback run on the rollout worker before each episode starts.
+
+        Args:
+            worker: Reference to the current rollout worker.
+            base_env: BaseEnv running the episode. The underlying
+                sub environment objects can be retrieved by calling
+                `base_env.get_sub_environments()`.
+            policies: Mapping of policy id to policy objects. In single
+                agent mode there will only be a single "default" policy.
+            episode: EpisodeV2 object which contains the episode's
+                state. You can use the `episode.user_data` dict to store
+                temporary data, and `episode.custom_metrics` to store custom
+                metrics for the episode.
+            kwargs: Forward compatibility placeholder.
+        """
+
+    def on_episode_step(
+        self,
+        *,
+        worker,
+        base_env: BaseEnv,
+        policies: dict[PolicyID, Policy] | None = None,
+        episode: EpisodeV2,
+        **kwargs,
+    ) -> None:
+        """Runs on each episode step.
+
+        Args:
+            worker: Reference to the current rollout worker.
+            base_env: BaseEnv running the episode. The underlying
+                sub environment objects can be retrieved by calling
+                `base_env.get_sub_environments()`.
+            policies: Mapping of policy id to policy objects.
+                In single agent mode there will only be a single
+                "default_policy".
+            episode: EpisodeV2 object which contains episode
+                state. You can use the `episode.user_data` dict to store
+                temporary data, and `episode.custom_metrics` to store custom
+                metrics for the episode.
+            kwargs: Forward compatibility placeholder.
+        """
+
+    def on_episode_end(self, *, worker, base_env: BaseEnv, policies: dict[PolicyID, Policy], episode, **kwargs) -> None:
+        """
+        Runs at the end of the episode.
+
+        Parameters
+        ----------
+        worker: RolloutWorker
+            Reference to the current rollout worker.
+        base_env: BaseEnv
+            BaseEnv running the episode. The underlying
+            env object can be gotten by calling base_env.get_sub_environments().
+        policies: dict
+            Mapping of policy id to policy objects. In single
+            agent mode there will only be a single "default" policy.
+        episode: MultiAgentEpisode
+            EpisodeV2 object which contains episode
+            state. You can use the `episode.user_data` dict to store
+            temporary data, and `episode.custom_metrics` to store custom
+            metrics for the episode.
+        """
+
+
 class BaseSimulator(ABC):
     """
     BaseSimulator is responsible for initializing the platform objects for a simulation
@@ -102,11 +183,12 @@ class BaseSimulator(ABC):
     it is also responsible for reporting the simulation state at each timestep
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         self.config = self.get_simulator_validator(**kwargs)
+        self.callbacks = self.get_callbacks()
 
     @property
-    def get_simulator_validator(self) -> typing.Type[BaseSimulatorValidator]:
+    def get_simulator_validator(self) -> type[BaseSimulatorValidator]:
         """
         returns the validator for the configuration options to the simulator
         the kwargs to this class are validated and put into a defined struct
@@ -118,7 +200,7 @@ class BaseSimulator(ABC):
         return BaseSimulatorValidator
 
     @property
-    def get_reset_validator(self) -> typing.Type[BaseSimulatorResetValidator]:
+    def get_reset_validator(self) -> type[BaseSimulatorResetValidator]:
         """
         returns the validator that can be used to validate episode parameters
         coming into the reset function from the environment class
@@ -133,8 +215,14 @@ class BaseSimulator(ABC):
         """Return the frame rate (in Hz) this simulator will run at"""
         return self.config.frame_rate
 
+    def shutdown(self):
+        """Shutdown the simulator. This will cause all resources to be closed. After this is called,
+        reset/step may no longer be called and the simulation is ready for destruction. This should be
+        safe to be called more than once, though subsequent calls should have no effect.
+        """
+
     @abstractmethod
-    def reset(self, config: typing.Dict[str, typing.Any]) -> BaseSimulatorState:
+    def reset(self, config: dict[str, typing.Any]) -> BaseSimulatorState:
         """
         reset resets the simulation and sets up a new episode
 
@@ -147,7 +235,7 @@ class BaseSimulator(ABC):
         """
 
     @abstractmethod
-    def step(self, platforms_to_action: typing.Set[str]) -> BaseSimulatorState:
+    def step(self, platforms_to_action: set[str]) -> BaseSimulatorState:
         """
         advances the simulation platforms and returns the state
 
@@ -171,7 +259,7 @@ class BaseSimulator(ABC):
 
     @property
     @abstractmethod
-    def platforms(self) -> typing.Dict[str, BasePlatform]:
+    def platforms(self) -> dict[str, BasePlatform]:
         """
         returns a dict of platforms in the simulation
 
@@ -180,7 +268,7 @@ class BaseSimulator(ABC):
         """
 
     @abstractmethod
-    def mark_episode_done(self, done_info: typing.Dict, episode_state: typing.Dict):
+    def mark_episode_done(self, done_info: dict, episode_state: dict, metadata: dict | None = None):
         """
         Takes in the done_info specifying how the episode completed
         and does any book keeping around ending an episode
@@ -188,10 +276,11 @@ class BaseSimulator(ABC):
         Arguments:
             done_info {OrderedDict} -- The Dict describing which Done conditions ended an episode
             episode_state {OrderedDict} -- The episode state at the end of the simulation
+            metadata {dict | None}  --  Additional metadata to be stored along with the episode
         """
 
     @abstractmethod
-    def save_episode_information(self, dones, rewards, observations):
+    def save_episode_information(self, dones, rewards, observations, observation_units):
         """
         provides a way to save information about the current episode
         based on the environment
@@ -200,15 +289,21 @@ class BaseSimulator(ABC):
             dones: the current done info of the step
             rewards: the reward info for this step
             observations: the observations for this step
+            observation_units: the measurement units of the observations for this step
         """
 
-    def render(self, state, mode="human"):  # pylint: disable=unused-argument
+    @property
+    def get_callbacks(self) -> type[SimulatorDefaultCallbacks]:
+        """Return the simulator callback class."""
+        return SimulatorDefaultCallbacks
+
+    def render(self, state, mode="human"):
         """
         allows you to do something to render your simulation
         you are responsible for checking which worker/vector index you are on
         """
 
-    def delete_platform(self, name):  # pylint: disable=unused-argument
+    def delete_platform(self, name):
         """
         provides a way to delete a platform from the simulation
         """

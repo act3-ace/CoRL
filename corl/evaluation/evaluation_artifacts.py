@@ -20,11 +20,12 @@ from corl.evaluation.recording.i_recorder import IRecord
 @dataclasses.dataclass
 class EvaluationArtifact_EvaluationOutcome:
     """
-    Contains information needed to retreive the evaluation outcome
+    Contains information needed to retrieve the evaluation outcome
 
     Args:
-        location: Location of Evalution outcome
+        location: Location of Evaluation outcome
     """
+
     location: IRecord
 
 
@@ -40,6 +41,7 @@ class EvaluationArtifact_Metrics:
         location: Location of metrics artifact, currently only file system is supported
         metrics_file: Name of file to save metrics to. defaults to metrics.pkl
     """
+
     location: str  # Eventually this may be a reference to a database instead of just a path
     file: str = "metrics.pkl"
 
@@ -55,4 +57,5 @@ class EvaluationArtifact_Visualization:
     Args:
         location: Location of plot artifacts
     """
+
     location: str  # Eventually this may be a reference to a database instead of just a path

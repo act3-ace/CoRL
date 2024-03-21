@@ -1,0 +1,7 @@
+[
+  {
+    "name": "GymnasiumReward",
+    "functor": "corl.rewards.gymnasium_reward.GymnasiumReward",
+    "config": {},
+  },
+]

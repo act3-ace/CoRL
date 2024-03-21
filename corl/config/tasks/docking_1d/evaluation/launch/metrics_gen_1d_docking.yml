@@ -1,0 +1,13 @@
+
+artifact_evaluation_outcome:
+  location: 
+    class_path: corl.evaluation.recording.folder.FolderRecord
+    init_args:
+      absolute_path: <SAVE-LOCATION>
+
+artifact_metrics:
+  location: <SAVE-LOCATION>
+
+metrics_config: config/tasks/docking_1d/evaluation/metrics/1d_docking.yml
+alerts_config: config/tasks/docking_1d/evaluation/alerts/base_alerts.yml
+

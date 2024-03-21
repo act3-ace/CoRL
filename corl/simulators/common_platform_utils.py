@@ -12,18 +12,18 @@ Common Platform Utils Module
 """
 import typing
 
-from corl.libraries.state_dict import StateDict
 from corl.simulators.base_parts import BaseController, BasePlatformPart, BaseSensor
 from corl.simulators.base_platform import BasePlatform
+from corl.simulators.base_simulator import BaseSimulatorState
 
 
-def get_platform_by_name(state: StateDict, platform_name: str, allow_invalid=False) -> typing.Optional[BasePlatform]:
+def get_platform_by_name(state: BaseSimulatorState, platform_name: str, allow_invalid=False) -> BasePlatform | None:
     """
     Gets a platform from a sim state based on a given agent id (name)
 
     Parameters
     ----------
-    state: StateDict
+    state: BaseSimulatorState
         State of current platforms in a sim step
     platform_name: str
         name of a given platform to search for in the sim state
@@ -33,13 +33,8 @@ def get_platform_by_name(state: StateDict, platform_name: str, allow_invalid=Fal
     platform: BasePlatform
         The platform with the given platform_name name
     """
-    platform: typing.Optional[BasePlatform] = None
-    if "_" in platform_name:
-        temp = platform_name.split("_", 1)[0]
-    else:
-        temp = platform_name
-
-    platform = state.sim_platforms.get(temp, None)
+    platform: BasePlatform | None = None
+    platform = state.sim_platforms.get(platform_name, None)
 
     if not allow_invalid and (platform is None or not issubclass(platform.__class__, BasePlatform)):
         raise ValueError(f"Could not find a platform named {platform_name} of class BasePlatform")
@@ -49,12 +44,12 @@ def get_platform_by_name(state: StateDict, platform_name: str, allow_invalid=Fal
 
 def get_controller_by_name(platform: BasePlatform, name: str) -> BaseController:
     """
-    Gets a platform controller from a platfrom given the controller name
+    Gets a platform controller from a platform given the controller name
 
     Parameters
     ----------
     platform: BasePlatform
-        platfrom to find part
+        platform to find part
     name: str
         name of a given controller to search for in the platform
 
@@ -68,12 +63,12 @@ def get_controller_by_name(platform: BasePlatform, name: str) -> BaseController:
 
 def get_sensor_by_name(platform: BasePlatform, name: str) -> BaseSensor:
     """
-    Gets a platform sensor from a platfrom given the sensor name
+    Gets a platform sensor from a platform given the sensor name
 
     Parameters
     ----------
     platform: BasePlatform
-        platfrom to find part
+        platform to find part
     name: str
         name of a given sensor to search for in the platform
 
@@ -88,14 +83,14 @@ def get_sensor_by_name(platform: BasePlatform, name: str) -> BaseSensor:
 T = typing.TypeVar("T", bound=BasePlatformPart)
 
 
-def get_part_by_name(platform: BasePlatform, name: str, part_type: typing.Type[T] = None) -> T:
+def get_part_by_name(platform: BasePlatform, name: str, part_type: type[T] | None = None) -> T:
     """
-    Gets a platform part from a platfrom given the part name
+    Gets a platform part from a platform given the part name
 
     Parameters
     ----------
     platform: BasePlatform
-        platfrom to find part
+        platform to find part
     name: str
         name of a given part  to search for in the platform
 
@@ -120,7 +115,7 @@ def get_part_by_name(platform: BasePlatform, name: str, part_type: typing.Type[T
     return found_part
 
 
-def is_platform_operable(state: StateDict, platform_name: str) -> bool:
+def is_platform_operable(state: BaseSimulatorState, platform_name: str) -> bool:
     """
     Check if a platform specified by name is operable
 

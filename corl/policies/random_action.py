@@ -8,15 +8,18 @@ This is a US Government Work not subject to copyright protection in the US.
 The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
-Module with base implimentations for Observations
+Module with base implementations for Observations
 """
+from collections import defaultdict
+
+import flatten_dict
+import numpy as np
 from ray.rllib.policy import Policy
 from ray.rllib.policy.sample_batch import SampleBatch
 
 
-class RandomActionPolicy(Policy):  # pylint: disable=abstract-method
-    """Random action policy.
-    """
+class RandomActionPolicy(Policy):
+    """Random action policy."""
 
     def __init__(self, observation_space, action_space, config):
         Policy.__init__(self, observation_space, action_space, config)
@@ -32,15 +35,27 @@ class RandomActionPolicy(Policy):  # pylint: disable=abstract-method
         episodes=None,
         explore=None,
         timestep=None,
-        **kwargs
+        **kwargs,
     ):
-        return [self.action_space.sample() for _ in obs_batch], [], {}
+        if not isinstance(obs_batch, list):
+            obs_batch = [obs_batch]
 
-    def learn_on_batch(self, samples):
+        actions_batch = defaultdict(list)
+        for _ in obs_batch:
+            random_actions = self.action_space.sample()
+            for key, value in flatten_dict.flatten(random_actions).items():
+                actions_batch[key].append(value)
+
+        for key, value in actions_batch.items():
+            actions_batch[key] = np.array(value)
+
+        return flatten_dict.unflatten(actions_batch), [], {}
+
+    def learn_on_batch(self, samples):  # noqa: PLR6301
         return {}
 
-    def get_weights(self):
+    def get_weights(self):  # noqa: PLR6301
         return {}
 
-    def set_weights(self, weights):
+    def set_weights(self, weights):  # noqa: PLR6301
         return

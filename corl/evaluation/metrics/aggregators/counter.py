@@ -28,7 +28,7 @@ class TerminalCounterMetric(MetricGeneratorAggregator):
 
     divide_total: bool = False
 
-    def generate_metric(self, params: typing.Union[typing.List[Metric], Metric], **kwargs) -> Metric:
+    def generate_metric(self, params: list[Metric] | Metric, **kwargs) -> Metric:
         """Generate the metric
 
         Arguments:
@@ -39,7 +39,7 @@ class TerminalCounterMetric(MetricGeneratorAggregator):
         """
 
         count: typing.Counter[typing.Any] = Counter()
-        arr: typing.List[Metric] = [params] if isinstance(params, Metric) else params
+        arr: list[Metric] = [params] if isinstance(params, Metric) else params
         for elem in arr:
             count.update(self._get_values(elem))
 
@@ -50,7 +50,7 @@ class TerminalCounterMetric(MetricGeneratorAggregator):
 
     @classmethod
     def _get_values(cls, metric_elem: Metric) -> typing.Iterable[typing.Any]:
-        if isinstance(metric_elem, (Real, String, Discrete)):
+        if isinstance(metric_elem, Real | String | Discrete):
             return [metric_elem.value]
 
         if isinstance(metric_elem, Rate):
@@ -59,4 +59,4 @@ class TerminalCounterMetric(MetricGeneratorAggregator):
         if isinstance(metric_elem, Vector):
             return itertools.chain.from_iterable(cls._get_values(x) for x in metric_elem.arr)
 
-        raise TypeError(f'Unsupported metric: {type(metric_elem).__name__}')
+        raise TypeError(f"Unsupported metric: {type(metric_elem).__name__}")

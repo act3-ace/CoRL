@@ -1,18 +1,21 @@
-
-from corl.libraries.plugin_library import PluginLibrary
 import pytest
 
-class ToyClass1():
+
+class ToyClass1:
     ...
 
-class ToyClass2():
+
+class ToyClass2:
     ...
 
-class ToyClass3():
+
+class ToyClass3:
     ...
 
-class ToyClass4():
+
+class ToyClass4:
     ...
+
 
 def test_plugin_library():
     from corl.libraries.plugin_library import PluginLibrary
@@ -23,9 +26,8 @@ def test_plugin_library():
     PluginLibrary.AddClassToGroup(ToyClass4, "class_4", {})
     PluginLibrary.AddClassToGroup(ToyClass2, "class_2", {"condition1": "test"})
 
-    # test doubling up on conditions
-    with pytest.raises(RuntimeError):
-        PluginLibrary.AddClassToGroup(ToyClass2, "class_2", {"condition1": "test"})
+    # test doubling up on conditions not causing an error
+    PluginLibrary.AddClassToGroup(ToyClass2, "class_2", {"condition1": "test"})
 
     # test wrong type for conditions
     with pytest.raises(RuntimeError):

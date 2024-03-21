@@ -9,7 +9,8 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
-from typing import List, Type
+
+from pydantic import ConfigDict
 
 from corl.glues.base_glue import BaseAgentGlue, BaseAgentGlueValidator
 
@@ -18,27 +19,24 @@ class BaseMultiWrapperGlueValidator(BaseAgentGlueValidator):
     """
     wrapped - the wrapped glue instances
     """
-    wrapped: List[BaseAgentGlue]
 
-    class Config:  # pylint: disable=C0115, R0903
-        arbitrary_types_allowed = True
+    wrapped: list[BaseAgentGlue]
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class BaseMultiWrapperGlue(BaseAgentGlue):
-    """A base object that glues can inherit in order to "wrap" multiple glue instances
-    """
+    """A base object that glues can inherit in order to "wrap" multiple glue instances"""
 
     def __init__(self, **kwargs) -> None:
         self.config: BaseMultiWrapperGlueValidator
         super().__init__(**kwargs)
 
-    @property
-    def get_validator(self) -> Type[BaseMultiWrapperGlueValidator]:
+    @staticmethod
+    def get_validator() -> type[BaseMultiWrapperGlueValidator]:
         return BaseMultiWrapperGlueValidator
 
-    def glues(self) -> List[BaseAgentGlue]:
-        """Get the wrapped glue instances
-        """
+    def glues(self) -> list[BaseAgentGlue]:
+        """Get the wrapped glue instances"""
         return self.config.wrapped
 
     def set_agent_removed(self, agent_removed: bool = True) -> None:

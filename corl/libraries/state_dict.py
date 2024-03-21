@@ -39,17 +39,17 @@ class StateDict(OrderedDict):
         ret = obj
         if isinstance(obj, dict):
             if issubclass(type(obj), StateDict):
-                for (k, v) in obj.items():
+                for k, v in obj.items():
                     obj[k] = StateDict.recursive_attrdict(v)
 
                 ret = obj
             else:
                 ret = StateDict(
-                    dict((str(k), StateDict.recursive_attrdict(v)) for (k, v) in obj.items()),
+                    {str(k): StateDict.recursive_attrdict(v) for (k, v) in obj.items()},
                     recurse=False,
                 )
         elif isinstance(obj, list):
-            ret = list(StateDict.recursive_attrdict(i) for i in obj)
+            ret = [StateDict.recursive_attrdict(i) for i in obj]
         elif isinstance(obj, tuple):
             ret = tuple(StateDict.recursive_attrdict(i) for i in obj)
 
@@ -63,10 +63,9 @@ class StateDict(OrderedDict):
     def __getattr__(self, name):
         _item = self.get(name)  # __getitem__(key) if key in self else None
 
-        if name not in self and _item is None:
+        if name not in self and _item is None and isinstance(name, str) and name[0] != "_":
             # attempt to ignore builtins and private attributes
-            if isinstance(name, str) and name[0] != "_":
-                raise KeyError(f"{name}")
+            raise KeyError(f"{name}")
 
         return _item
 
@@ -80,13 +79,13 @@ class StateDict(OrderedDict):
     def __dir__(self):
         return list(super().__dir__()) + [str(k) for k in self.keys()]
 
-    def keys(self):
+    def keys(self):  # noqa: PLR6301
         return OrderedDict(sorted(super().items())).keys()
 
-    def values(self):
+    def values(self):  # noqa: PLR6301
         return OrderedDict(sorted(super().items())).values()
 
-    def items(self):
+    def items(self):  # noqa: PLR6301
         return OrderedDict(sorted(super().items())).items()
 
     @staticmethod

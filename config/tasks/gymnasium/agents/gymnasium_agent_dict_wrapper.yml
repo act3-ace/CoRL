@@ -1,0 +1,75 @@
+"agent": "corl.agents.base_agent.TrainableBaseAgent"
+"config":
+    {
+        "parts":
+            [{ "part": "Controller_Gymnasium" }, { "part": "Sensor_State" }],
+        "episode_parameter_provider": !include ./baseline_epp.yml,
+        "glues":
+            [
+                {
+                    "functor": "corl.glues.common.controller_glue.ControllerGlue",
+                    "config": { "controller": "Controller_Gymnasium" },
+                },
+                {
+                    "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+                    "config":
+                        {
+                            "sensor": "Sensor_State",
+                            "normalization": { "enabled": False },
+                        },
+                },
+                {
+                    "functor": "corl.glues.common.projected_quantity.ProjectedQuantity",
+                    "config": {},
+                    "wrapped":
+                        {
+                            "quantity":
+                                {
+                                    "functor": "corl.glues.common.target_value.TargetValue",
+                                    "config":
+                                        {
+                                            "target_value":
+                                                { "value": 1.0, "unit": foot / second },
+                                            "limit":
+                                                {
+                                                    "minimum":
+                                                        {
+                                                            "value": -10.0,
+                                                            "unit": foot / second,
+                                                        },
+                                                    "maximum":
+                                                        {
+                                                            "value": -10.0,
+                                                            "unit": foot / second,
+                                                        },
+                                                },
+                                        },
+                                },
+                            "angle1":
+                                {
+                                    "functor": "corl.glues.common.target_value.TargetValue",
+                                    "config":
+                                        {
+                                            "target_value":
+                                                { "value": .5, "unit": rad },
+                                            "limit":
+                                                {
+                                                    "minimum":
+                                                        {
+                                                            "value": -3.1416,
+                                                            "unit": rad,
+                                                        },
+                                                    "maximum":
+                                                        {
+                                                            "value": 3.1416,
+                                                            "unit": rad,
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                },
+            ],
+        "dones": !include ./baseline_dones.yml,
+        "rewards": !include ./baseline_rewards.yml,
+    }

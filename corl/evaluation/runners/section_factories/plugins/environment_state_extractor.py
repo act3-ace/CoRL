@@ -14,11 +14,9 @@ from abc import ABC, abstractmethod
 
 
 class EnvironmentStateExtractor(ABC):
-    """Abstract class to define how to extract information that needs to be saved from the larger environment state
-    """
+    """Abstract class to define how to extract information that needs to be saved from the larger environment state"""
 
     @abstractmethod
     def extract(self, state: dict) -> dict:
-        """extract information from the given state
-        """
+        """extract information from the given state"""
         raise RuntimeError("Must Instantiate this method")

@@ -1,0 +1,2 @@
+first_config: true
+second_config: !include config/test_config2.yml

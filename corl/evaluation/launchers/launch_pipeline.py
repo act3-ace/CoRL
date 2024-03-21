@@ -11,9 +11,8 @@ limitation or restriction. See accompanying README and LICENSE for details.
 Entry / Launch point to run the evaluation framework processes, evaluation , generate_metrics , visualize back to back .
 There are also various storage options
 """
-
-import typing
 from pathlib import Path
+from typing import Any
 
 import jsonargparse
 
@@ -22,7 +21,9 @@ from corl.evaluation.evaluation_artifacts import (
     EvaluationArtifact_Metrics,
     EvaluationArtifact_Visualization,
 )
+from corl.evaluation.launchers.base_eval import BaseProcessor, EvalConfig
 from corl.evaluation.launchers.launch_evaluate import get_args as eval_get_args
+from corl.evaluation.launchers.launch_evaluate import load_config as eval_load_config
 from corl.evaluation.launchers.launch_evaluate import main as evaluate_main
 from corl.evaluation.launchers.launch_generate_metrics import get_args as gen_metrics_get_args
 from corl.evaluation.launchers.launch_generate_metrics import main as generate_metrics_main
@@ -30,14 +31,58 @@ from corl.evaluation.launchers.launch_storage import get_args as storage_get_arg
 from corl.evaluation.launchers.launch_storage import main as storage_main
 from corl.evaluation.launchers.launch_visualize import get_args as visualize_get_args
 from corl.evaluation.launchers.launch_visualize import main as visualize_main
-from corl.evaluation.loader.check_point_file import CheckpointFile
 from corl.evaluation.loader.policy_checkpoint import PolicyCheckpoint
-from corl.evaluation.loader.weight_file import WeightFile
 from corl.evaluation.recording.folder import FolderRecord
 from corl.evaluation.recording.i_recorder import IRecord
+from corl.evaluation.runners.iterate_test_cases import ConfigSaver
 
 
-def get_run_args() -> typing.Type[jsonargparse.Namespace]:
+class PipelineProcessor(BaseProcessor):
+    def __init__(self, run_params: jsonargparse.Namespace, agent_checkpoints: dict[str, Path], **kwargs):
+        super().__init__(**kwargs)
+        self.run_params = run_params
+        self.agent_checkpoints = agent_checkpoints
+
+    def __call__(self, config: EvalConfig, results: Any):
+        print("\n")
+        print("Evaluation portion complete")
+        use_eval_record = results[0]
+
+        gen_metrics_params, metrics_artifact = gen_metrics_args(self.run_params, use_eval_record)
+
+        print("\n")
+        print("executing generate_metrics segment")
+
+        generate_metrics_main(gen_metrics_params)
+
+        print("\n")
+        print("generate_metrics segment complete")
+
+        _, visualize_params_instantiated, artifact_visualize = visualize_args(self.run_params, metrics_artifact)
+
+        print("\n")
+        print("executing visualization segment")
+
+        visualize_main(visualize_params_instantiated)
+
+        print("completed visualization segment")
+        print("Evaluation framework pipeline complete")
+
+        # collect visualization locations from visualize_params_instantiated
+
+        if self.run_params.storage_config:
+            artifact_location_config = {
+                "eval_data_location": Path(str(use_eval_record.absolute_path)),
+                "metrics_file_location": Path(str(metrics_artifact.location)).joinpath(str(metrics_artifact.file)),
+                "visualizations_location": Path(str(artifact_visualize.location)),
+                "agent_checkpoints": self.agent_checkpoints,
+            }
+
+            storage_instantiated_args = storage_args(self.run_params, artifact_location_config)
+            storage_main(storage_instantiated_args)
+
+
+def get_run_args() -> jsonargparse.Namespace:
     """
     Obtain the appropriate config arguments to run the evaluation framework pipeline.
 
@@ -48,18 +93,16 @@ def get_run_args() -> typing.Type[jsonargparse.Namespace]:
     """
 
     parser = jsonargparse.ArgumentParser()
-    parser.add_argument('--cfg', action=jsonargparse.ActionConfigFile, help='path to yaml file containing run arguments')
-    parser.add_argument('--eval_config', type=str, help='path to evaluation launch config')
-    parser.add_argument('--gen_metrics_config', type=str, help='path to generate_metrics launch config')
-    parser.add_argument('--visualize_config', type=str, help='path to visualize launch config')
-    parser.add_argument('--storage_config', type=str, default=None, help='path to acedt bottle config')
+    parser.add_argument("--cfg", action=jsonargparse.ActionConfigFile, help="path to yaml file containing run arguments")
+    parser.add_argument("--eval_config", type=str, help="path to evaluation launch config")
+    parser.add_argument("--gen_metrics_config", type=str, help="path to generate_metrics launch config")
+    parser.add_argument("--visualize_config", type=str, help="path to visualize launch config")
+    parser.add_argument("--storage_config", type=str, default=None, help="path to acedt bottle config")
 
-    run_params = parser.parse_args()
-
-    return run_params
+    return parser.parse_args()
 
 
-def get_evaluation_save(instantiated: typing.Type[jsonargparse.Namespace]) -> FolderRecord:
+def get_evaluation_save(instantiated: type[jsonargparse.Namespace]) -> FolderRecord:
     """
     Obtain the location at which the evaluation segment recorded its results to. Picks up the first save location.
 
@@ -71,10 +114,10 @@ def get_evaluation_save(instantiated: typing.Type[jsonargparse.Namespace]) -> Fo
         FolderRecord
             The first save location used in the evaluation segment to record evaluation results.
     """
-    return instantiated['recorders'][0]
+    return instantiated["recorders"][0]  # type: ignore[index]
 
 
-def get_agent_checkpoints(instantiated_args: typing.Type[jsonargparse.Namespace]) -> typing.Dict[str, Path]:
+def get_agent_checkpoints(instantiated_args: jsonargparse.Namespace) -> dict[str, Path]:
     """
     From the evaluation segment retrieve the agent checkpoint locations.
 
@@ -87,21 +130,14 @@ def get_agent_checkpoints(instantiated_args: typing.Type[jsonargparse.Namespace]
 
     """
     agent_checkpoints = {}
-    teams_map = instantiated_args['teams']
+    teams_map = instantiated_args["teams"]
     for agent in teams_map.agent_config:
-        if isinstance(agent.agent_loader, CheckpointFile):
+        if isinstance(agent.agent_loader, PolicyCheckpoint):
             agent_checkpoints[agent.name] = Path(agent.agent_loader.checkpoint_filename)
-        elif isinstance(agent.agent_loader, WeightFile):
-            agent_checkpoints[agent.name] = Path(agent.agent_loader.h5_file_path)
-        elif isinstance(agent.agent_loader, PolicyCheckpoint):
-            agent_checkpoints[agent.name] = Path(agent.agent_loader.checkpoint_filename)
-
     return agent_checkpoints
 
 
-def evaluation_args(
-    run_params: typing.Type[jsonargparse.Namespace]
-) -> typing.Tuple[typing.Type[jsonargparse.Namespace], typing.Dict[str, Path]]:
+def evaluation_args(run_params: jsonargparse.Namespace) -> tuple[jsonargparse.Namespace, dict[str, Path]]:
     """
     Retrieve all run arguments to execute evaluation process and return the first save location for eval output.
 
@@ -128,10 +164,9 @@ def evaluation_args(
     return instantiated_args, agent_checkpoints
 
 
-def gen_metrics_args(run_params: typing.Type[jsonargparse.Namespace],
-                     eval_record: IRecord) -> typing.Tuple[typing.Dict[str, typing.Any], EvaluationArtifact_Metrics]:
+def gen_metrics_args(run_params: jsonargparse.Namespace, eval_record: IRecord) -> tuple[jsonargparse.Namespace, EvaluationArtifact_Metrics]:
     """
-    Retreive the running arguments for the generate_metrics process. Reconfigures locations as appropriate.
+    Retrieve the running arguments for the generate_metrics process. Reconfigures locations as appropriate.
 
     Parameters
     ----------
@@ -154,20 +189,20 @@ def gen_metrics_args(run_params: typing.Type[jsonargparse.Namespace],
 
     # by default grab the first record
 
-    metrics_artifact = EvaluationArtifact_Metrics(str(eval_record.absolute_path))  # type: ignore
+    metrics_artifact = EvaluationArtifact_Metrics(str(eval_record.absolute_path))
     eval_artifact = EvaluationArtifact_EvaluationOutcome(location=eval_record)
 
-    args['artifact_metrics'] = metrics_artifact
-    args['artifact_evaluation_outcome'] = eval_artifact
+    args["artifact_metrics"] = metrics_artifact
+    args["artifact_evaluation_outcome"] = eval_artifact
 
     return args, metrics_artifact
 
 
 def visualize_args(
-    run_params: typing.Type[jsonargparse.Namespace], metrics_artifact: typing.Type[EvaluationArtifact_Metrics]
-) -> typing.Tuple[typing.Type[jsonargparse.Namespace], typing.Type[jsonargparse.Namespace], EvaluationArtifact_Visualization]:
+    run_params: jsonargparse.Namespace, metrics_artifact: EvaluationArtifact_Metrics
+) -> tuple[jsonargparse.Namespace, jsonargparse.Namespace, EvaluationArtifact_Visualization]:
     """
-    Retreive the running arguments for the visualize process. Reconfigures locations as appropriate.
+    Retrieve the running arguments for the visualize process. Reconfigures locations as appropriate.
 
     Parameters
     ----------
@@ -186,20 +221,20 @@ def visualize_args(
     args, instantiate = visualize_get_args(visualize_cfg)
 
     common_folder = metrics_artifact.location
-    visualization_folder = Path(common_folder).joinpath('visualizations')
+    visualization_folder = Path(common_folder).joinpath("visualizations")
     if not visualization_folder.is_dir():
         visualization_folder.mkdir()
     artifact_visualize = EvaluationArtifact_Visualization(str(visualization_folder))
 
-    instantiate['artifact_metrics'] = metrics_artifact
-    instantiate['artifact_visualization'] = artifact_visualize
+    instantiate["artifact_metrics"] = metrics_artifact
+    instantiate["artifact_visualization"] = artifact_visualize
 
     return args, instantiate, artifact_visualize
 
 
 def storage_args(run_params, artifacts_config):
     """
-    Retreive the running arguments for the storage process. Reconfigures locations as appropriate.
+    Retrieve the running arguments for the storage process. Reconfigures locations as appropriate.
 
     Parameters
     ----------
@@ -215,7 +250,7 @@ def storage_args(run_params, artifacts_config):
     """
 
     storage_instantiated = storage_get_args(run_params.storage_config)
-    storage_instantiated['artifacts_location_config'] = artifacts_config
+    storage_instantiated["artifacts_location_config"] = artifacts_config
     return storage_instantiated
 
 
@@ -226,49 +261,19 @@ def main():
 
     run_params = get_run_args()
 
-    instantiated_args, agent_checkpoints = evaluation_args(run_params)
+    args, agent_checkpoints = evaluation_args(run_params)
 
-    print('Executing evaluation segment')
+    print("Executing evaluation segment")
 
-    eval_records = evaluate_main(instantiated_args)
+    config = eval_load_config(args.cfg)
 
-    print("\n")
-    print('Evaluation portion complete')
-    use_eval_record = eval_records[0]
+    config["processors"] = [
+        {"type": ConfigSaver},
+        {"type": PipelineProcessor, "config": {"run_params": args, "agent_checkpoints": agent_checkpoints}},
+    ]
 
-    gen_metrics_params, metrics_artifact = gen_metrics_args(run_params, use_eval_record)
-
-    print("\n")
-    print('executing generate_metrics segment')
-
-    generate_metrics_main(gen_metrics_params)
-
-    print('\n')
-    print('generate_metrics segment complete')
-
-    _, visualize_params_instantiated, artifact_visualize = visualize_args(run_params, metrics_artifact)
-
-    print('\n')
-    print('executing visualization segment')
-
-    visualize_main(visualize_params_instantiated)
-
-    print('completed visualization segment')
-    print('Evaluation framework pipeline complete')
-
-    # collect visualization locations from visualize_params_instantiated
-
-    if run_params.storage_config:
-        artifact_location_config = {
-            'eval_data_location': Path(str(use_eval_record.absolute_path)),
-            'metrics_file_location': Path(str(metrics_artifact.location)).joinpath(str(metrics_artifact.file)),
-            'visualizations_location': Path(str(artifact_visualize.location)),
-            'agent_checkpoints': agent_checkpoints
-        }
-
-        storage_instantiated_args = storage_args(run_params, artifact_location_config)
-        storage_main(storage_instantiated_args)
+    evaluate_main(args, config)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

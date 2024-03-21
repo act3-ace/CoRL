@@ -11,38 +11,37 @@ limitation or restriction. See accompanying README and LICENSE for details.
 """
 
 import abc
-import typing
 from collections import OrderedDict
 
+import gymnasium
+from pydantic import ConfigDict
+
 from corl.dones.done_func_base import DoneFuncBase, DoneFuncBaseValidator
-from corl.libraries.environment_dict import DoneDict, StateDict
+from corl.simulators.base_simulator import BaseSimulatorState
 
 
 class BaseDictWrapperDoneValidator(DoneFuncBaseValidator):
     """
     wrapped - the wrapped done instances and their keys
     """
-    wrapped: typing.Dict[str, DoneFuncBase]
 
-    class Config:  # pylint: disable=C0115, R0903
-        arbitrary_types_allowed = True
+    wrapped: dict[str, DoneFuncBase]
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class BaseDictWrapperDone(DoneFuncBase):
-    """A base object that dones can inherit in order to "wrap" multiple done instances, addressed by keys
-    """
+    """A base object that dones can inherit in order to "wrap" multiple done instances, addressed by keys"""
 
     def __init__(self, **kwargs) -> None:
         self.config: BaseDictWrapperDoneValidator
         super().__init__(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[BaseDictWrapperDoneValidator]:
+    @staticmethod
+    def get_validator() -> type[BaseDictWrapperDoneValidator]:
         return BaseDictWrapperDoneValidator
 
-    def dones(self) -> typing.Dict[str, DoneFuncBase]:
-        """Get the wrapped done instance dict
-        """
+    def dones(self) -> dict[str, DoneFuncBase]:
+        """Get the wrapped done instance dict"""
         return self.config.wrapped
 
     @abc.abstractmethod
@@ -51,8 +50,8 @@ class BaseDictWrapperDone(DoneFuncBase):
         observation: OrderedDict,
         action: OrderedDict,
         next_observation: OrderedDict,
-        next_state: StateDict,
-        observation_space: StateDict,
-        observation_units: StateDict,
-    ) -> DoneDict:
+        next_state: BaseSimulatorState,
+        observation_space: gymnasium.Space,
+        observation_units: OrderedDict,
+    ) -> bool:
         ...

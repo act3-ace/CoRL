@@ -1,0 +1,21 @@
+# This config defines parameters used to initialize the agent, including platform parts, initial state
+# (simulator_reset_parameters), glues, dones, and rewards.
+
+"agent": "corl.agents.base_agent.TrainableBaseAgent"
+"config": {
+    "parts": [{ "part": "Controller_NoOp" }],
+    "episode_parameter_provider": {
+        "type": "corl.episode_parameter_providers.simple.SimpleParameterProvider"
+    },
+    "glues": [
+        {
+            "functor": "corl.glues.common.controller_glue.ControllerGlue",
+            "config": { "controller": "Controller_NoOp" },
+        },
+    ],
+    "dones": [{
+        "name": "PongGameDoneFunction",
+        "functor": "corl.dones.pong.dones.PongGameDoneFunction",
+    }],
+    "rewards": [],
+}

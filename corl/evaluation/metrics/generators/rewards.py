@@ -9,7 +9,6 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
-import typing
 
 from corl.evaluation.episode_artifact import EpisodeArtifact
 from corl.evaluation.metrics.generator import MetricGeneratorTerminalEventScope
@@ -27,17 +26,16 @@ class TotalReward(MetricGeneratorTerminalEventScope):
     Scope: Event
     """
 
-    def generate_metric(self, params: EpisodeArtifact, **kwargs) -> Metric:
-
+    def generate_metric(self, params: EpisodeArtifact, **kwargs) -> Metric:  # noqa: PLR6301
         if "agent_id" not in kwargs:
-            raise RuntimeError("Expecting \"agent_id\" to be provided")
+            raise RuntimeError('Expecting "agent_id" to be provided')
 
-        agent_id = kwargs["agent_id"].split('.')[0]
+        agent_id = kwargs["agent_id"].split(".")[0]
 
         # Find the last step with observation data from the platform in question
         # If the platform isn't in the episode at all, return Void
         steps_with_platform_in_question = [item for item in params.steps if agent_id in item.agents and item.agents[agent_id] is not None]
-        if len(steps_with_platform_in_question) == 0:
+        if not steps_with_platform_in_question:
             return Void()
 
         last_step_with_platform_data = steps_with_platform_in_question[-1]
@@ -55,16 +53,14 @@ class RewardVector(MetricGeneratorTerminalEventScope):
     Scope: Event
     """
 
-    def generate_metric(self, params: EpisodeArtifact, **kwargs) -> Metric:
-
+    def generate_metric(self, params: EpisodeArtifact, **kwargs) -> Metric:  # noqa: PLR6301
         if "agent_id" not in kwargs:
-            raise RuntimeError("Expecting \"agent_id\" to be provided")
+            raise RuntimeError('Expecting "agent_id" to be provided')
 
-        agent_id = kwargs["agent_id"].split('.')[0]
+        agent_id = kwargs["agent_id"].split(".")[0]
 
-        arr: typing.List[Metric] = []
+        arr: list[Metric] = []
         for step in params.steps:
-
             if agent_id not in step.agents or step.agents[agent_id] is None:
                 break
 
@@ -73,7 +69,7 @@ class RewardVector(MetricGeneratorTerminalEventScope):
             if map_rewards is None:
                 continue
             # Create a non terminal metric (Dict) that is comprised of the terminal (Real) rewards
-            real_dict: typing.Dict[str, Metric] = {key: Real(map_rewards[key]) for key in map_rewards.keys()}
+            real_dict: dict[str, Metric] = {key: Real(map_rewards[key]) for key in map_rewards}
             arr.append(Dict(real_dict))
 
         return Vector(arr)

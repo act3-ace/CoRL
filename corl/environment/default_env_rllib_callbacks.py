@@ -10,23 +10,22 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 EnvironmentDefaultCallbacks
 """
-# pylint: disable=arguments-differ, W0613
-import typing
+
+import contextlib
 import warnings
 from collections import defaultdict
 
 import numpy as np
 from flatten_dict import flatten
-from gym.utils import seeding
+from gymnasium.utils import seeding
 from ray.rllib import BaseEnv
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
-from ray.rllib.evaluation.episode import Episode
+from ray.rllib.evaluation.episode_v2 import EpisodeV2
 from ray.rllib.policy import Policy
 from ray.rllib.policy.sample_batch import SampleBatch
 from ray.rllib.utils.typing import AgentID, PolicyID
 
 from corl.dones.done_func_base import DoneStatusCodes
-from corl.environment.multi_agent_env import ACT3MultiAgentEnv
 
 SHORT_EPISODE_THRESHOLD = 5
 
@@ -73,8 +72,8 @@ def log_done_info(env, episode):
     if env.done_info:
         for platform_id, platform_data in env.done_info.items():
             for done_name, done_value in platform_data.items():
-                episode.custom_metrics[f'done_results/{platform_id}/{done_name}'] = int(done_value)
-            episode.custom_metrics[f'done_results/{platform_id}/NoDone'] = int(not any(platform_data.values()))
+                episode.custom_metrics[f"done_results/{platform_id}/{done_name}"] = int(done_value)
+            episode.custom_metrics[f"done_results/{platform_id}/NoDone"] = int(not any(platform_data.values()))
 
 
 class EnvironmentDefaultCallbacks(DefaultCallbacks):
@@ -98,12 +97,12 @@ class EnvironmentDefaultCallbacks(DefaultCallbacks):
     }
 
     def on_episode_start(
-        self,
+        self,  # noqa: PLR6301
         *,
         worker,
         base_env: BaseEnv,
-        policies: typing.Dict[PolicyID, Policy],
-        episode: Episode,
+        policies: dict[PolicyID, Policy],
+        episode: EpisodeV2,
         **kwargs,
     ) -> None:
         """Callback run on the rollout worker before each episode starts.
@@ -115,7 +114,7 @@ class EnvironmentDefaultCallbacks(DefaultCallbacks):
                 `base_env.get_sub_environments()`.
             policies: Mapping of policy id to policy objects. In single
                 agent mode there will only be a single "default" policy.
-            episode: Episode object which contains the episode's
+            episode: EpisodeV2 object which contains the episode's
                 state. You can use the `episode.user_data` dict to store
                 temporary data, and `episode.custom_metrics` to store custom
                 metrics for the episode.
@@ -125,13 +124,16 @@ class EnvironmentDefaultCallbacks(DefaultCallbacks):
 
         episode.user_data["rewards_accumulator"] = defaultdict(float)  # default dict with default value of 0.0
 
+        env = base_env.get_sub_environments()[episode.env_id]
+        env.simulator.callbacks.on_episode_start(worker=worker, base_env=base_env, policies=policies, episode=episode, **kwargs)
+
     def on_episode_step(
-        self,
+        self,  # noqa: PLR6301
         *,
         worker,
         base_env: BaseEnv,
-        policies: typing.Optional[typing.Dict[PolicyID, Policy]] = None,
-        episode: Episode,
+        policies: dict[PolicyID, Policy] | None = None,
+        episode: EpisodeV2,
         **kwargs,
     ) -> None:
         """Runs on each episode step.
@@ -144,7 +146,7 @@ class EnvironmentDefaultCallbacks(DefaultCallbacks):
             policies: Mapping of policy id to policy objects.
                 In single agent mode there will only be a single
                 "default_policy".
-            episode: Episode object which contains episode
+            episode: EpisodeV2 object which contains episode
                 state. You can use the `episode.user_data` dict to store
                 temporary data, and `episode.custom_metrics` to store custom
                 metrics for the episode.
@@ -161,17 +163,11 @@ class EnvironmentDefaultCallbacks(DefaultCallbacks):
                 key = f"rewards_cumulative/{reward_name}"
                 rewards_accumulator[key] += reward_val
 
-    def on_episode_end(  # pylint: disable=too-many-branches
-        self,
-        *,
-        worker,
-        base_env: BaseEnv,  # pylint: disable=too-many-branches
-        policies: typing.Dict[PolicyID, Policy],
-        episode,
-        **kwargs
-    ) -> None:
+        env.simulator.callbacks.on_episode_step(worker=worker, base_env=base_env, policies=policies, episode=episode, **kwargs)
+
+    def on_episode_end(self, *, worker, base_env: BaseEnv, policies: dict[PolicyID, Policy], episode, **kwargs) -> None:  # noqa: PLR6301
         """
-        on_episode_end  stores the custom metrics in RLLIB. Note this is on a per glue basis.
+        on_episode_end stores the custom metrics in RLLIB. Note this is on a per glue basis.
 
         1. read the training information for the current episode
         2. For each metric in each platform interface in each environment
@@ -188,27 +184,32 @@ class EnvironmentDefaultCallbacks(DefaultCallbacks):
             Mapping of policy id to policy objects. In single
             agent mode there will only be a single "default" policy.
         episode: MultiAgentEpisode
-            Episode object which contains episode
+            EpisodeV2 object which contains episode
             state. You can use the `episode.user_data` dict to store
             temporary data, and `episode.custom_metrics` to store custom
             metrics for the episode.
         """
+        if isinstance(episode, Exception):
+            return
 
         # Issue a warning if the episode is short
-        # This, should get outputing in the log and may help identify any setup issues
+        # This, should get outputting in the log and may help identify any setup issues
         if episode.length < SHORT_EPISODE_THRESHOLD:
-            msg = f"Episode {str(episode.episode_id)} length {episode.length} is less than warn threshold {str(SHORT_EPISODE_THRESHOLD)}"
+            msg = f"Episode {episode.episode_id!s} length {episode.length} is less than warn threshold {SHORT_EPISODE_THRESHOLD!s}"
             if "params" in episode.user_data:
                 msg += "\nparams:\n"
-                for key in episode.user_data["params"].keys():
-                    msg += f"  {key}: {str(episode.user_data['params'][key])}"
+                for key in episode.user_data["params"]:
+                    msg += f"  {key}: {episode.user_data['params'][key]!s}"
                     msg += "\n"
             else:
-                msg += "\nParams not provied in episode user_data"
+                msg += "\nParams not provided in episode user_data"
             warnings.warn(msg)
+        for i in range(1, 11):
+            length_bound = SHORT_EPISODE_THRESHOLD * i
+            episode.custom_metrics[f"episode_length/{length_bound}"] = episode.length < length_bound
 
         env = base_env.get_sub_environments()[episode.env_id]
-        if env.glue_info:  # pylint: disable=too-many-nested-blocks
+        if env.glue_info:
             for glue_name, metric_val in flatten(env.glue_info, reducer="path").items():
                 episode.custom_metrics[glue_name] = metric_val
 
@@ -223,43 +224,43 @@ class EnvironmentDefaultCallbacks(DefaultCallbacks):
 
         # Variables
         for key, value in flatten(env.local_variable_store, reducer="path").items():
-            try:
-                episode.custom_metrics[f'variable/env/{key}'] = float(value.value)
-            except ValueError:
-                pass
-
+            with contextlib.suppress(ValueError):
+                if isinstance(value, str):
+                    continue
+                episode.custom_metrics[f"variable/env/{key}"] = float(value.m)
         for agent_name, agent_data in env.agent_dict.items():
             for key, value in flatten(agent_data.local_variable_store, reducer="path").items():
-                try:
-                    episode.custom_metrics[f'variable/{agent_name}/{key}'] = float(value.value)
-                except ValueError:
-                    pass
-
+                with contextlib.suppress(ValueError):
+                    if isinstance(value, str):
+                        continue
+                    episode.custom_metrics[f"variable/{agent_name}/{key}"] = float(value.m)
         # Episode Parameter Providers
-        metrics = env.config.epp.compute_metrics()
+        metrics = env.epp.compute_metrics()
         for k, v in metrics.items():
-            episode.custom_metrics[f'adr/env/{k}'] = v
+            episode.custom_metrics[f"adr/env/{k}"] = v
 
         for agent_name, agent_data in env.agent_dict.items():
             metrics = agent_data.config.epp.compute_metrics()
             for k, v in metrics.items():
-                episode.custom_metrics[f'adr/{agent_name}/{k}'] = v
+                episode.custom_metrics[f"adr/{agent_name}/{k}"] = v
 
         # Cumulative Rewards
         for key, value in episode.user_data["rewards_accumulator"].items():
             episode.custom_metrics[key] = value
 
+        env.simulator.callbacks.on_episode_end(worker=worker, base_env=base_env, policies=policies, episode=episode, **kwargs)
+
     def on_postprocess_trajectory(
-        self,
+        self,  # noqa: PLR6301
         *,
         worker,
         episode,
         agent_id: AgentID,
         policy_id: PolicyID,
-        policies: typing.Dict[PolicyID, Policy],
+        policies: dict[PolicyID, Policy],
         postprocessed_batch: SampleBatch,
-        original_batches: typing.Dict[AgentID, typing.Tuple[Policy, SampleBatch]],
-        **kwargs
+        original_batches: dict[AgentID, tuple[Policy, SampleBatch]],
+        **kwargs,
     ) -> None:
         """
         Called immediately after a policy's postprocess_fn is called.
@@ -273,7 +274,7 @@ class EnvironmentDefaultCallbacks(DefaultCallbacks):
         worker: RolloutWorker
             Reference to the current rollout worker.
         episode: MultiAgentEpisode
-            Episode object.
+            EpisodeV2 object.
         agent_id: str
             Id of the current agent.
         policy_id: str
@@ -296,13 +297,11 @@ class EnvironmentDefaultCallbacks(DefaultCallbacks):
             policy_id=policy_id,
             policies=policies,
             postprocessed_batch=postprocessed_batch,
-            original_batches=original_batches
+            original_batches=original_batches,
         )
-        episode.worker.foreach_env(
-            lambda env: env.post_process_trajectory(agent_id, postprocessed_batch, episode, policies[policy_id])
-        )  # type: ignore
+        episode.worker.foreach_env(lambda env: env.post_process_trajectory(agent_id, postprocessed_batch, episode, policies[policy_id]))
 
-    def on_train_result(self, *, algorithm, result: dict, **kwargs) -> None:
+    def on_train_result(self, *, algorithm, result: dict, **kwargs) -> None:  # noqa: PLR6301
         """
         Called at the end of Trainable.train().
 
@@ -316,8 +315,5 @@ class EnvironmentDefaultCallbacks(DefaultCallbacks):
         """
         rng, _ = seeding.np_random(seed=algorithm.iteration)
 
-        # Environment EPP
-        assert result['config']['env'] == ACT3MultiAgentEnv
-
-        for epp in result['config']['env_config']['epp_registry'].values():
+        for epp in result["config"]["env_config"].get("epp_registry", {}).values():
             epp.update(result, rng)

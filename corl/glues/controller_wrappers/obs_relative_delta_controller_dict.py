@@ -15,9 +15,9 @@ import logging
 import typing
 from collections import OrderedDict
 
-import gym
+import gymnasium
 import numpy as np
-from pydantic import validator
+from pydantic import field_validator
 
 from corl.glues.base_dict_wrapper import BaseDictWrapperGlue, BaseDictWrapperGlueValidator
 from corl.glues.common.controller_glue import ControllerGlue
@@ -34,12 +34,13 @@ class RelativeObsDeltaActionDictValidator(BaseDictWrapperGlueValidator):
                     e.g. A throttle DeltaAction.apply_action([0.2]) with step_size=[.05] would move the
                     absolute throttle position to 0.01 higher than it was at the end of the last step.
     """
-    step_size: float = 1.0
-    obs_index: typing.Optional[int] = 0
-    is_wrap: bool = False
-    initial_value: typing.Optional[float] = None
 
-    @validator("step_size")
+    step_size: float = 1.0
+    obs_index: int | None = 0
+    is_wrap: bool = False
+    initial_value: float | None = None
+
+    @field_validator("step_size")
     @classmethod
     def check_step_scale(cls, v):
         """
@@ -58,16 +59,16 @@ class RelativeObsDeltaActionDict(BaseDictWrapperGlue, RelativeObsDeltaAction):  
     0.2 would move the absolute roll position 0.2 higher than it is as measured by the linked roll sensor.
     """
 
-    def __init__(self, **kwargs) -> None:  # pylint: disable=super-init-not-called
+    def __init__(self, **kwargs) -> None:
         self.config: RelativeObsDeltaActionDictValidator  # type: ignore[assignment]
         BaseDictWrapperGlue.__init__(**kwargs)
         self._logger = logging.getLogger(RelativeObsDeltaActionDict.__name__)
 
         controller_keys = self.glues().keys()
-        if 'controller' not in controller_keys:
-            raise KeyError('Missing key: controller')
-        if 'sensor' not in controller_keys:
-            raise KeyError('Missing key: sensor')
+        if "controller" not in controller_keys:
+            raise KeyError("Missing key: controller")
+        if "sensor" not in controller_keys:
+            raise KeyError("Missing key: sensor")
 
         self.controller: ControllerGlue = typing.cast(ControllerGlue, self.glues()["controller"])
         if not isinstance(self.controller, ControllerGlue):
@@ -85,10 +86,10 @@ class RelativeObsDeltaActionDict(BaseDictWrapperGlue, RelativeObsDeltaAction):  
         # verify that the config setup is not going to get the user into a situation where they are
         # only accessing one part of the obs but applying that obs as the base position for multiple actions
 
-        tmp = self.controller.action_space()
-        if not isinstance(tmp, gym.spaces.Dict):
+        tmp = self.controller.action_space
+        if not isinstance(tmp, gymnasium.spaces.Dict):
             raise RuntimeError("obs relative delta controller only knows how to operate on dictionary action spaces currently")
-        if self.config.obs_index and len(list(tmp.spaces.values())[0].low) != 1:
+        if self.config.obs_index and len(next(iter(tmp.spaces.values())).low) != 1:  # type: ignore
             raise RuntimeError(
                 f"ERROR: your glue {self.get_unique_name()} has an action space length of more than 1, "
                 "but you specified though obs_index to access only 1 component of the obs "
@@ -100,12 +101,14 @@ class RelativeObsDeltaActionDict(BaseDictWrapperGlue, RelativeObsDeltaAction):  
         self._is_wrap = self.config.is_wrap
 
         self.saved_action_deltas = OrderedDict()
-        for space_name, space in self.action_space().items():
+        assert isinstance(self.action_space, gymnasium.spaces.Dict)
+        for space_name, space in self.action_space.items():
             if self.config.initial_value is not None:
                 self.saved_action_deltas[space_name] = np.asarray([self.config.initial_value], dtype=np.float32)
             else:
+                assert isinstance(space, gymnasium.spaces.Box)
                 self.saved_action_deltas[space_name] = space.low
 
-    @property
-    def get_validator(self) -> typing.Type[RelativeObsDeltaActionDictValidator]:  # type: ignore[override]
+    @staticmethod
+    def get_validator() -> type[RelativeObsDeltaActionDictValidator]:  # type: ignore[override]
         return RelativeObsDeltaActionDictValidator

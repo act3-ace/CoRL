@@ -1,0 +1,6 @@
+policy_class: corl.simulators.pong.heuristic_paddle_policy.SimplePaddleController
+train: False
+
+config:
+  controllers:
+    - [PaddleController]

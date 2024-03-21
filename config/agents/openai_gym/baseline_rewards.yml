@@ -1,7 +1,0 @@
-[
-  {
-    "name": "OpenAIGymReward",
-    "functor": "corl.rewards.openai_gym_reward.OpenAIGymReward",
-    "config": {},
-  },
-]

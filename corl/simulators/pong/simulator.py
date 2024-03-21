@@ -14,27 +14,48 @@ This mainly shows a "how to use example" and provide an setup to unit test with
 import typing
 
 from corl.libraries.plugin_library import PluginLibrary
-from corl.libraries.units import ValueWithUnits
-from corl.simulators.base_simulator import BaseSimulator, BaseSimulatorResetValidator, BaseSimulatorState
+from corl.libraries.units import Quantity
+from corl.simulators.base_simulator import (
+    AgentConfig,
+    BaseSimulator,
+    BaseSimulatorResetValidator,
+    BaseSimulatorState,
+    BaseSimulatorValidator,
+)
 from corl.simulators.pong.paddle_platform import PaddlePlatform, PaddleType
 from corl.simulators.pong.pong import GameStatus, Pong
 
 
 def strip_units(item):
-    """Remove units form all values with units objects
-    """
+    """Remove units form all values with units objects"""
     if isinstance(item, dict):
         for key, value in item.items():
-            if isinstance(value, dict):
-                item[key] = strip_units(value)
-            elif isinstance(value, ValueWithUnits):
+            if isinstance(value, dict | Quantity):
                 item[key] = strip_units(value)
         return item
 
-    if isinstance(item, ValueWithUnits):
-        return item.value
+    return item.m if isinstance(item, Quantity) else item
 
-    return item
+
+class PongSimulatorValidator(BaseSimulatorValidator):
+    """
+    A Validator for Docking1dSimulatorValidator reset configs
+
+    Parameters
+    ----------
+    platform_config: dict
+        Contains individual initialization dicts for each agent.
+        Key is platform name, value is platform's initialization dict.
+    enable_health: bool
+        enable or disable health, which will turn collision of the paddle off and make it inoperable
+        after touching the ball
+    """
+
+    platform_config: dict | None = {}
+    paddle0_side: PaddleType = PaddleType.LEFT
+    pong: Pong = Pong()
+
+    agent_configs: typing.Mapping[str, AgentConfig] = None  # type: ignore
 
 
 class PongSimulatorResetValidator(BaseSimulatorResetValidator):
@@ -50,9 +71,12 @@ class PongSimulatorResetValidator(BaseSimulatorResetValidator):
         enable or disable health, which will turn collision of the paddle off and make it inoperable
         after touching the ball
     """
-    platform_config: typing.Optional[typing.Dict] = {}
+
+    platform_config: dict | None = {}
     paddle0_side: PaddleType = PaddleType.LEFT
     pong: Pong = Pong()
+
+    agent_configs_reset: typing.Mapping[str, AgentConfig] = None  # type: ignore
 
 
 class PongSimulatorState(BaseSimulatorState):
@@ -60,6 +84,7 @@ class PongSimulatorState(BaseSimulatorState):
     pong_game: the pong game being run
     game_status: the enum of the current game status
     """
+
     pong_game: Pong
     game_status: GameStatus = GameStatus.IN_PROGRESS
 
@@ -70,36 +95,49 @@ class PongSimulator(BaseSimulator):
     """
 
     def __init__(self, **kwargs) -> None:
+        self.config: PongSimulatorValidator
         super().__init__(**kwargs)
+
         self._state: PongSimulatorState
         self._time = 0.0
-        self.pong_game = None
-        self._paddle0_type = None
+        self.pong_game: Pong
+        self._paddle0_type: PaddleType
 
     @property
-    def get_reset_validator(self) -> typing.Type[PongSimulatorResetValidator]:
+    def get_simulator_validator(self) -> type[PongSimulatorValidator]:
+        """
+        access to afims validator
+        """
+        return PongSimulatorValidator
+
+    @property
+    def get_reset_validator(self) -> type[PongSimulatorResetValidator]:
         """Return validator"""
         return PongSimulatorResetValidator
 
-    def reset(self, config):
-        config = self.get_reset_validator(**strip_units(config))
+    def reset(self, config: dict[str, typing.Any]):
+        validated_config = self.get_reset_validator(**strip_units(config))
+        if not validated_config.agent_configs_reset:
+            validated_config.agent_configs_reset = self.config.agent_configs
+        self.config.agent_configs = validated_config.agent_configs_reset
+        self.config.paddle0_side = validated_config.paddle0_side
 
         self._time = 0.0
 
-        self.pong_game = config.pong
+        self.pong_game = self.config.pong = validated_config.pong
 
-        self._paddle0_type = PaddleType(config.paddle0_side)
+        self._paddle0_type = PaddleType(self.config.paddle0_side)
 
-        paddle_dict = self._initialize_paddles(config.platforms)
+        paddle_dict = self._initialize_paddles(validated_config.platforms)
 
-        sim_platforms = {}  # pylint: disable=attribute-defined-outside-init
+        sim_platforms = {}
         for agent_id, agent_config in self.config.agent_configs.items():
-            agent_config = self.config.agent_configs[agent_id]
+            agent_config = self.config.agent_configs[agent_id]  # noqa: PLW2901
             sim_platforms[agent_id] = PaddlePlatform(
                 platform_name=agent_id,
                 parts_list=agent_config.parts_list,
                 paddle_type=self._paddle_type(agent_id),
-                paddle=paddle_dict[agent_id]
+                paddle=paddle_dict[agent_id],
             )
 
         self._state = PongSimulatorState(sim_platforms=sim_platforms, sim_time=self._time, pong_game=self.pong_game)
@@ -107,10 +145,7 @@ class PongSimulator(BaseSimulator):
         return self._state
 
     def step(self, platforms_to_action):
-        keys = []
-        for platform in self.platforms.values():
-            keys.append(platform.last_move)
-
+        keys = [platform.last_move for platform in self.platforms.values()]
         self._state.game_status = self.pong_game.step(keys)
         self._time += 1
         self._state.pong_game = self.pong_game
@@ -134,15 +169,14 @@ class PongSimulator(BaseSimulator):
     def platforms(self):
         return self._state.sim_platforms
 
-    def mark_episode_done(self, done_info, episode_state):
+    def mark_episode_done(self, done_info, episode_state, metadata):
         pass
 
-    def save_episode_information(self, dones, rewards, observations):
+    def save_episode_information(self, dones, rewards, observations, observation_units):
         pass
 
-    def render(self, state, mode="human"):  # pylint: disable=unused-argument
-        """only render first environment
-        """
+    def render(self, state, mode="human"):  # noqa: PLR6301
+        """only render first environment"""
         return
 
     def _paddle_type(self, platform_id):

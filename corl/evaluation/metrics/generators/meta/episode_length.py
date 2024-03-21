@@ -22,5 +22,5 @@ class EpisodeLength_Steps(MetricGeneratorTerminalEventScope):
     Scope: Event
     """
 
-    def generate_metric(self, params: EpisodeArtifact, **kwargs) -> Metric:
+    def generate_metric(self, params: EpisodeArtifact, **kwargs) -> Metric:  # noqa: PLR6301
         return Real(len(params.steps))

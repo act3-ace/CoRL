@@ -1,0 +1,70 @@
+# ---------------------------------------------------------------------------
+#
+#
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
+
+####################################################################
+# Override values used by the setup
+####################################################################
+experiment_class: corl.experiments.rllib_experiment.RllibExperiment
+config:
+  rllib_config_updates: &rllib_config_updates
+    #num_workers: 0
+    # model:
+    #   # Custom model built on top of the existing baseline model.
+    #   custom_model: "FrameStackingModel"
+    #   # Default model config option: currently adds one more layer than
+    #   # default for the computing of rates... This is not intended to
+    #   # replace the existing
+    #   fcnet_hiddens: [256, 256, 256]
+    #   # Configuration options above the existing settings enabled by
+    #   # the base setup
+    #   custom_model_config:
+    #     # The number of frames to stack in the model. At the existing
+    #     # rate the controller will store 4 seconds of steps
+    #     num_frames: 4
+    #     # Note if not using the controller directly then the actions in
+    #     # the observation are not the action from the policy. As such it
+    #     # is good to have this enabled.
+    #     # - i.e. using a wrapper such as delta or discrete the the actions
+    #     #   are not the commanded values at the wrapper but the unwrapped
+    #     #   commands at the controller... May be small difference but worth
+    #     #   noting
+    #     include_actions: True
+    #     # Currently do not have a reason to include the rewards in the
+    #     # the model training but that is a interesting view to try...
+    #     # - TODO Try
+    #     include_rewards: False
+
+  # No overrides for ray as there are no changes
+  ray_config_updates: &ray_config_updates
+    local_mode: False
+
+  # Change the default path for saving out the data
+  env_config_updates: &env_config_updates
+    TrialName: CartPole-V1
+    output_path: /tmp/data/corl/act3
+
+  # Change the default path for saving out the data
+  tune_config_updates: &tune_config_updates
+    storage_path: /tmp/data/corl/ray_results/
+
+  ####################################################################
+  # Setup the actual keys used by the code
+  # Note that items are patched from the update section
+  ###################################################################
+  rllib_configs:
+    default: !merge [!include ../rllib_config.yml, *rllib_config_updates]
+    local: !merge [!include ../rllib_config.yml,  *rllib_config_updates]
+
+  ray_config: !merge [!include ../ray_config.yml, *ray_config_updates]
+  env_config: !merge [!include ../environments/cartpole_v1_with_time.yml, *env_config_updates]
+  tune_config: !merge [!include ../tune_config.yml, *tune_config_updates]
+

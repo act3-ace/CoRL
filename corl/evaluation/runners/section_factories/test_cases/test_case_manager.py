@@ -15,16 +15,20 @@ Author: John McCarroll
 """
 
 import abc
-import typing
+from typing import Any
 
-from pydantic import BaseModel, PyObject
+import pandas as pd
+from pydantic import BaseModel
+
+TestCaseIndex = int
 
 
 class TestCaseStrategyValidator(BaseModel):
     """
     Validator for TestCaseStrategy classes.
     """
-    config: typing.Dict = {}
+
+    # config: dict = {}
 
 
 class TestCaseStrategy(abc.ABC):
@@ -34,10 +38,11 @@ class TestCaseStrategy(abc.ABC):
     """
 
     def __init__(self, **kwargs) -> None:
-        self.config: TestCaseStrategyValidator = self.get_validator(**kwargs)
+        super().__init__()
+        self.config: TestCaseStrategyValidator = self.get_validator()(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[TestCaseStrategyValidator]:
+    @staticmethod
+    def get_validator() -> type[TestCaseStrategyValidator]:
         """
         Method to return validator for TestCaseStrategy
         """
@@ -46,7 +51,7 @@ class TestCaseStrategy(abc.ABC):
     @abc.abstractmethod
     def update_rllib_config(self, config: dict) -> dict:
         """
-        This method is reponsible for mutating the RLLibConfig, overriding or wrapping the EPPs defined in the task configs.
+        This method is responsible for mutating the RLLibConfig, overriding or wrapping the EPPs defined in the task configs.
 
         Parameters
         ----------
@@ -61,10 +66,11 @@ class TestCaseStrategy(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_test_cases(self):
+    def get_test_cases(self) -> pd.DataFrame | list[dict[str, Any]]:
         """
-        This method is reponsible for fetching the data structure representing configured/scheduled test cases, if available.
-        Ex. The TabularParameterProvider's test_cases Pandas.DataFrame
+        This method is responsible for fetching the data structure representing configured/scheduled test cases.
+        This should NOT return an empty list or empty dataframe. The canonical 'empty' or default test case is [{}]
+        which indicates that there are no changes to the default epp parameters.
 
         Returns
         -------
@@ -73,80 +79,50 @@ class TestCaseStrategy(abc.ABC):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
     def get_num_test_cases(self) -> int:
         """
-        This method is reponsible for returning the number of test cases configured.
+        This method is responsible for returning the number of test cases to run. There should be at minimum
+        1 test case.
+        NOTE: This is not necessarially the same as len(self.test_cases).
 
         Returns
         -------
         num_test_cases
             The number of evaluation episodes to run (ie. the number of test cases)
         """
+        num_test_cases = 0
+
+        test_cases = self.get_test_cases()
+
+        if isinstance(test_cases, pd.DataFrame):
+            num_test_cases = len(test_cases.index)
+
+        elif isinstance(test_cases, list):
+            num_test_cases = len(test_cases)
+
+        else:
+            raise RuntimeError(f"Invalid test_cases {test_cases}\nExpected [pd.DataFrame, list], got type '{type(test_cases)}'")
+
+        if num_test_cases <= 0:
+            raise RuntimeError("Too few test cases")
+
+        return num_test_cases
+
+    @abc.abstractmethod
+    def get_test_case_index(self, episode_id: int) -> TestCaseIndex:
+        """Gets the index of the test case for the specified episode_id"""
         raise NotImplementedError
 
-
-class TestCaseManagerValidator(BaseModel):
-    """
-    Validator for the TestCaseManager class
-
-    config: typing.Dict
-        config for the TestCaseStrategy class constructor
-    class_path: PyObject
-        desired TestCaseStrategy path
-    """
-    config: typing.Dict = {}
-    class_path: typing.Optional[PyObject] = None
+    def get_test_case(self, index: TestCaseIndex) -> pd.Series | dict[str, Any]:
+        return self.get_test_cases()[index]
 
 
-class TestCaseManager:
-    """
-    Instantiates the desired EPP with config values defined in launch config.
-    Handles test cases and EPP configs. Prepares EPP configs.
-
-    Conrete context class to provide stable API for managing test cases and mutating the rllib config appropriately.
-    This class delegates most functions to its TestCaseStrategy object, which encapsulates EPP specific logic.
-    """
-
-    def __init__(self, class_path: typing.Optional[str] = None, config: typing.Optional[typing.Dict[str, typing.Any]] = None, **kwargs):
-        # create strategy instance
-        self.config: typing.Optional[TestCaseManagerValidator] = None
-        self.test_case_strategy: typing.Optional[typing.Any] = None
-
-        if class_path:
-            if config is None:
-                config = {}
-            self.config = self.get_validator(class_path=class_path, config=config, **kwargs)
-            self.test_case_strategy = self.config.class_path(config=self.config.config)  # type: ignore  # pylint: disable=not-callable
-
-    @property
-    def get_validator(self) -> typing.Type[TestCaseManagerValidator]:
-        """
-        Method to return validator for TestCaseManager
-        """
-        return TestCaseManagerValidator
-
-    # EPP Specific Methods (strategy delegation)
-    def update_rllib_config(self, config: dict):
-        """
-        This method delegates to an EPP-specific strategy to mutate the rllib_config, overwriting a task's EPPs as needed.
-        """
-        if self.test_case_strategy:
-            return self.test_case_strategy.update_rllib_config(config)
+class NoTestCases(TestCaseStrategy):
+    def update_rllib_config(self, config: dict) -> dict:  # noqa: PLR6301
         return config
 
-    def get_test_cases(self):
-        """
-        This method delegates to an EPP-specific strategy to return a collection of test cases set to run during evaluation.
-        """
-        if self.test_case_strategy:
-            return self.test_case_strategy.get_test_cases()
-        return None
+    def get_test_cases(self) -> pd.DataFrame | list[dict[str, Any]]:  # noqa: PLR6301
+        return [{}]
 
-    def get_num_test_cases(self) -> int:
-        """
-        This method delegates to an EPP-specific strategy to to return the number of test cases set to run during evaluation.
-        """
-        if self.test_case_strategy:
-            return self.test_case_strategy.get_num_test_cases()
+    def get_test_case_index(self, episode_id: int) -> TestCaseIndex:  # noqa: PLR6301
         return 0

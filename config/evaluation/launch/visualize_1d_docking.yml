@@ -1,4 +1,0 @@
-source_pickle: /home/vgangal/workspace/eval_framework_out/corl/docking1d/metrics.pkl
-method: print
-event_table_print: True
-event_table_print_location: /home/vgangal/workspace/eval_framework_out/corl/docking1d/

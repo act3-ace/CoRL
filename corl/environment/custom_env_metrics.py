@@ -12,14 +12,17 @@ Logs extra environment metrics specific to Pong.
 """
 from ray.rllib import BaseEnv
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
-from ray.rllib.evaluation.episode import Episode
+from ray.rllib.evaluation.episode_v2 import EpisodeV2
 
 
 class CustomPongMetrics(DefaultCallbacks):
     """Logs the number of ball hits for each paddle"""
 
-    def on_episode_end(self, *, base_env: BaseEnv, episode: Episode, **_) -> None:
+    def on_episode_end(self, *, base_env: BaseEnv, episode: EpisodeV2, **_) -> None:  # noqa: PLR6301
         """At the end of each episode, log the total paddle hits"""
+        if isinstance(episode, Exception):
+            return
+
         env = base_env.get_sub_environments()[episode.env_id]
         # Cycle through the platforms and log the ball hit for each
         for platform_name, simulator in env.state.sim_platforms.items():

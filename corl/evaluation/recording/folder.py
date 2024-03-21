@@ -10,32 +10,33 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Records an evaluation outcome to a folder
 """
-import dataclasses
-import os
+import contextlib
+import logging
 import shutil
-import typing
 from datetime import datetime
 from pathlib import Path
 from shutil import copyfile
 
+import pandas as pd
 import ray.cloudpickle as pickle
+from pydantic import BaseModel, field_validator
 
 from corl.evaluation.evaluation_outcome import EvaluationOutcome
 from corl.evaluation.recording.i_recorder import IRecord, IRecorder
 
 
 class FolderRecord(IRecord):
-    """A folder record which can save and load EvaluationOutcomes to folders
-    """
+    """A folder record which can save and load EvaluationOutcomes to folders"""
+
     _absolute_path: Path
 
-    def __init__(self, absolute_path: typing.Union[Path, str]):
+    def __init__(self, absolute_path: Path | str):
         self._absolute_path = Path(absolute_path)
+        self._logger = logging.getLogger(type(self).__name__)
 
     @property
     def absolute_path(self) -> Path:
-        """Get the absolute path
-        """
+        """Get the absolute path"""
         return self._absolute_path
 
     def save(self, outcome: EvaluationOutcome) -> None:
@@ -46,33 +47,46 @@ class FolderRecord(IRecord):
         """
         output_folder: Path = self._absolute_path
 
-        for test_case_idx in outcome.episode_artifacts.keys():
-
-            # retrieve current episode
-            episode_artifact = outcome.episode_artifacts[test_case_idx]
-
+        for test_case_idx, episode_artifacts in outcome.episode_artifacts.items():
             # create test case folder
-            test_case_folder = output_folder / f"test_case_{str(test_case_idx)}"
-            os.mkdir(test_case_folder)
+            test_case_folder = output_folder / f"test_case_{test_case_idx!s}"
+            test_case_folder.mkdir(exist_ok=True)
 
-            # essentially loop through the self.artifacts_filenames
+            # Copy episode artifact files to test_case_folder
+            for episode_artifact in episode_artifacts:
+                start_time: str = episode_artifact.start_time.strftime("%Y-%m-%d_%H-%M-%S")
 
-            for artifact_name in episode_artifact.artifacts_filenames:
-                # do relinking here , s.t. if an aer file or info file is present
+                for artifact_filename in episode_artifact.artifacts_filenames.values():
+                    artifact_path = Path(artifact_filename)
+                    new_path = test_case_folder / f"{start_time}_{artifact_path.name}"
 
-                file_name = episode_artifact.artifacts_filenames[artifact_name].split('/')[-1]
-                new_path = test_case_folder / file_name
+                    try:
+                        copyfile(artifact_path, new_path)
+                    except FileNotFoundError as e:
+                        self._logger.error(f"{e}")
 
-                try:
-                    copyfile(episode_artifact.artifacts_filenames[artifact_name], new_path)
-                except FileNotFoundError as e:
-                    print(f"{FolderRecord.__name__}:{e}")
+                with open(test_case_folder / f"{start_time}_episode_artifact.pkl", "wb") as f:
+                    # HACK todo fix
+                    tmp_done_config = None
+                    with contextlib.suppress(AttributeError):
+                        tmp_done_config = episode_artifact.done_config
+                        del episode_artifact.done_config
 
-            with open(test_case_folder / "batch.pkl", "wb") as f:
-                pickle.dump(episode_artifact, f)
+                    with contextlib.suppress(KeyError):
+                        del episode_artifact.env_config["epp_registry"]
+
+                    pickle.dump(episode_artifact, f)
+                    if tmp_done_config is not None:
+                        episode_artifact.done_config = tmp_done_config
+
+            with open(test_case_folder / f"{start_time}_test_case.csv", "w") as f:
+                outcome.get_test_cases().iloc[test_case_idx].to_csv(f)
 
         with open(output_folder / "test_cases.pkl", "wb") as f:
             pickle.dump(outcome.test_cases, f)
+
+        with open(output_folder / "test_cases.csv", "w") as f:
+            outcome.get_test_cases().to_csv(f)
 
     def load(self) -> EvaluationOutcome:
         """Load EvaluationOutcome from folder
@@ -84,7 +98,7 @@ class FolderRecord(IRecord):
         with open(self._absolute_path / "test_cases.pkl", "rb") as f:
             test_cases = pickle.load(f)
 
-        paths = self._absolute_path.glob('test_case_*/batch.pkl')
+        paths = self._absolute_path.glob("test_case_*/*_episode_artifact.pkl")
         artifacts = {}
         for path in paths:
             with open(path, "rb") as f:
@@ -93,18 +107,34 @@ class FolderRecord(IRecord):
                     raise RuntimeError(
                         f"Test case of {artifact.test_case} already exists. This indicates an issue with evaluation generation"
                     )
-                artifacts[artifact.test_case] = artifact
+                artifacts[artifact.test_case] = [artifact]
 
         return EvaluationOutcome(test_cases, artifacts)
 
 
-@dataclasses.dataclass
-class Folder(IRecorder[FolderRecord]):
-    """Generates a record to interface with a folder structure
-    """
+class Folder(BaseModel, IRecorder[FolderRecord]):
+    """Generates a record to interface with a folder structure"""
 
-    dir: str
-    append_timestamp: bool = dataclasses.field(default=True)
+    append_timestamp: bool = True
+    dir: Path  # noqa: A003
+
+    @field_validator("dir")
+    def generate_output_dir(cls, v, info):
+        """Generate the output dir"""
+
+        if info.data["append_timestamp"]:
+            timestamp_str = "_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            output_folder = v.with_name(v.stem + timestamp_str)
+        else:
+            output_folder = v
+
+        if output_folder.exists():
+            shutil.rmtree(str(output_folder))
+
+        # Make absolute
+        output_folder = output_folder.resolve()
+        output_folder.mkdir(parents=True, exist_ok=False)
+        return output_folder
 
     def resolve(self) -> FolderRecord:
         """Resolve and generate the record
@@ -112,77 +142,60 @@ class Folder(IRecorder[FolderRecord]):
         Returns:
             FolderRecord -- Record
         """
+        return FolderRecord(self.dir)
 
-        #########################################
-        ## Resolve and create directory
 
-        output_folder = Path(self.dir)
+class EpisodeArtifactLoggingCallbackLoader(IRecord):
+    """Loads files saved from enabling the EpisodeArtifactLoggingCallback during
+    training"""
 
-        if self.append_timestamp:
-            timestamp_str = '_' + datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-            output_folder = output_folder.with_name(output_folder.stem + timestamp_str)
+    def __init__(self, absolute_path: Path | str):
+        """_summary_
 
-        # MTB Removed - How do you use the checkpoint when there are multiple checkpoints?!
-        # # If output_folder is not provided, build it from other information
-        # if output_folder is None:
-        #     output_folder_is_checkpoint_dir = False
+        Parameters
+        ----------
+        absolute_path : typing.Union[Path, str]
+            This is the absolute path to the
+        """
 
-        #     # Determine the root of the output folder
-        #     # First choice - output_root parameter
-        #     output_folder = config['output_root']
-        #     # Second choice - checkpoint directory
-        #     if output_folder is None and config['checkpoint'] is not None:
-        #         output_folder = os.path.dirname(config['checkpoint'])
-        #         output_folder_is_checkpoint_dir = True
-        #     # Third choice - parameters file directory
-        #     if output_folder is None and config['parameters'] is not None:
-        #         output_folder = os.path.dirname(config['parameters'])
-        #         output_folder_is_checkpoint_dir = True
-        #     # Fourth choice - current working directory
-        #     if output_folder is None:
-        #         output_folder = ''
+        self._absolute_path = Path(absolute_path)
 
-        #     # Determine the name
-        #     # First choice - name parameter
-        #     name = self.name
+    @property
+    def absolute_path(self) -> Path:
+        """Get the absolute path to the root directory where the trajectories
+        are stored. (e.g. <experiment_name>/trajectories/epoch_000001)
+        """
 
-        #     # Second choice - read environment and controller from parameters
-        #     # Use checkpoint as final portion if it exists
-        #     if name is None and
-        #           not output_folder_is_checkpoint_dir and
-        #           (config['checkpoint'] is not None or config['parameters'] is not None):
-        #         if config['checkpoint'] is not None:
-        #             checkpoint_folder = os.path.basename(os.path.dirname(os.path.dirname(config['checkpoint'])))
-        #             checkpoint_name = os.path.basename(config['checkpoint'])
-        #         else:
-        #             checkpoint_folder = ''
-        #             checkpoint_name = 'evaluation'
+        return self._absolute_path
 
-        #         parameters = config['parameters']
-        #         if parameters is None:
-        #             parameters = os.path.join(os.path.dirname(os.path.dirname(config['checkpoint'])), 'params.pkl')
+    def save(self, _):
+        """Overwrite the abstract class"""
 
-        #         with open(parameters, 'rb') as f:
-        #             env_config = pickle.load(f)
+    def load(self) -> EvaluationOutcome:
+        episode_artifact_files = list(self._absolute_path.glob("*.p*kl*"))
+        episode_artifact_files.sort()
+        artifacts_dict = {}
+        # The test_cases will store initial conditions for each episode
+        # artifact
+        test_cases = []
+        for idx, epi_artifact_file in enumerate(episode_artifact_files):
+            with open(epi_artifact_file, "rb") as file_obj:
+                episode_artifact = pickle.load(file_obj)
+                # The episode artifact test case number doesn't matter
+                # for artifacts saved from training
+            episode_artifact.test_case = idx
+            artifacts_dict[idx] = episode_artifact
 
-        #         aaco_environment = env_config['env_config']['environment']['aaco_environment']
-        #         controller = env_config['env_config']['environment']['TrialName']
+            # Build the test case dataframe: the test cases dataframe stores the reset parameters
+            # we grab the information from the episode artifact
+            sim_reset_dict = episode_artifact.params
+            # Add prefix so the columns match with what gets generated during IterateTestCases
+            sim_reset_dict = {f"environment.{k}": v.value for k, v in sim_reset_dict.items()}
+            sim_reset_dict["test_case"] = idx
+            test_cases.append(sim_reset_dict)
+        if test_cases:
+            test_cases_df = pd.DataFrame(test_cases)
+            test_cases_df = test_cases_df.set_index("test_case")
 
-        #         # Modify leaderboard.py to accept
-        #         name = os.path.join(aaco_environment, controller, checkpoint_folder, checkpoint_name)
-
-        #     # Third choice - evaluation
-        #     if name is None:
-        #         name = 'evaluation'
-
-        #     output_folder = os.path.join(output_folder, name + timestamp_str)
-
-        if output_folder.exists():
-            shutil.rmtree(output_folder)
-
-        # Make absolute
-        output_folder_abs = output_folder.resolve()
-
-        output_folder_abs.mkdir(parents=True, exist_ok=False)
-
-        return FolderRecord(output_folder_abs)
+            return EvaluationOutcome(test_cases=test_cases_df, episode_artifacts=artifacts_dict)
+        return EvaluationOutcome(test_cases=test_cases, episode_artifacts=artifacts_dict)

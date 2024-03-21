@@ -9,13 +9,13 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
-import typing
 from collections import OrderedDict
 
+import gymnasium
+
 from corl.dones.done_func_base import DoneFuncBase, DoneFuncBaseValidator, DoneStatusCodes
-from corl.libraries.environment_dict import DoneDict
-from corl.libraries.state_dict import StateDict
-from corl.libraries.units import Time
+from corl.libraries.units import Quantity
+from corl.simulators.base_simulator import BaseSimulatorState
 
 
 class EpisodeLengthDoneValidator(DoneFuncBaseValidator):
@@ -26,7 +26,8 @@ class EpisodeLengthDoneValidator(DoneFuncBaseValidator):
     horizon : float, optional
         The max expected length for horizon (in seconds), by default 1000
     """
-    horizon: float = 1000
+
+    horizon: Quantity
 
 
 class EpisodeLengthDone(DoneFuncBase):
@@ -35,14 +36,14 @@ class EpisodeLengthDone(DoneFuncBase):
     via a done condition... Note this is largely a debug item
     """
 
-    REQUIRED_UNITS = {'horizon': Time.Second}
+    REQUIRED_UNITS = {"horizon": "second"}
 
     def __init__(self, **kwargs) -> None:
         self.config: EpisodeLengthDoneValidator
         super().__init__(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[EpisodeLengthDoneValidator]:
+    @staticmethod
+    def get_validator() -> type[EpisodeLengthDoneValidator]:
         """Returns the validator for this done condition"""
         return EpisodeLengthDoneValidator
 
@@ -51,25 +52,18 @@ class EpisodeLengthDone(DoneFuncBase):
         observation: OrderedDict,
         action: OrderedDict,
         next_observation: OrderedDict,
-        next_state: StateDict,
-        observation_space: StateDict,
-        observation_units: StateDict,
-    ) -> DoneDict:
-
-        done = DoneDict()
+        next_state: BaseSimulatorState,
+        observation_space: gymnasium.Space,
+        observation_units: OrderedDict,
+    ) -> bool:
         try:
-            done[self.platform] = next_state.sim_time >= self.config.horizon
-
-            if done[self.platform]:
-                next_state.episode_state[self.platform][self.name] = DoneStatusCodes.DRAW
+            done = next_state.sim_time >= self.config.horizon.m
 
         except ValueError:
             # Missing platform should trigger some other done condition
-            done[self.platform] = False
+            done = False
 
-        self._set_all_done(done)
-
-        if done[self.platform]:
+        if done:
             next_state.episode_state[self.platform][self.name] = DoneStatusCodes.DRAW
 
         return done

@@ -3,10 +3,10 @@ This module extends corl.simulators.base_platform.BasePlatform to create a simpl
 docking platform.
 """
 
-import typing
 
 import numpy as np
 
+from corl.libraries.units import corl_get_ureg
 from corl.simulators.base_platform import BasePlatform, BasePlatformValidator
 from corl.simulators.docking_1d.entities import Deputy1D
 
@@ -19,10 +19,11 @@ class Docking1dPlatformValidator(BasePlatformValidator):
         platform: Deputy1D
             Deputy associated with the CoRL Docking1dPlatform
     """
+
     platform: Deputy1D
 
 
-class Docking1dPlatform(BasePlatform):
+class Docking1dPlatform(BasePlatform):  # noqa: PLW1641
     """
     A platform representing a spacecraft operating under Double Integrator dynamics.
     Allows for saving an action to the platform for when the platform needs
@@ -43,19 +44,18 @@ class Docking1dPlatform(BasePlatform):
         super().__init__(**kwargs)
 
         self._platform = self.config.platform
-        self._last_applied_action = np.array([0], dtype=np.float32)  # thrust
+        self._last_applied_action = corl_get_ureg().Quantity(np.array([0], dtype=np.float32), "newtons")  # thrust
         self._sim_time = 0.0
 
-    @property
-    def get_validator(self) -> typing.Type[Docking1dPlatformValidator]:
+    @staticmethod
+    def get_validator() -> type[Docking1dPlatformValidator]:
         return Docking1dPlatformValidator
 
     def __eq__(self, other):
         if isinstance(other, Docking1dPlatform):
             eq = (self.velocity == other.velocity).all()
             eq = eq and (self.position == other.position).all()
-            eq = eq and self.sim_time == other.sim_time
-            return eq
+            return eq and self.sim_time == other.sim_time
         return False
 
     def get_applied_action(self):
@@ -75,7 +75,7 @@ class Docking1dPlatform(BasePlatform):
         Arguments:
             action typing.Any -- The action to store in the platform
         """
-        if isinstance(action, np.ndarray) and len(action) == 1:
+        if isinstance(action.m, np.ndarray) and len(action.m) == 1:
             self._last_applied_action = action
 
     @property

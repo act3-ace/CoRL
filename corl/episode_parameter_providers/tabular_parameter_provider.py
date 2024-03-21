@@ -14,39 +14,41 @@ import copy
 import typing
 
 import pandas as pd
-from pydantic import validator
+from pydantic import field_validator, model_validator
 
 from corl.episode_parameter_providers import EpisodeParameterProvider, EpisodeParameterProviderValidator, ParameterModel, Randomness
-from corl.libraries.parameters import OverridableParameterWrapper
+from corl.libraries.parameters import OverridableParameterWrapper, Parameter
 
 
 class TabularValidator(EpisodeParameterProviderValidator):
     """Validation model for the inputs of TabularParameterProvider"""
-    separator: str = '/'
-    filename: typing.Optional[str] = None
-    read_csv_kwargs: typing.Dict[str, typing.Any] = {}
-    data: pd.DataFrame = None
 
-    @validator('separator')
+    separator: str = "/"
+    filename: str | None = None
+    read_csv_kwargs: dict[str, typing.Any] = {}
+    data: pd.DataFrame
+
+    @field_validator("separator")
+    @classmethod
     def separator_validator(cls, v):
         """Validate that the separator is a single character"""
         if len(v) != 1:
-            raise ValueError('Separator must be single character')
+            raise ValueError("Separator must be single character")
         return v
 
-    @validator('data', pre=True, always=True)
-    def data_validator(cls, v, values):
+    @model_validator(mode="before")
+    def data_validator(cls, values):
         """Validate the data field"""
-        if v is None:
-            if values['filename'] is None:
-                raise ValueError('Either data or filename must be provided')
-            v = pd.read_csv(values['filename'], **values['read_csv_kwargs'])
-        return v
+        if values.get("data") is None:
+            if values.get("filename") is None:
+                raise ValueError("Either data or filename must be provided")
+            values["data"] = pd.read_csv(values["filename"], **values["read_csv_kwargs"])
+        return values
 
-    @validator('data')
-    def column_validator(cls, v, values):
+    @field_validator("data")
+    def column_validator(cls, v, info):
         """Validate the columns in the data field"""
-        parameters_keys = {values['separator'].join(x) for x in values['parameters'].keys()}
+        parameters_keys = {info.data["separator"].join(x) for x in info.data["parameters"]}
         data_columns = set(v.columns)
         if parameters_keys != data_columns:
             left_side = parameters_keys - data_columns
@@ -68,25 +70,33 @@ class TabularParameterProvider(EpisodeParameterProvider):
         self.config: TabularValidator
         super().__init__(**kwargs)
 
+        assert all(isinstance(v, Parameter) for v in self.config.parameters.values())
         self._params = {k: OverridableParameterWrapper(v) for k, v in self.config.parameters.items()}
 
-        self._index = 0
-        self._episode_id = 0
+        self._index: int = 0
 
-    @property
-    def get_validator(self) -> typing.Type[TabularValidator]:
+    def reset(self) -> None:
+        self._index = 0
+
+    @staticmethod
+    def get_validator() -> type[TabularValidator]:
         """Get the validator for this class."""
         return TabularValidator
 
-    def _do_get_params(self, rng: Randomness) -> typing.Tuple[ParameterModel, typing.Union[int, None]]:
+    def _do_get_params(self, rng: Randomness, env_epp_ctx: dict | None) -> tuple[ParameterModel, int | None, dict | None]:
+        if env_epp_ctx:
+            index = env_epp_ctx["index"]
+        else:
+            index = self._index
+            self._index += 1
+            env_epp_ctx = {"index": index}
 
-        self._episode_id = self.config.data.index[self._index] if self._index < len(self.config.data) else None
+        self._episode_id = self.config.data.index[index] if index < len(self.config.data) else None
 
-        row = self.config.data.iloc[self._index % len(self.config.data)]
-        self._index += 1
+        row = self.config.data.iloc[index % len(self.config.data)]
 
         pm = copy.deepcopy(self._params)
         for i in row.index:
             pm[tuple(i.split(self.config.separator))].override_value = row.loc[i]
 
-        return pm, self._episode_id
+        return pm, self._episode_id, env_epp_ctx

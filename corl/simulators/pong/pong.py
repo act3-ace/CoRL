@@ -15,13 +15,14 @@ https://github.com/techwithtim/Pong-Python
 from enum import Enum
 
 import pygame
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class Colors(Enum):
     """
-        Enumer ations of display colors
+    Enumer ations of display colors
     """
+
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     BLUE = (0, 0, 255)
@@ -30,8 +31,9 @@ class Colors(Enum):
 
 class GameStatus(Enum):
     """
-        Enumeration of game status
+    Enumeration of game status
     """
+
     LEFT_WIN = 0
     RIGHT_WIN = 1
     IN_PROGRESS = 2
@@ -39,17 +41,18 @@ class GameStatus(Enum):
 
 class Paddle(BaseModel):
     """
-        Paddle controlled by user
+    paddle controlled by user
     """
+
     width: int = 20
     height: int = 100
-    x: int = 0
-    y: int = 0
-    vel = 4
-    color = Colors.WHITE.value
+    x: float = 0
+    y: float = 0
+    vel: float = 4
+    color: tuple[int, int, int] = Colors.WHITE.value
     collision_on: bool = True
-    health = 1
-    current_health = 1
+    health: int = 1
+    current_health: int = 1
     ball_hits: int = 0
 
     def __init__(self, **kwarg):
@@ -76,14 +79,15 @@ class Paddle(BaseModel):
 
 class Ball(BaseModel):
     """
-        Ball object
+    Ball object
     """
+
     max_vel: int = 5
     radius: int = 7
-    x: int = 0
-    y: int = 0
-    x_vel: int = 5
-    y_vel: int = 0
+    x: float = 0
+    y: float = 0
+    x_vel: float = 5
+    y_vel: float = 0
 
     def move(self):
         """
@@ -93,9 +97,9 @@ class Ball(BaseModel):
         self.y += self.y_vel
 
 
-class PongRender():
+class PongRender:
     """
-        Class to render the current pong game
+    Class to render the current pong game
     """
 
     def __init__(self, screen_width, screen_height):
@@ -128,11 +132,13 @@ class PongRender():
 
         pygame.draw.rect(
             self.display_window,
-            self.left_paddle_color, (pong.left_paddle.x, pong.left_paddle.y, pong.left_paddle.width, pong.left_paddle.height)
+            self.left_paddle_color,
+            (pong.left_paddle.x, pong.left_paddle.y, pong.left_paddle.width, pong.left_paddle.height),
         )
         pygame.draw.rect(
             self.display_window,
-            self.right_paddle_color, (pong.right_paddle.x, pong.right_paddle.y, pong.right_paddle.width, pong.right_paddle.height)
+            self.right_paddle_color,
+            (pong.right_paddle.x, pong.right_paddle.y, pong.right_paddle.width, pong.right_paddle.height),
         )
 
         for i in range(10, self.display_window.get_height(), self.display_window.get_height() // 20):
@@ -140,7 +146,8 @@ class PongRender():
                 continue
             pygame.draw.rect(
                 self.display_window,
-                Colors.WHITE.value, (self.display_window.get_width() // 2 - 5, i, 10, self.display_window.get_height() // 20)
+                Colors.WHITE.value,
+                (self.display_window.get_width() // 2 - 5, i, 10, self.display_window.get_height() // 20),
             )
 
         pygame.draw.circle(self.display_window, self.ball_color, (pong.ball.x, pong.ball.y), pong.ball.radius)
@@ -154,7 +161,7 @@ class PongRender():
         text = self.score_font.render(win_text, 1, Colors.WHITE.value)
         self.display_window.blit(
             text,
-            (self.display_window.get_width() // 2 - text.get_width() // 2, self.display_window.get_height() // 2 - text.get_height() // 2)
+            (self.display_window.get_width() // 2 - text.get_width() // 2, self.display_window.get_height() // 2 - text.get_height() // 2),
         )
 
         pygame.display.update()
@@ -163,17 +170,16 @@ class PongRender():
 
 class Pong(BaseModel):
     """
-        Pong game
+    Pong game
     """
+
     screen_width: int = 700
     screen_height: int = 500
     left_paddle: Paddle = Paddle()
     right_paddle: Paddle = Paddle()
     ball: Ball = Ball()
     health_enabled: bool = False
-
-    class Config:  # pylint: disable=C0115, R0903
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def __init__(self, **kwarg):
         super().__init__(**kwarg)
@@ -197,10 +203,10 @@ class Pong(BaseModel):
         ----------
         keys : list
             list of pygame key presses
-        left_paddle : Paddle
+        left_paddle : paddle
             left paddle in game
         right_paddle : Ball
-            right padd  in game
+            right pad  in game
         """
 
         if pygame.K_w in keys and left_paddle.y - left_paddle.vel >= 0:
@@ -220,50 +226,55 @@ class Pong(BaseModel):
         ----------
         ball : Ball
             ball in pong game
-        left_paddle : Paddle
+        left_paddle : paddle
             left paddle in game
         right_paddle : Ball
-            right padd  in game
+            right pad  in game
         """
 
-        if ball.y + ball.radius >= self.screen_height:
-            ball.y_vel *= -1
-        elif ball.y - ball.radius <= 0:
+        if ball.y + ball.radius >= self.screen_height or ball.y - ball.radius <= 0:
             ball.y_vel *= -1
 
         if ball.x_vel < 0:
-            if left_paddle.collision_on and ball.y >= left_paddle.y and ball.y <= left_paddle.y + left_paddle.height:
-                if ball.x - ball.radius <= left_paddle.x + left_paddle.width:
-                    ball.x_vel *= -1
+            if (
+                left_paddle.collision_on
+                and ball.y >= left_paddle.y
+                and ball.y <= left_paddle.y + left_paddle.height
+                and ball.x - ball.radius <= left_paddle.x + left_paddle.width
+            ):
+                ball.x_vel *= -1
 
-                    middle_y = left_paddle.y + left_paddle.height / 2
-                    difference_in_y = middle_y - ball.y
-                    reduction_factor = (left_paddle.height / 2) / ball.max_vel
-                    y_vel = difference_in_y / reduction_factor
-                    ball.y_vel = -1 * y_vel
-                    if self.health_enabled:
-                        left_paddle.current_health -= 1
-                        if left_paddle.current_health <= 0:
-                            left_paddle.collision_on = False
-                    # Updates the ball hit count for the left paddle
-                    left_paddle.ball_hits += 1
+                middle_y = left_paddle.y + left_paddle.height / 2
+                difference_in_y = middle_y - ball.y
+                reduction_factor = (left_paddle.height / 2) / ball.max_vel
+                y_vel = difference_in_y / reduction_factor
+                ball.y_vel = -1 * y_vel
+                if self.health_enabled:
+                    left_paddle.current_health -= 1
+                    if left_paddle.current_health <= 0:
+                        left_paddle.collision_on = False
+                # Updates the ball hit count for the left paddle
+                left_paddle.ball_hits += 1
 
-        else:
-            if right_paddle.collision_on and ball.y >= right_paddle.y and ball.y <= right_paddle.y + right_paddle.height:
-                if ball.x + ball.radius >= right_paddle.x:
-                    ball.x_vel *= -1
+        elif (
+            right_paddle.collision_on
+            and ball.y >= right_paddle.y
+            and ball.y <= right_paddle.y + right_paddle.height
+            and ball.x + ball.radius >= right_paddle.x
+        ):
+            ball.x_vel *= -1
 
-                    middle_y = right_paddle.y + right_paddle.height / 2
-                    difference_in_y = middle_y - ball.y
-                    reduction_factor = (right_paddle.height / 2) / ball.max_vel
-                    y_vel = difference_in_y / reduction_factor
-                    ball.y_vel = -1 * y_vel
-                    if self.health_enabled:
-                        right_paddle.current_health -= 1
-                        if right_paddle.current_health <= 0:
-                            right_paddle.collision_on = False
-                    # Updates the ball hit count for the right paddle
-                    right_paddle.ball_hits += 1
+            middle_y = right_paddle.y + right_paddle.height / 2
+            difference_in_y = middle_y - ball.y
+            reduction_factor = (right_paddle.height / 2) / ball.max_vel
+            y_vel = difference_in_y / reduction_factor
+            ball.y_vel = -1 * y_vel
+            if self.health_enabled:
+                right_paddle.current_health -= 1
+                if right_paddle.current_health <= 0:
+                    right_paddle.collision_on = False
+            # Updates the ball hit count for the right paddle
+            right_paddle.ball_hits += 1
 
     def step(self, keys: list) -> GameStatus:
         """Advance pong game
@@ -351,5 +362,5 @@ def main():
     pygame.quit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

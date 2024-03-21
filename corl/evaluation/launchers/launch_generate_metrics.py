@@ -10,7 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Entry/Launch point to the generate_metrics process/segment of the evaluation framework.
 """
-
+import itertools
 import pathlib
 import typing
 
@@ -27,7 +27,7 @@ from corl.evaluation.scene_processors import SceneProcessors
 from corl.parsers.yaml_loader import load_file
 
 
-def get_args(path: str = None) -> typing.Tuple[typing.Type[jsonargparse.Namespace], typing.Dict[str, typing.Any]]:
+def get_args(path: str | None = None) -> tuple[jsonargparse.Namespace, jsonargparse.Namespace]:
     """
     Obtain the running arguments for the generate_metrics segment of the evaluation framework
 
@@ -49,10 +49,10 @@ def get_args(path: str = None) -> typing.Tuple[typing.Type[jsonargparse.Namespac
     def func(source_object):
         return source_object.location.absolute_path
 
-    parser.link_arguments('artifact_evaluation_outcome', 'artifact_metrics.location', compute_fn=func, apply_on='instantiate')
+    parser.link_arguments("artifact_evaluation_outcome", "artifact_metrics.location", compute_fn=func, apply_on="instantiate")
 
-    parser.add_argument("--alerts-config", type=str, help='config defining which alerts to process')
-    parser.add_argument("--metrics-config", type=str, help='config defining which metrics to process')
+    parser.add_argument("--alerts-config", type=str, help="config defining which alerts to process")
+    parser.add_argument("--metrics-config", type=str, help="config defining which metrics to process")
     parser.add_argument(
         "--raise-on-error-alert", type=bool, default=True, help="If true will raise an exception when error alert encountered"
     )
@@ -67,7 +67,7 @@ def get_args(path: str = None) -> typing.Tuple[typing.Type[jsonargparse.Namespac
     return args, instantiated
 
 
-def main(params: typing.Dict[str, typing.Any]):
+def main(params: dict[str, typing.Any] | jsonargparse.Namespace):
     """
     Run the generate_metrics process
 
@@ -109,7 +109,7 @@ def main(params: typing.Dict[str, typing.Any]):
     if isinstance(test_cases, pd.DataFrame):
         test_cases = test_cases.reset_index()
 
-    evaluation_data: typing.List[EpisodeArtifact] = list(outcome.episode_artifacts.values())
+    evaluation_data: list[EpisodeArtifact] = list(itertools.chain(*list(outcome.episode_artifacts.values())))
 
     processed_data = SceneProcessors.from_evaluation(
         evaluation_data=evaluation_data,

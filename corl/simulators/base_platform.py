@@ -11,9 +11,8 @@ limitation or restriction. See accompanying README and LICENSE for details.
 Base Platform Abstract Class Object
 """
 import abc
-import typing
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from corl.simulators.base_parts import BaseController, BaseSensor
 
@@ -28,12 +27,10 @@ class BasePlatformValidator(BaseModel):
         parts_list: typing.List[typing.Tuple]
             list of parts the agent uses to interact with the platform
     """
-    platform_name: str
-    parts_list: typing.List[typing.Tuple]
 
-    class Config:
-        """Allow arbitrary types for Parameter"""
-        arbitrary_types_allowed = True
+    platform_name: str
+    parts_list: list[tuple]
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class BasePlatform(abc.ABC):
@@ -41,12 +38,11 @@ class BasePlatform(abc.ABC):
     BasePlatform base abstraction for a platform object. Platforms can be aircraft, land vehicles,
     ground radar, satellites etc.
     Platforms have platform properties that describe the platform, for example position, velocity, etc.
-    Platforms have platform parts which consist of controls, weapons, or sensors.
+    Platforms have platform parts which consist of controls or sensors.
     """
 
-    def __init__(self, **kwargs):
-
-        self.config: BasePlatformValidator = self.get_validator(**kwargs)
+    def __init__(self, **kwargs) -> None:
+        self.config: BasePlatformValidator = self.get_validator()(**kwargs)
 
         self._name = self.config.platform_name
         self._sensors = self._get_part_dict(self.config.parts_list, BaseSensor)
@@ -54,8 +50,8 @@ class BasePlatform(abc.ABC):
 
         self.verify_unique_parts()
 
-    @property
-    def get_validator(self) -> typing.Type[BasePlatformValidator]:
+    @staticmethod
+    def get_validator() -> type[BasePlatformValidator]:
         """
         get validator for this BasePlatform
 
@@ -104,9 +100,7 @@ class BasePlatform(abc.ABC):
         sensor_parts = set(self._sensors.keys())
         controller_parts = set(self._controllers.keys())
         part_union = sensor_parts.intersection(controller_parts)
-        # filter out any parts that are both a sensor AND a controller, that is fine
-        filtered_intersection = set(x for x in part_union if not isinstance(self._sensors[x], BaseController))
-        if filtered_intersection:
+        if filtered_intersection := {x for x in part_union if not isinstance(self._sensors[x], BaseController)}:
             raise RuntimeError(
                 f"Parts on a platform need to have a unique name, but platform {self._name} "
                 f"has the following sensors and controllers that share the same name: {filtered_intersection} "

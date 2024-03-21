@@ -13,8 +13,7 @@ from abc import ABC, abstractmethod
 
 
 class ConfigUpdate(ABC):
-    """Abstract class to update a configuration
-    """
+    """Abstract class to update a configuration"""
 
     @abstractmethod
     def update(self, config: dict) -> dict:

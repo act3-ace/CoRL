@@ -13,14 +13,20 @@ limitation or restriction. See accompanying README and LICENSE for details.
 
 import os
 import tempfile
-from contextlib import contextmanager
-from typing import List
 
 import pytest
 import ray
 
-from corl.episode_parameter_providers import EpisodeParameterProvider
-from corl.episode_parameter_providers.remote import RemoteEpisodeParameterProvider
+# from pint import UnitRegistry, set_application_registry
+from corl.test_utils.testing_ureg_func import ureg_setup_func
+
+
+def pytest_sessionstart(session):
+    """
+    Called after the Session object has been created and
+    before performing collection and entering the run test loop.
+    """
+    ureg_setup_func()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -37,7 +43,14 @@ def ray_session(request):
     os.putenv("CUDA_VISIBLE_DEVICES", "-1")
     global _ray_session_temp_dir
     with tempfile.TemporaryDirectory() as _ray_session_temp_dir:
-        ray_config = {"address": None, "include_dashboard": False, "num_gpus": 0, "_temp_dir": _ray_session_temp_dir, "_redis_password": None, "ignore_reinit_error": False}
+        ray_config = {
+            "address": None,
+            "include_dashboard": False,
+            "num_gpus": 0,
+            "_temp_dir": _ray_session_temp_dir,
+            "_redis_password": None,
+            "ignore_reinit_error": False,
+        }
         ray.init(**ray_config)
         yield
         ray.shutdown()
@@ -65,7 +78,11 @@ def self_managed_ray():
     yield
     if ray.is_initialized():
         ray.shutdown()
-    ray_config = {"include_dashboard": False, "num_gpus": 0, "_temp_dir": _ray_session_temp_dir}
+    ray_config = {
+        "include_dashboard": False,
+        "num_gpus": 0,
+        "_temp_dir": _ray_session_temp_dir,
+    }
     ray.init(**ray_config)
 
 
@@ -86,7 +103,11 @@ def optional_debuggable_ray(request):
         yield True
         if ray.is_initialized():
             ray.shutdown()
-        ray_config = {"include_dashboard": False, "num_gpus": 0, "_temp_dir": _ray_session_temp_dir}
+        ray_config = {
+            "include_dashboard": False,
+            "num_gpus": 0,
+            "_temp_dir": _ray_session_temp_dir,
+        }
         ray.init(**ray_config)
     else:
         yield False

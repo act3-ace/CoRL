@@ -22,5 +22,5 @@ class Runtime(MetricGeneratorTerminalEventScope):
     Scope: Event
     """
 
-    def generate_metric(self, params: EpisodeArtifact, **kwargs) -> Metric:
-        return Real(params.wall_time_sec)
+    def generate_metric(self, params: EpisodeArtifact, **kwargs) -> Metric:  # noqa: PLR6301
+        return Real(params.duration_sec)

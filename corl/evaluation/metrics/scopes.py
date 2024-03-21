@@ -13,8 +13,8 @@ import enum
 
 
 class Scopes(enum.IntEnum):
-    """Scopes which a metric can be computed on
-    """
+    """Scopes which a metric can be computed on"""
+
     EVENT = enum.auto()
     """An Event is a single flight
     """
@@ -29,8 +29,7 @@ class Scopes(enum.IntEnum):
 
 
 def from_string(name: str) -> Scopes:
-    """Generate a scope enumeration from string
-    """
+    """Generate a scope enumeration from string"""
     if name == "event":
         return Scopes.EVENT
     if name == "evaluation":

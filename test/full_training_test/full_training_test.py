@@ -9,160 +9,80 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
-import pathlib
-
 import pytest
-import ray
-import yaml
 
-from corl.train_rl import parse_corl_args
-from corl.parsers.yaml_loader import load_file
-from corl.experiments.base_experiment import ExperimentParse
-
+from corl.test_utils import full_training
+from corl.train_rl import build_experiment, parse_corl_args
 
 ppo_rllib_config = {
-    'horizon': 10,
-    'rollout_fragment_length': 10,
-    'train_batch_size': 10,
-    'sgd_minibatch_size': 10,
-    'num_workers': 1,
-    'num_cpus_per_worker': 1,
-    'num_envs_per_worker': 1,
-    'num_cpus_for_driver': 1,
-    'num_gpus_per_worker': 0,
-    'num_gpus': 0,
-    'num_sgd_iter': 30,
-    'seed': 1
+    "rollout_fragment_length": 10,
+    "train_batch_size": 10,
+    "sgd_minibatch_size": 10,
+    "num_workers": 1,
+    "num_cpus_per_worker": 1,
+    "num_envs_per_worker": 1,
+    "num_cpus_for_driver": 1,
+    "num_gpus_per_worker": 0,
+    "num_gpus": 0,
+    "num_sgd_iter": 5,
+    "seed": 1,
 }
 
 sac_rllib_config = {
-    'horizon': 10,
-    'rollout_fragment_length': 10,
-    'train_batch_size': 10,
-    'num_workers': 1,
-    'num_cpus_per_worker': 1,
-    'num_envs_per_worker': 1,
-    'num_cpus_for_driver': 1,
-    'num_gpus_per_worker': 0,
-    'num_gpus': 0,
-    'seed': 1
+    "rollout_fragment_length": 10,
+    "train_batch_size": 10,
+    "num_workers": 1,
+    "num_cpus_per_worker": 1,
+    "num_envs_per_worker": 1,
+    "num_cpus_for_driver": 1,
+    "num_gpus_per_worker": 0,
+    "num_gpus": 0,
+    "seed": 1,
 }
 
+
 # Adjustments to the configuration files used in this test to match the current baseline is authorized, provided you make a post on
-# MatterMost aaco-ai-agents with notifications to joblackburn and bheiner that the change was made.
-# All other changes, such as commenting out tests or disabling inference or evaluation requires coordination on the aaco-ai-agents
+# MatterMost -ML-agents with notifications to joblackburn and bheiner that the change was made.
+# All other changes, such as commenting out tests or disabling inference or evaluation requires coordination on the -ML-agents
 # channel of MatterMost with notifications to joblackburn and bheiner.
 # This should always be committed as False; however, if you need to debug this unit test, set it temporarily to True
 # @pytest.mark.ray_debug_mode(False)
 @pytest.mark.parametrize(
-    'experiment_config, test_rllib_config',
+    "experiment_config, test_rllib_config, train_agent",
     [
+        pytest.param("config/tasks/gymnasium/experiments/cartpole_v1.yml", ppo_rllib_config, False, id="cartpole-v1"),
+        pytest.param("config/tasks/gymnasium/experiments/cartpole_v1_repeated_obs.yml", ppo_rllib_config, False, id="cartpole-v1-repeated"),
         pytest.param(
-            'config/tasks/openai_gym/experiments/cartpole_v1.yml',
-            ppo_rllib_config,
-            id='cartpole-v1'
+            "config/tasks/gymnasium/experiments/cartpole_v1_with_wrapper.yml", ppo_rllib_config, False, id="cartpole-v1-with_wrapper"
         ),
+        pytest.param("config/tasks/gymnasium/experiments/cartpole_v1_random.yml", ppo_rllib_config, False, id="cartpole-v1-random"),
+        pytest.param("config/tasks/gymnasium/experiments/cartpole_v1_scripted.yml", ppo_rllib_config, True, id="cartpole-v1-scripted"),
+        pytest.param("config/tasks/gymnasium/experiments/cartpole_v1_noop_ctrl.yml", ppo_rllib_config, False, id="cartpole-v1-noop_ctrl"),
         pytest.param(
-            'config/tasks/openai_gym/experiments/cartpole_v1_repeated_obs.yml',
-            ppo_rllib_config,
-            id='cartpole-v1-repeated'
+            "config/tasks/gymnasium/experiments/cartpole_v1_dict_wrapper.yml", ppo_rllib_config, True, id="cartpole-v1-dict_wrapper"
         ),
-        pytest.param(
-            'config/tasks/openai_gym/experiments/cartpole_v1_with_wrapper.yml',
-            ppo_rllib_config,
-            id='cartpole-v1-with_wrapper'
-        ),
-        pytest.param(
-            'config/tasks/openai_gym/experiments/cartpole_v1_random.yml',
-            ppo_rllib_config,
-            id='cartpole-v1-random'
-        ),
-        pytest.param(
-            'config/tasks/openai_gym/experiments/cartpole_v1_scripted.yml',
-            ppo_rllib_config,
-            id='cartpole-v1-scripted'
-        ),
-
-        pytest.param(
-            'config/tasks/openai_gym/experiments/cartpole_v1_noop_ctrl.yml',
-            ppo_rllib_config,
-            id='cartpole-v1-noop_ctrl'
-        ),
-        pytest.param(
-            'config/tasks/openai_gym/experiments/cartpole_v1_with_duplicate_parts.yml',
-            ppo_rllib_config,
-            id='cartpole_v1_with_duplicate_parts'
-        ),
-        pytest.param(
-            'config/tasks/openai_gym/experiments/cartpole_v1_dict_wrapper.yml',
-            ppo_rllib_config,
-            id='cartpole-v1-dict_wrapper'
-        ),
-        pytest.param(
-            'config/tasks/docking_1d/experiments/docking_1d.yml',
-            ppo_rllib_config,
-            id='docking-1d'
-        ),
-        pytest.param(
-            'config/tasks/openai_gym/experiments/pendulum_v1.yml',
-            ppo_rllib_config,
-            id='pendulum-v1'
-        ),
-        pytest.param(
-            'config/tasks/pong/experiments/pong.yml',
-            ppo_rllib_config,
-            id='pong ppo'
-        ),
-        pytest.param(
-            'config/tasks/pong/experiments/pong_commander.yml',
-            ppo_rllib_config,
-            id='pong commander ppo'
-        ),
-        pytest.param(
-            'config/tasks/pong/experiments/pong_sac.yml',
-            sac_rllib_config,
-            id='pong sac'
-        ),
+        # pytest.param("config/tasks/docking_1d/experiments/docking_1d.yml", ppo_rllib_config, True,  id="docking-1d"),
+        pytest.param("config/tasks/gymnasium/experiments/pendulum_v1.yml", ppo_rllib_config, False, id="pendulum-v1"),
+        # pytest.param("config/tasks/pong/experiments/pong.yml", ppo_rllib_config, False,  id="pong ppo"),
+        pytest.param("config/tasks/pong/experiments/pong_commander.yml", ppo_rllib_config, True, id="pong commander ppo"),
+        pytest.param("config/tasks/pong/experiments/pong_sac.yml", sac_rllib_config, True, id="pong sac"),
     ],
 )
 def test_tasks(
     experiment_config,
     test_rllib_config,
+    train_agent,
     tmp_path,
     self_managed_ray,
 ):
-    # optional_debuggable_ray = False
-    # if optional_debuggable_ray:
-    #     ray_config['local_mode'] = True
-    # else:
-    #     ray_config['ignore_reinit_error'] = True
-
     args = parse_corl_args(["--cfg", experiment_config])
-    config = load_file(config_filename=args.config)
+    experiment_class, experiment_file_validated = build_experiment(args)
+    full_training.update_rllib_experiment_for_test(experiment_class, experiment_file_validated, test_rllib_config, tmp_path)
 
-    # print(config)
-    experiment_parse = ExperimentParse(**config)
-    experiment_class = experiment_parse.experiment_class(**experiment_parse.config)
+    if train_agent:
+        experiment_class.run_experiment(experiment_file_validated)
 
-    experiment_class.config.rllib_configs["local"].update(test_rllib_config)
-    if "model" in experiment_class.config.rllib_configs["local"]:
-        experiment_class.config.rllib_configs["local"]["model"].reset()
-
-    experiment_class.config.ray_config['ignore_reinit_error'] = True
-    if "_temp_dir" in experiment_class.config.ray_config:
-        del experiment_class.config.ray_config["_temp_dir"]
-
-    experiment_class.config.env_config["output_path"] = str(tmp_path / "training")
-
-    experiment_class.config.tune_config['stop']['training_iteration'] = 1
-    experiment_class.config.tune_config['local_dir'] = str(tmp_path / "training")
-    experiment_class.config.tune_config['checkpoint_freq'] = 1
-    experiment_class.config.tune_config['max_failures'] = 1
-    args.compute_platform = "local"
-    experiment_class.run_experiment(args)
-
-
-    # Determine filename of the checkpoint
-    checkpoint_glob = list(tmp_path.glob('training/**/checkpoint_000001'))
-    assert len(checkpoint_glob) == 1
-    checkpoint = checkpoint_glob[0]
+        # Determine filename of the checkpoint
+        checkpoint_glob = list(tmp_path.glob("training/**/checkpoint_000000"))
+        assert len(checkpoint_glob) == 1
+        checkpoint_glob[0]

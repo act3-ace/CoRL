@@ -1,0 +1,8 @@
+  root:
+      config: {}
+  relative:
+      test: True
+  site_pkg:
+    first_config: true
+    second_config:
+        second_config_data: true

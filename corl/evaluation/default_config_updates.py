@@ -18,5 +18,5 @@ class DoNothingConfigUpdate(ConfigUpdate):
     A config update that does nothing. Used as a placeholder/default when no config update is required.
     """
 
-    def update(self, config):
+    def update(self, config):  # noqa: PLR6301
         return config

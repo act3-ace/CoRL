@@ -1,9 +1,8 @@
 #  type: ignore
 #  flake8: noqa
-#  pylint: skip-file
 import logging
 
-import gym
+import gymnasium
 import numpy as np
 from ray.rllib.models import ModelCatalog
 from ray.rllib.models.torch.misc import AppendBiasLayer, SlimFC, normc_initializer
@@ -25,12 +24,12 @@ class TorchFrameStack(TorchModelV2, nn.Module):
 
     def __init__(
         self,
-        obs_space: gym.spaces.Space,
-        action_space: gym.spaces.Space,
+        obs_space: gymnasium.spaces.Space,
+        action_space: gymnasium.spaces.Space,
         num_outputs: int,
         model_config: ModelConfigDict,
         name: str,
-        num_frames: int = 1
+        num_frames: int = 1,
     ):
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
         nn.Module.__init__(self)
@@ -46,8 +45,9 @@ class TorchFrameStack(TorchModelV2, nn.Module):
 
         num_frames = model_config["custom_model_config"].get("num_frames", 1)
 
-        self.view_requirements[TorchFrameStack.PREV_N_OBS
-                               ] = ViewRequirement(data_col="obs", shift="-{}:0".format(num_frames - 1), space=obs_space)
+        self.view_requirements[TorchFrameStack.PREV_N_OBS] = ViewRequirement(
+            data_col="obs", shift="-{}:0".format(num_frames - 1), space=obs_space
+        )
         # Generate free-floating bias variables for the second half of
         # the outputs.
         if self.free_log_std:
@@ -150,8 +150,7 @@ class TorchFrameStack(TorchModelV2, nn.Module):
     def forward(self, input_dict: Dict[str, TensorType], state: List[TensorType], seq_lens: TensorType) -> (TensorType, List[TensorType]):
         self._last_flat_in = input_dict[TorchFrameStack.PREV_N_OBS].float()
         self._features = self._hidden_layers(self._last_flat_in)
-        logits = self._logits(self._features) if self._logits else \
-            self._features
+        logits = self._logits(self._features) if self._logits else self._features
         if self.free_log_std:
             logits = self._append_free_log_std(logits)
         return logits, state

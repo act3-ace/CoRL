@@ -1,0 +1,36 @@
+# ---------------------------------------------------------------------------
+#
+#
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
+
+"agent": "corl.agents.base_agent.TrainableBaseAgent"
+"config":
+    {
+        "parts":
+            [{ "part": "Controller_Gymnasium" }, { "part": "Sensor_State" }],
+        "episode_parameter_provider": !include ./baseline_epp.yml,
+        "glues":
+            [
+                {
+                    "functor": "corl.glues.common.controller_glue.ControllerGlue",
+                    "config": { "controller": "Controller_Gymnasium" },
+                },
+                {
+                    "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+                    "config":
+                        {
+                            "sensor": "Sensor_State",
+                            "normalization": { "enabled": False },
+                        },
+                },
+            ],
+        "dones": !include ./baseline_dones.yml,
+        "rewards": !include ./baseline_rewards.yml,
+    }

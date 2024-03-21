@@ -15,8 +15,7 @@ from corl.evaluation.metrics.metric import TerminalMetric
 
 
 class Void(TerminalMetric):
-    """Terminal Metric to represent a real number
-    """
+    """Terminal Metric to represent a real number"""
 
     def __add__(self, rhs: typing.Any):
         raise RuntimeError(f"No logic on how to handle {type(rhs)}")

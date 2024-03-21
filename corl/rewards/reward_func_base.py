@@ -11,14 +11,13 @@ limitation or restriction. See accompanying README and LICENSE for details.
 Reward Functor Base Module
 """
 import abc
-import typing
 from collections import OrderedDict
 
+import gymnasium
 from pydantic import BaseModel
 
 from corl.libraries.env_func_base import EnvFuncBase
-from corl.libraries.environment_dict import RewardDict
-from corl.libraries.state_dict import StateDict
+from corl.simulators.base_simulator_state import BaseSimulatorState
 
 
 class RewardFuncBaseValidator(BaseModel):
@@ -28,22 +27,21 @@ class RewardFuncBaseValidator(BaseModel):
     platform_names: list of platforms controlled by the agent
                     this reward belongs to
     """
-    name: typing.Optional[str]
+
+    name: str | None = None
     agent_name: str
-    platform_names: typing.List[str]
+    platform_names: list[str]
 
 
 class RewardFuncBase(EnvFuncBase):
-    """The base implementation for reward functors
-    """
+    """The base implementation for reward functors"""
 
-    def __init__(self, **kwargs):
-        self.config: RewardFuncBaseValidator = self.get_validator(**kwargs)
+    def __init__(self, **kwargs) -> None:
+        self.config: RewardFuncBaseValidator = self.get_validator()(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[RewardFuncBaseValidator]:
-        """Returns pydantic validator associated with this class
-        """
+    @staticmethod
+    def get_validator() -> type[RewardFuncBaseValidator]:
+        """Returns pydantic validator associated with this class"""
         return RewardFuncBaseValidator
 
     @abc.abstractmethod
@@ -52,23 +50,23 @@ class RewardFuncBase(EnvFuncBase):
         observation: OrderedDict,
         action,
         next_observation: OrderedDict,
-        state: StateDict,
-        next_state: StateDict,
-        observation_space: StateDict,
-        observation_units: StateDict,
-    ) -> RewardDict:
+        state: BaseSimulatorState,
+        next_state: BaseSimulatorState,
+        observation_space: gymnasium.Space,
+        observation_units: OrderedDict,
+    ) -> float:
         ...
 
-    def post_process_trajectory(self, agent_id, state, batch, episode, policy):  # pylint: disable=unused-argument
+    def post_process_trajectory(self, agent_id, state, batch, episode, policy):
         """Allows the user to modify the trajectory of the episode
         in the batch collected during an rllib callback. WARNING: This function is dangerous
-        you can completly destroy training using this
+        you can completely destroy training using this
         Use it only as a last resort
         """
 
     @property
     def name(self) -> str:
-        """ gets the name fo the functor
+        """gets the name for the functor
 
         Returns
         -------

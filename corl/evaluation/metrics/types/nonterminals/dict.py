@@ -16,11 +16,10 @@ from corl.evaluation.metrics.metric import Metric, NonTerminalMetric
 
 
 @dataclasses.dataclass
-class Dict(NonTerminalMetric):
-    """NonTerminal Metric to contain a dictionary of other metrics
-    """
+class Dict(NonTerminalMetric):  # noqa: PLW1641
+    """NonTerminal Metric to contain a dictionary of other metrics"""
 
-    data: typing.Dict[str, Metric]
+    data: dict[str, Metric]
 
     def __add__(self, rhs: typing.Any):
         if isinstance(rhs, Dict):

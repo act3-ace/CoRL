@@ -13,13 +13,12 @@ import dataclasses
 import typing
 
 from corl.evaluation.metrics.metric import TerminalMetric
-from corl.libraries.units import ValueWithUnits
+from corl.libraries.units import Quantity
 
 
 @dataclasses.dataclass
 class Real(TerminalMetric):
-    """Terminal Metric to represent a real number
-    """
+    """Terminal Metric to represent a real number"""
 
     value: float
 
@@ -29,14 +28,12 @@ class Real(TerminalMetric):
         raise RuntimeError(f"No logic on how to handle {type(rhs)}")
 
     def __truediv__(self, rhs: typing.Any):
+        lhs = self.value.value if isinstance(self.value, Real) else self.value
 
-        if isinstance(self.value, (ValueWithUnits, Real)):
-            lhs = self.value.value
-        else:
-            lhs = self.value
-
-        if isinstance(rhs, (ValueWithUnits, Real)):
+        if isinstance(rhs, (Real)):
             rhs = rhs.value
+        elif isinstance(rhs, Quantity):
+            rhs = rhs.m
 
         quotient = float(lhs) / float(rhs)
 

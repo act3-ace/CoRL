@@ -1,4 +1,3 @@
-# pylint: disable=no-self-argument
 """
 ---------------------------------------------------------------------------
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)

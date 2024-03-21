@@ -10,14 +10,12 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
 
-import typing
 from collections import OrderedDict
-from functools import lru_cache
-
-import gym
+from functools import cached_property
 
 from corl.glues.base_glue import BaseAgentPlatformGlue, BaseAgentPlatformGlueValidator
-from corl.libraries.units import NoneUnitType
+from corl.libraries.property import DictProp, DiscreteProp
+from corl.libraries.units import corl_quantity
 from corl.simulators.base_parts import BasePlatformPart
 from corl.simulators.common_platform_utils import get_part_by_name
 
@@ -26,22 +24,22 @@ class ObservePartValidityValidator(BaseAgentPlatformGlueValidator):
     """
     part: which part to find on the platform
     """
+
     part: str
 
 
 class ObservePartValidity(BaseAgentPlatformGlue):
-    """Glue to observe a part's validity flag
-    """
+    """Glue to observe a part's validity flag"""
 
-    # pylint: disable=too-few-public-methods
     class Fields:
         """
         Fields in this glue
         """
+
         VALIDITY_OBSERVATION = "validity_observation"
 
-    @property
-    def get_validator(self) -> typing.Type[ObservePartValidityValidator]:
+    @staticmethod
+    def get_validator() -> type[ObservePartValidityValidator]:
         return ObservePartValidityValidator
 
     def __init__(self, **kwargs) -> None:
@@ -51,32 +49,18 @@ class ObservePartValidity(BaseAgentPlatformGlue):
         self._part: BasePlatformPart = get_part_by_name(self._platform, self.config.part)
         self._part_name: str = self.config.part
 
-    @lru_cache(maxsize=1)
+        self._uname = f"ObserveValidity_{self._part_name}"
+
     def get_unique_name(self) -> str:
-        """Class method that retrieves the unique name for the glue instance
-        """
-        return "ObserveValidity_" + self._part_name
+        """Class method that retrieves the unique name for the glue instance"""
+        return f"ObserveValidity_{self._part_name}"
 
-    @lru_cache(maxsize=1)
-    def observation_units(self):
-        """Units of the sensors in this glue
-        """
-        d = gym.spaces.dict.Dict()
-        d.spaces[self.Fields.VALIDITY_OBSERVATION] = NoneUnitType
-        return d
-
-    @lru_cache(maxsize=1)
-    def observation_space(self):
-        """Observation Space
-        """
-        d = gym.spaces.dict.Dict()
-        d.spaces[self.Fields.VALIDITY_OBSERVATION] = gym.spaces.Discrete(2)
-        return d
+    @cached_property
+    def observation_prop(self):
+        return DictProp(spaces={self.Fields.VALIDITY_OBSERVATION: DiscreteProp(n=2)})
 
     def get_observation(self, other_obs: OrderedDict, obs_space, obs_units):
-        """Observation Values
-        """
+        """Observation Values"""
         d = OrderedDict()
-        d[self.Fields.VALIDITY_OBSERVATION] = int(self._part.valid)
-
+        d[self.Fields.VALIDITY_OBSERVATION] = corl_quantity()(int(self._part.valid), "dimensionless")
         return d

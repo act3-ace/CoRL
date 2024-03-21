@@ -1,0 +1,21 @@
+# Currently the only configuration supported is the trajectory animation settings
+# This section defines the mapping between the serializers and deserializers.
+"streamlit_layout": {
+  # REQUIRED: The animator to use for the display trajectory animation section.
+  # Must be derived from corl.visualization.base_animator.
+  "display_trajectory_animation_section" : {
+    "animator": {
+      "functor": "corl.visualization.plotly_animator.PlotlyTrajectoryAnimation",
+      "config": {
+        "platform_serializer_map": {
+          "corl.evaluation.serialize_platforms.Serialize_Pong":"corl.evaluation.serialize_platforms.DeserializePongPlotlyAnimation"},
+        "platform_color_map" : {"paddle0":"blue", "paddle1": "red"}
+      }
+    },
+    # Sets the frame axis bounds for the animation. This sets the default values and is optional.
+    "frame_axis_bounds": {
+      "functor": "corl.visualization.base_animator.FrameAxisBounds",
+      "config": {"xbounds": !!python/tuple [0, 700], "ybounds": !!python/tuple [0, 500]},
+    }
+  }
+}

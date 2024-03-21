@@ -14,19 +14,16 @@ from collections import OrderedDict
 
 
 class ObsBuffer:
-    """Wrapper for OBS functions
-    """
+    """Wrapper for OBS functions"""
 
     def __init__(self) -> None:
-        """Constructor
-        """
+        """Constructor"""
         self._buffer1: OrderedDict = OrderedDict()
         self._buffer2: OrderedDict = OrderedDict()
         self._index = 0
 
     def update_obs_pointer(self):
-        """get the next observation pointer for next and current
-        """
+        """get the next observation pointer for next and current"""
         self._index += 1
 
     @property
@@ -37,9 +34,7 @@ class ObsBuffer:
         OrderedDict
             The observation dictionary
         """
-        if self._index % 2 == 0:
-            return self._buffer1
-        return self._buffer2
+        return self._buffer1 if self._index % 2 == 0 else self._buffer2
 
     @observation.setter
     def observation(self, data: OrderedDict) -> None:
@@ -65,9 +60,7 @@ class ObsBuffer:
         OrderedDict
             The next observation dictionary
         """
-        if self._index % 2 == 0:
-            return self._buffer2
-        return self._buffer1
+        return self._buffer2 if self._index % 2 == 0 else self._buffer1
 
     @next_observation.setter
     def next_observation(self, data: OrderedDict) -> None:

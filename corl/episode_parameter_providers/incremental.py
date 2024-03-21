@@ -15,9 +15,8 @@ the provided 'num_test_cases' int, to provide an accurate episode_id during eval
 Author: John McCarroll
 """
 
-import typing
 
-from pydantic import PyObject
+from pydantic import ImportString
 
 from corl.episode_parameter_providers import EpisodeParameterProvider, EpisodeParameterProviderValidator, ParameterModel, Randomness
 
@@ -26,9 +25,10 @@ class IncrementalWrapperValidator(EpisodeParameterProviderValidator):
     """
     Validation model for the inputs of IncrementalParameterProviderWrapper
     """
+
     num_test_cases: int
-    type: PyObject  # the class of the wrapped ParameterProvider
-    config: typing.Optional[typing.Dict]  # the config for the wrapped ParameterProvider
+    type: ImportString  # noqa: A003 # the class of the wrapped ParameterProvider
+    config: dict | None = {}  # the config for the wrapped ParameterProvider
 
 
 class IncrementalParameterProviderWrapper(EpisodeParameterProvider):
@@ -43,19 +43,22 @@ class IncrementalParameterProviderWrapper(EpisodeParameterProvider):
         config = self.config.config if self.config.config is not None else {}  # type: ignore
         self.epp = self.config.type(type=self.config.type, parameters=self.config.parameters, **config)  # type: ignore
 
-    @property
-    def get_validator(self) -> typing.Type[IncrementalWrapperValidator]:
+    def reset(self) -> None:
+        self.index = 0
+
+    @staticmethod
+    def get_validator() -> type[IncrementalWrapperValidator]:
         """Get the validator for this class."""
         return IncrementalWrapperValidator
 
-    def _do_get_params(self, rng: Randomness) -> typing.Tuple[ParameterModel, typing.Union[int, None]]:
+    def _do_get_params(self, rng: Randomness, env_epp_ctx: dict | None) -> tuple[ParameterModel, int | None, dict | None]:
         """
         This method retrieves parameter values from its wrapped ParameterProvider.
         It then returns them, alongside the episode_id.
         """
 
         # delegate to get params
-        params, _ = self.epp.get_params(rng)
+        params, _, env_epp_ctx = self.epp.get_params(rng, env_epp_ctx)
 
         # get episode_id
         episode_id = self.index if self.index < self.config.num_test_cases else None  # type: ignore
@@ -63,6 +66,6 @@ class IncrementalParameterProviderWrapper(EpisodeParameterProvider):
         # increment after params collected
         self.index += 1
 
-        return params, episode_id
+        return params, episode_id, env_epp_ctx
 
     # TODO: delegate other methods to wrapped EPP?

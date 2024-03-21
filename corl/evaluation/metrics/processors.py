@@ -35,31 +35,23 @@ class Processor(abc.ABC):
     A metric processor combines data and generators to generate metrics
     """
 
-    _metrics: typing.Dict[str, Metric]
-    _alerts: typing.List[Alert]
-    _metrics_info: typing.Dict[str, str]  # collect metrics information
+    _metrics: dict[str, Metric]
+    _alerts: list[Alert]
+    _metrics_info: dict[str, str]  # collect metrics information
 
-    def __init__(
-        self, metrics: typing.Dict[str, Metric], metrics_info: typing.Dict[str, str], alerts: typing.Optional[typing.List[Alert]] = None
-    ):
-
+    def __init__(self, metrics: dict[str, Metric], metrics_info: dict[str, str], alerts: list[Alert] | None = None):
         self._metrics = metrics
 
-        if alerts is None:
-            self._alerts = []
-        else:
-            self._alerts = alerts
-
+        self._alerts = [] if alerts is None else alerts
         self._metrics_info = metrics_info
 
     @property
-    def metrics(self) -> typing.Dict[str, Metric]:
-        """Returns the calculated metrics
-        """
+    def metrics(self) -> dict[str, Metric]:
+        """Returns the calculated metrics"""
         return self._metrics
 
     @property
-    def metrics_info(self) -> typing.Dict[str, str]:
+    def metrics_info(self) -> dict[str, str]:
         """
         Returns descriptions of all calculated metrics
         """
@@ -67,9 +59,8 @@ class Processor(abc.ABC):
         return self._metrics_info
 
     @property
-    def alerts(self) -> typing.List[Alert]:
-        """Returns the calculated alerts
-        """
+    def alerts(self) -> list[Alert]:
+        """Returns the calculated alerts"""
         return self._alerts
 
 
@@ -83,28 +74,22 @@ class Event(Processor):
 
     @property
     def data(self):
-        """Get the data on the event
-        """
+        """Get the data on the event"""
         return self._data
 
     @classmethod
     def process(
-        cls,
-        data: EpisodeArtifact,
-        metric_generators: typing.List[MetricGenerator],
-        alert_generators: typing.List[AlertGenerator],
-        **kwargs
+        cls, data: EpisodeArtifact, metric_generators: list[MetricGenerator], alert_generators: list[AlertGenerator], **kwargs
     ) -> Event:
-        """Generate the metrics and alerts by giving the generators the provided data
-        """
+        """Generate the metrics and alerts by giving the generators the provided data"""
 
-        metrics_info: typing.Dict[str, str] = {}
+        metrics_info: dict[str, str] = {}
 
         ####################
         ## Calculate metrics
 
         # Calculate any of the terminal metrics on the event
-        metrics: typing.Dict[str, Metric] = {}
+        metrics: dict[str, Metric] = {}
         for generator in metric_generators:
             if isinstance(generator, MetricGeneratorTerminalEventScope):
                 if generator.name in metrics:
@@ -137,9 +122,8 @@ class Event(Processor):
 
         ####################
         # Calculate alerts
-        alerts: typing.List[Alert] = []
+        alerts: list[Alert] = []
         for alert_generator in alert_generators:
-
             # Determine if we can evaluate the alert
             can_evaluate = True
             if alert_generator.metric not in metrics:
@@ -158,7 +142,7 @@ class Event(Processor):
                 alerts += alert_generator.generate(metrics)
 
         event = Event(metrics, metrics_info, alerts)
-        event._data = data
+        event._data = data  # noqa: SLF001
         return event
 
 
@@ -168,40 +152,27 @@ class Evaluation(Processor):
     An evaluation is a list of events.
     """
 
-    events: typing.List[Event]
+    events: list[Event]
 
-    def __init__(
-        self,
-        metrics: typing.Dict[str, Metric],
-        metrics_info: typing.Dict[str, str],
-        alerts: typing.List[Alert],
-        events: typing.List[Event]
-    ):
+    def __init__(self, metrics: dict[str, Metric], metrics_info: dict[str, str], alerts: list[Alert], events: list[Event]):
         super().__init__(metrics, metrics_info, alerts)
         self.events = events
 
     @classmethod
     def process(
-        cls,
-        data: typing.List[EpisodeArtifact],
-        metric_generators: typing.List[MetricGenerator],
-        alert_generators: typing.List[AlertGenerator],
-        **kwargs
+        cls, data: list[EpisodeArtifact], metric_generators: list[MetricGenerator], alert_generators: list[AlertGenerator], **kwargs
     ) -> Evaluation:
-        """Generate the metrics by giving the generators the provided data
-        """
+        """Generate the metrics by giving the generators the provided data"""
 
         ####################
         # Process each event with the given generators
-        events: typing.List[Event] = []
-        for item in data:
-            events.append(Event.process(item, metric_generators, alert_generators, **kwargs))
+        events: list[Event] = [Event.process(item, metric_generators, alert_generators, **kwargs) for item in data]
 
         ####################
         ## Calculate metrics
 
-        metrics: typing.Dict[str, Metric] = {}
-        metrics_info: typing.Dict[str, str] = {}
+        metrics: dict[str, Metric] = {}
+        metrics_info: dict[str, str] = {}
 
         # Calculate any of the terminal metrics on the Evaluation scope
         for generator in metric_generators:
@@ -230,7 +201,7 @@ class Evaluation(Processor):
 
                 # Extract the desired metric as a list
                 metrics_to_give_aggregator = []
-                for i, computed_metrics in enumerate([item.metrics for item in events]):
+                for i, computed_metrics in enumerate(item.metrics for item in events):
                     if aggregator.metrics_to_use not in computed_metrics:
                         raise RuntimeError(f"{aggregator.metrics_to_use} not in the {i}th event of the evaluation")
                     metrics_to_give_aggregator.append(computed_metrics[aggregator.metrics_to_use])
@@ -243,9 +214,8 @@ class Evaluation(Processor):
 
         ####################
         # Calculate alerts
-        alerts: typing.List[Alert] = []
+        alerts: list[Alert] = []
         for alert_generator in alert_generators:
-
             # Determine if we can evaluate the alert
             can_evaluate = True
             if alert_generator.metric not in metrics:
@@ -272,18 +242,17 @@ class Tournament(Processor):
     An evaluation is a list of evaluations.
     """
 
-    evaluations: typing.List[Evaluation]
+    evaluations: list[Evaluation]
 
     @classmethod
     def process(
         cls,
-        data: typing.List[typing.List[EpisodeArtifact]],
-        metric_generators: typing.List[MetricGenerator],
-        alert_generators: typing.List[AlertGenerator],
-        **kwargs
+        data: list[list[EpisodeArtifact]],
+        metric_generators: list[MetricGenerator],
+        alert_generators: list[AlertGenerator],
+        **kwargs,
     ) -> Processor:
-        """Generate the metrics by giving the generators the provided data
-        """
+        """Generate the metrics by giving the generators the provided data"""
 
         raise RuntimeError("Not Tested")
         # # Process each evaluation with the given generators

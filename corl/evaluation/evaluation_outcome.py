@@ -11,25 +11,29 @@ limitation or restriction. See accompanying README and LICENSE for details.
 Contains classes to represent
 """
 import dataclasses
-import typing
+from collections import defaultdict
+from typing import Any
 
 import pandas as pd
+from pydantic import validator
 
 from corl.evaluation.episode_artifact import EpisodeArtifact
 
 
 @dataclasses.dataclass
 class EvaluationOutcome:
-    """Dataclass to hold the results of an evaluation run
-  """
+    """Dataclass to hold the results of an evaluation run"""
 
-    @dataclasses.dataclass
-    class Dataframes:
-        """Dataclass that holds dataframes generated from an EvaluationOutcome
-    """
-        step: pd.DataFrame
-        episode: pd.DataFrame
-        done: pd.DataFrame
+    test_cases: pd.DataFrame | list[dict[str, Any]]
+    episode_artifacts: dict[int, list[EpisodeArtifact]] = None  # type: ignore
 
-    test_cases: typing.Union[pd.DataFrame, list, None]
-    episode_artifacts: typing.Dict[int, EpisodeArtifact]
+    @validator("episode_artifacts", pre=True, always=True)
+    def gen_default_dict(cls, v):
+        if v is None:
+            return defaultdict(list)
+        return v
+
+    def get_test_cases(self) -> pd.DataFrame:
+        if isinstance(self.test_cases, pd.DataFrame):
+            return self.test_cases
+        return pd.DataFrame(self.test_cases)

@@ -15,8 +15,7 @@ import typing
 
 
 class Metric:
-    """Abstract class that any metric is to inherit from
-    """
+    """Abstract class that any metric is to inherit from"""
 
     @abc.abstractmethod
     def __add__(self, rhs: typing.Any):
@@ -27,7 +26,7 @@ class Metric:
         ...
 
 
-class TerminalMetric(abc.ABC, Metric):  # pylint: disable=too-few-public-methods # Allows for enhanced type checking
+class TerminalMetric(abc.ABC, Metric):  # Allows for enhanced type checking
     """Abstract class that a terminal metric is to inherit from.
 
     A Terminal metric is one that is not contains pure data.
@@ -35,7 +34,7 @@ class TerminalMetric(abc.ABC, Metric):  # pylint: disable=too-few-public-methods
     """
 
 
-class NonTerminalMetric(abc.ABC, Metric):  # pylint: disable=too-few-public-methods # Allows for enhanced type checking
+class NonTerminalMetric(abc.ABC, Metric):  # Allows for enhanced type checking
     """Abstract class that a nonterminal metric is to inherit from.
 
     A NonTerminal metric is a metric that itself contains other metrics.

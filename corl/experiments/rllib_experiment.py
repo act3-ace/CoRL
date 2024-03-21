@@ -9,7 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
-import argparse
+import gc
 import importlib
 import logging
 import os
@@ -23,29 +23,31 @@ from datetime import datetime
 
 import git
 import ray
-from pydantic import BaseModel, DirectoryPath, PyObject, validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, ImportString, field_validator
 from ray import tune
-from ray.rllib.algorithms.callbacks import DefaultCallbacks, MultiCallbacks
-from ray.rllib.env.env_context import EnvContext
+from ray.rllib.algorithms.callbacks import DefaultCallbacks, make_multi_callbacks
 from ray.rllib.policy.policy import Policy
-from ray.tune.registry import get_trainable_cls
+from ray.tune.registry import get_trainable_cls, register_env
 
+import corl.experiments.rllib_utils.wrappers as rllib_wrappers
+from corl.environment.base_multi_agent_env import BaseCorlMultiAgentEnv
 from corl.environment.default_env_rllib_callbacks import EnvironmentDefaultCallbacks
-from corl.environment.multi_agent_env import ACT3MultiAgentEnv, ACT3MultiAgentEnvValidator
+from corl.environment.environment_wrappers import GroupedAgentsEnv
+from corl.environment.multi_agent_env import ACT3MultiAgentEnv
 from corl.episode_parameter_providers import EpisodeParameterProvider
 from corl.episode_parameter_providers.remote import RemoteEpisodeParameterProvider
-from corl.experiments.base_experiment import BaseExperiment, BaseExperimentValidator
+from corl.experiments.base_experiment import BaseExperiment, BaseExperimentValidator, ExperimentFileParse
 from corl.experiments.rllib_utils.policy_mapping_functions import PolicyIsAgent
 from corl.libraries.factory import Factory
-from corl.libraries.rllib_setup_util import AutoRllibConfigSetup, auto_configure_rllib_config
-from corl.parsers.yaml_loader import apply_patches
+from corl.libraries.file_path import CorlDirectoryPath
+from corl.parsers.yaml_loader import apply_patches, load_file
 from corl.policies.base_policy import BasePolicyValidator
 
 
 class RllibPolicyMappingValidator(BaseModel):
-    """validator of data used to generate policy mapping
-    """
-    functor: PyObject = PolicyIsAgent
+    """validator of data used to generate policy mapping"""
+
+    functor: ImportString = PolicyIsAgent
     config: dict = {}
 
 
@@ -60,21 +62,26 @@ class RllibExperimentValidator(BaseExperimentValidator):
     trial_creator_function: this function will overwrite the default trial string creator
                             and allow more fine tune trial name creators
     """
-    ray_config: typing.Dict[str, typing.Any]
-    env_config: EnvContext
-    rllib_configs: typing.Dict[str, typing.Dict[str, typing.Any]]
-    tune_config: typing.Dict[str, typing.Any]
-    trainable_config: typing.Optional[typing.Dict[str, typing.Any]]
-    disable_auto_rllib_config_setup: bool = False
-    auto_rllib_config_setup: AutoRllibConfigSetup = AutoRllibConfigSetup()
-    hparam_search_class: typing.Optional[PyObject]
-    hparam_search_config: typing.Optional[typing.Dict[str, typing.Any]]
-    extra_callbacks: typing.Optional[typing.List[PyObject]]
-    trial_creator_function: typing.Optional[PyObject]
-    policy_mapping: RllibPolicyMappingValidator = RllibPolicyMappingValidator()
 
-    @validator('rllib_configs', pre=True)
-    def apply_patches_rllib_configs(cls, v):  # pylint: disable=no-self-argument
+    ray_config: dict[str, typing.Any]
+    env_config: dict[str, typing.Any]
+    rllib_configs: dict[str, dict[str, typing.Any]]
+    tune_config: dict[str, typing.Any]
+    trainable_config: dict[str, typing.Any] | None = None
+    hparam_search_class: ImportString | None = None
+    hparam_search_config: dict[str, typing.Any] | None = None
+    extra_callbacks: list[ImportString] | None = None
+    extra_tune_callbacks: list[ImportString] | None = None
+    trial_creator_function: ImportString | None = None
+    policy_mapping: RllibPolicyMappingValidator = RllibPolicyMappingValidator()
+    environment: str = "CorlMultiAgentEnv"
+    policies: dict[str, str] = {}
+    configuration_only: bool = False
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    @field_validator("rllib_configs", mode="before")
+    @classmethod
+    def apply_patches_rllib_configs(cls, v):
         """
         The dictionary of rllib configs may come in as a dictionary of
         lists of dictionaries, this function is responsible for collapsing
@@ -93,13 +100,15 @@ class RllibExperimentValidator(BaseExperimentValidator):
         rllib_configs = {}
         for key, value in v.items():
             if isinstance(value, list):
+                warnings.warn("having this validator apply patches is deprecated, please use the !merge yml directive", DeprecationWarning)
                 rllib_configs[key] = apply_patches(value)
             elif isinstance(value, dict):
                 rllib_configs[key] = value
         return rllib_configs
 
-    @validator('ray_config', 'tune_config', 'trainable_config', 'env_config', pre=True)
-    def apply_patches_configs(cls, v):  # pylint: disable=no-self-argument
+    @field_validator("ray_config", "tune_config", "trainable_config", "env_config", mode="before")
+    @classmethod
+    def apply_patches_configs(cls, v):
         """
         reduces a field from
         typing.Union[typing.List[typing.Dict[str, typing.Any]], typing.Dict[str, typing.Any]]]
@@ -112,15 +121,31 @@ class RllibExperimentValidator(BaseExperimentValidator):
             [type] -- [description]
         """
         if isinstance(v, list):
+            warnings.warn("having this validator apply patches is deprecated, please use the !merge yml directive", DeprecationWarning)
+            # OLD METHOD:
+            #     env_config: [!include ../environments/core_capture_v1.yml, *env_config_updates]
+            #
+            # N.B. in this case the environment command line argument is not used.
             v = apply_patches(v)
         return v
 
-    @validator('env_config')
-    def no_horizon(cls, v):
-        """Ensure that the horizon is not specified in the env_config."""
-        if 'horizon' in v:
-            raise ValueError('Cannot specify the horizon in the env_config')
+
+def path_exists(v):
+    """Check that the checkpoint path exists"""
+
+    if v is None:
         return v
+
+    sub_file_checks = []
+    for filename in ["rllib_checkpoint.json", "policy_state.pkl"]:
+        tmp = v / filename
+        sub_file_checks.append(tmp.exists())
+    if not all(sub_file_checks):
+        raise RuntimeError(
+            "Loading a checkpoint from the policy config 'checkpoint_path' requires "
+            "specifying a rllib policy folder that has both a 'rllib_checkpoint.json' and a 'policy_state.pkl' in it."
+        )
+    return v
 
 
 class RllibPolicyValidator(BasePolicyValidator):
@@ -137,32 +162,11 @@ class RllibPolicyValidator(BasePolicyValidator):
     Returns:
         [type] -- [description]
     """
-    config: typing.Dict[str, typing.Any] = {}
-    policy_class: typing.Union[PyObject, None] = None
-    checkpoint_path: typing.Optional[str]
+
+    config: dict[str, typing.Any] = {}
+    policy_class: ImportString | None = None
+    checkpoint_path: typing.Annotated[CorlDirectoryPath, AfterValidator(path_exists)] | None = None
     train: bool = True
-
-    @validator('checkpoint_path')
-    def path_exists(cls, v):
-        """Check that the checkpoint path exists
-        """
-
-        if v is None:
-            return v
-
-        directory_path = pathlib.Path(os.path.expandvars(v))
-        DirectoryPath.validate(directory_path)
-
-        sub_file_checks = []
-        for x in ["rllib_checkpoint.json", "policy_state.pkl"]:
-            tmp = directory_path / x
-            sub_file_checks.append(tmp.exists())
-        if not all(sub_file_checks):
-            raise RuntimeError(
-                "Loading a checkpoint from the policy config 'checkpoint_path' requires "
-                "specifying a rllib policy folder that has both a 'rllib_checkpoint.json' and a 'policy_state.pkl' in it."
-            )
-        return directory_path
 
 
 class RllibExperiment(BaseExperiment):
@@ -175,82 +179,88 @@ class RllibExperiment(BaseExperiment):
         self.config: RllibExperimentValidator
         self._logger = logging.getLogger(RllibExperiment.__name__)
         super().__init__(**kwargs)
+        self._register_envs()
 
-    @property
-    def get_validator(self) -> typing.Type[RllibExperimentValidator]:
+    @classmethod
+    def process_cli_args(cls, config: dict, cli_args: ExperimentFileParse):
+        """Modifies/overrides config fields with command line arguments."""
+        in_env_config = config["env_config"]
+
+        # OLD METHOD:
+        #     env_config: [!include ../environments/core_capture_v1.yml, *env_config_updates]
+        #
+        #   N.B. in this case the environment command line argument is not used.
+        #
+        # NEW METHOD
+        #     env_config:
+        #         default: [!include ../environments/core_capture_v1.yml, *env_config_updates]
+        #         option1: [!include ../environments/core_capture_v1.yml, *env_config_updates]
+        #         option2: [!include ../environments/core_capture_v1_mod.yml, *env_config_updates]
+        if isinstance(in_env_config, dict):
+            if cli_args.environment in in_env_config:
+                config["env_config"] = config["env_config"][cli_args.environment]
+            elif "simulator" in in_env_config and "episode_parameter_provider" in in_env_config:
+                pass
+            else:
+                raise ValueError(
+                    f"The selected env is not in the env_config dict --- Environment = {cli_args.environment} --- {in_env_config}"
+                )
+
+    @staticmethod
+    def get_validator() -> type[RllibExperimentValidator]:
         return RllibExperimentValidator
 
     @property
-    def get_policy_validator(self) -> typing.Type[RllibPolicyValidator]:
+    def get_policy_validator(self) -> type[RllibPolicyValidator]:
         """Return validator"""
         return RllibPolicyValidator
 
-    def run_experiment(self, args: argparse.Namespace) -> None:
-
-        rllib_config = self._select_rllib_config(args.compute_platform)
-
-        if args.compute_platform in ['ray']:
+    def initialize_ray(self, compute_platform: str, debug: bool):
+        """Initializes ray"""
+        if compute_platform in ["ray"]:
             self._update_ray_config_for_ray_platform()
 
-        self._add_trial_creator()
-
-        # This needs to be before the ray cluster is initialized
-        if args.debug:
-            self.config.ray_config['local_mode'] = True
+        if debug:
+            self.config.ray_config["local_mode"] = True
 
         ray.init(**self.config.ray_config)
 
-        ray_resources = ray.available_resources()
+    def run_experiment(self, args: ExperimentFileParse) -> None:
+        # Check for env key in env_config and if not present allow deprecated
+        # path to still work --- else index and replace with selected env.
+        rllib_config = self._select_rllib_config(args.compute_platform)
 
-        if not self.config.disable_auto_rllib_config_setup:
-            auto_configure_rllib_config(rllib_config, self.config.auto_rllib_config_setup, ray_resources)
+        self.initialize_ray(args.compute_platform, args.debug)
 
         self.config.env_config["agents"], self.config.env_config["agent_platforms"] = self.create_agents(
             args.platform_config, args.agent_config
         )
 
-        self.config.env_config["horizon"] = rllib_config["horizon"]
-
         if args.output:
-            self.config.env_config["output_path"] = args.output
-            self.config.tune_config["local_dir"] = args.output
+            self.config.env_config["output_path"] = str(args.output)
+            self.config.tune_config["storage_path"] = str(args.output)
 
         if args.name:
             self.config.env_config["TrialName"] = args.name
 
-        if not self.config.ray_config['local_mode']:
-            self.config.env_config['episode_parameter_provider'] = RemoteEpisodeParameterProvider.wrap_epp_factory(
-                Factory(**self.config.env_config['episode_parameter_provider']),
-                actor_name=ACT3MultiAgentEnv.episode_parameter_provider_name
+        self._add_trial_creator()
+
+        if not self.config.ray_config["local_mode"]:
+            self.config.env_config["episode_parameter_provider"] = RemoteEpisodeParameterProvider.wrap_epp_factory(
+                Factory(**self.config.env_config["episode_parameter_provider"]),
+                actor_name=BaseCorlMultiAgentEnv.episode_parameter_provider_name,
             )
 
-            for agent_name, agent_configs in self.config.env_config['agents'].items():
-                agent_configs.class_config.config['episode_parameter_provider'] = RemoteEpisodeParameterProvider.wrap_epp_factory(
-                    Factory(**agent_configs.class_config.config['episode_parameter_provider']), agent_name
+            for agent_name, agent_configs in self.config.env_config["agents"].items():
+                agent_configs.class_config.config["episode_parameter_provider"] = RemoteEpisodeParameterProvider.wrap_epp_factory(
+                    Factory(**agent_configs.class_config.config["episode_parameter_provider"]), agent_name
                 )
+        tmp_env: ACT3MultiAgentEnv = self.create_environment()
+        self.config.env_config["epp_registry"] = tmp_env.config.epp_registry
+        policies, train_policies, available_policies = self.create_policies(tmp_env)
 
-        self.config.env_config['epp_registry'] = ACT3MultiAgentEnvValidator(**self.config.env_config).epp_registry
-
-        tmp = ACT3MultiAgentEnv(self.config.env_config)
-        tmp_as = tmp.action_space
-        tmp_os = tmp.observation_space
-        tmp_ac = self.config.env_config['agents']
-
-        policies = {
-            policy_name: (
-                tmp_ac[policy_name].policy_config["policy_class"],
-                policy_obs,
-                tmp_as[policy_name],
-                tmp_ac[policy_name].policy_config["config"]
-            )
-            for policy_name,
-            policy_obs in tmp_os.spaces.items()
-            if tmp_ac[policy_name]
-        }
-
-        train_policies = [policy_name for policy_name in policies.keys() if tmp_ac[policy_name].policy_config["train"]]
-
-        self._update_rllib_config(rllib_config, train_policies, policies, args, tmp_ac)
+        self._update_rllib_config(rllib_config, train_policies, policies, args, available_policies)
+        self._update_tune_config()
 
         self._enable_episode_parameter_provider_checkpointing()
 
@@ -262,13 +272,52 @@ class RllibExperiment(BaseExperiment):
                 search_class = self.config.hparam_search_class()
             search_class.add_algorithm_hparams(rllib_config, self.config.tune_config)
 
+        self.on_configuration_end(args, rllib_config)
+
+        if self.config.configuration_only:
+            return
+        # this environment may have initialized something on worker process, so just be to sure it is not going to collide
+        # with anything
+        del tmp_env
+        gc.collect()
+
         tune.run(
             config=rllib_config,
-            # progress_reporter=AACOProgressReporter(),
+            # progress_reporter=(),
             **self.config.tune_config,
         )
 
-    def _update_rllib_config(self, rllib_config, train_policies, policies, args: argparse.Namespace, tmp_ac) -> None:
+    def create_environment(self) -> typing.Any:
+        """Return environment from rllib environment creators"""
+        return rllib_wrappers.get_rllib_environment_creator(self.config.environment)(self.config.env_config)
+
+    def create_policies(self, environment):
+        """Return various polices used in experiments"""
+        env_policies = {
+            agent_name: self.get_policy_validator(**agent_parse.policy_config)
+            for agent_name, agent_parse in self.config.env_config["agents"].items()
+        }
+        experiment_policies = {name: self.get_policy_validator(**load_file(config)) for name, config in self.config.policies.items()}
+        available_policies = experiment_policies | env_policies
+
+        policies = {
+            policy_name: (
+                available_policies[policy_name].policy_class,
+                policy_obs,
+                environment.action_space[policy_name],
+                available_policies[policy_name].config,
+            )
+            for policy_name, policy_obs in environment.observation_space.spaces.items()
+            if available_policies[policy_name]
+        }
+
+        train_policies = [policy_name for policy_name in policies if available_policies[policy_name].train]
+        return policies, train_policies, available_policies
+
+    def on_configuration_end(self, args: ExperimentFileParse, rllib_config: dict[str, typing.Any]) -> None:
+        """Subclass hook for additional configuration after the end of the standard configuration."""
+
+    def _update_rllib_config(self, rllib_config, train_policies, policies, args: ExperimentFileParse, available_policies) -> None:
         """
         Update several rllib config fields
         tmp_ac: agent_classes from temporary environment to get obs/action space, these should be
@@ -281,14 +330,13 @@ class RllibExperiment(BaseExperiment):
             "policies_to_train": train_policies,
         }
 
-        rllib_config["env"] = ACT3MultiAgentEnv
-        callback_list: typing.List[typing.Type[DefaultCallbacks]] = [self.get_callbacks()]
-        checkpoint_weight_files = {}
-        # if a policy shows a checkpoint
-        for agent_name, agent_config in tmp_ac.items():
-            if agent_config.policy_config["checkpoint_path"]:
-                checkpoint_weight_files[agent_name] = agent_config.policy_config["checkpoint_path"]
-        if checkpoint_weight_files:
+        rllib_config["env"] = self.config.environment
+        callback_list: list[type[DefaultCallbacks]] = [self.get_callbacks()]
+        if checkpoint_weight_files := {
+            agent_name: agent_config.checkpoint_path
+            for agent_name, agent_config in available_policies.items()
+            if agent_config.checkpoint_path
+        }:
 
             class WeightLoaderCallback(DefaultCallbacks):
                 """
@@ -296,9 +344,16 @@ class RllibExperiment(BaseExperiment):
                 into policies
                 """
 
-                def on_algorithm_init(self, *, algorithm, **kwargs):
+                def on_algorithm_init(self, *, algorithm, **kwargs):  # noqa: PLR6301
                     agent_weight_dict = {}
                     for agent_name, file_path in checkpoint_weight_files.items():
+                        try:
+                            git_repo = git.Repo(file_path, search_parent_directories=True)
+                        except git.InvalidGitRepositoryError:
+                            print(f"Checkpoint hash for {agent_name} at {file_path} is unknown")
+                        else:
+                            git_hash = git_repo.head.object.hexsha
+                            print(f"Checkpoint hash for {agent_name} at {file_path}: {git_hash}")
                         restored = Policy.from_checkpoint(file_path)
                         agent_weight_dict[agent_name] = restored.get_weights()
                     algorithm.set_weights(agent_weight_dict)
@@ -306,8 +361,8 @@ class RllibExperiment(BaseExperiment):
 
             callback_list.append(WeightLoaderCallback)
         if self.config.extra_callbacks:
-            callback_list.extend(self.config.extra_callbacks)  # type: ignore[arg-type]
-        rllib_config["callbacks"] = MultiCallbacks(callback_list)
+            callback_list.extend(self.config.extra_callbacks)
+        rllib_config["callbacks"] = make_multi_callbacks(callback_list)
         rllib_config["env_config"] = self.config.env_config
         now = datetime.now()
         rllib_config["env_config"]["output_date_string"] = f"{now.strftime('%Y%m%d_%H%M%S')}_{socket.gethostname()}"
@@ -316,7 +371,14 @@ class RllibExperiment(BaseExperiment):
         self._add_git_hashes_to_config(rllib_config)
 
         if args.debug:
-            rllib_config['num_workers'] = 0
+            rllib_config["num_workers"] = 0
+
+    def _update_tune_config(self) -> None:
+        """
+        Update tune config with extra callbacks
+        """
+        if self.config.extra_tune_callbacks:
+            self.config.tune_config["callbacks"] = [callback() for callback in self.config.extra_tune_callbacks]
 
     def _add_git_hashes_to_config(self, rllib_config) -> None:
         """adds git hashes (or package version information if git information
@@ -324,10 +386,10 @@ class RllibExperiment(BaseExperiment):
         Key modules are the following:
           - corl,
           - whatever cwd is set to at the time of the function call
-            (notionally /opt/project / aaco-rl-agents)
+            (notionally /opt/project / -rl-agents)
           - any other modules listed in rllib_config["env_config"]["plugin_paths"]
 
-        This information is not actually used by ACT3MultiAgentEnv;
+        This information is not actually used by BaseCorlMultiAgentEnv;
         however, putting it in the env_config means that this
         information is saved to the params.pkl and thus is available
         for later inspection while seeking to understand the
@@ -353,12 +415,12 @@ class RllibExperiment(BaseExperiment):
 
             # go ahead and strip out corl related things from plugin_path
             plugpath = []
-            for item in rllib_config['env_config']['plugin_paths']:
+            for item in rllib_config["env_config"]["plugin_paths"]:
                 match0 = cp0.match(item)
                 if match0 is None:
                     plugpath.append(item)
 
-            plugpath.append('corl')
+            plugpath.append("corl")
 
             # add git hashes to env_config dictionary
             for module0 in plugpath:
@@ -368,7 +430,7 @@ class RllibExperiment(BaseExperiment):
                 if modulefile is not None:
                     match0 = rp.match(modulefile)
                     if match0 is not None:
-                        repo_path = match0.group('repopath')
+                        repo_path = match0.group("repopath")
                         try:
                             githash = git.Repo(repo_path, search_parent_directories=True).head.object.hexsha
                             rllib_config["env_config"]["git_hash"][env_hash_key] = githash
@@ -376,23 +438,25 @@ class RllibExperiment(BaseExperiment):
                         except git.InvalidGitRepositoryError:
                             # possibly installed in image but not a git repo
                             # look for version number
-                            if hasattr(module1, 'version') and hasattr(module1.version, '__version__'):
+                            if hasattr(module1, "version") and hasattr(module1.version, "__version__"):
                                 githash = module1.version.__version__
                                 rllib_config["env_config"]["git_hash"][env_hash_key] = githash
                                 self._logger.info(f"{module0} hash: {githash}")
                             else:
-                                self._logger.warning((f"module: {module0}, repopath: {repo_path}"
-                                                      "is invalid git repo\n"))
-                                sys.stderr.write((f"module: {module0}, repopath: {repo_path}"
-                                                  "is invalid git repo\n"))
+                                self._logger.warning(f"module: {module0}, repopath: {repo_path} is invalid git repo\n")
+                                sys.stderr.write(f"module: {module0}, repopath: {repo_path} is invalid git repo\n")
         except ValueError:
             warnings.warn("Unable to add the gitlab hash to experiment!!!")
 
-    def get_callbacks(self) -> typing.Type[EnvironmentDefaultCallbacks]:
+    def get_callbacks(self) -> type[EnvironmentDefaultCallbacks]:  # noqa: PLR6301
         """Get the environment callbacks"""
         return EnvironmentDefaultCallbacks
 
-    def _select_rllib_config(self, platform: typing.Optional[str]) -> typing.Dict[str, typing.Any]:
+    def _register_envs(self):  # noqa: PLR6301
+        register_env("CorlMultiAgentEnv", lambda config: ACT3MultiAgentEnv(config))
+        register_env("CorlGroupedAgentEnv", lambda config: GroupedAgentsEnv(config))
+
+    def _select_rllib_config(self, platform: str | None) -> dict[str, typing.Any]:
         """Extract the rllib config for the proper computational platform
 
         Parameters
@@ -420,75 +484,80 @@ class RllibExperiment(BaseExperiment):
         raise RuntimeError(f'Invalid rllib_config for platform "{platform}"')
 
     def _update_ray_config_for_ray_platform(self) -> None:
-        """Update the ray configuration for ray platforms
-        """
-        self.config.ray_config['address'] = 'auto'
-        self.config.ray_config['log_to_driver'] = False
+        """Update the ray configuration for ray platforms"""
+        self.config.ray_config["address"] = "auto"
+        self.config.ray_config["log_to_driver"] = False
 
     def _enable_episode_parameter_provider_checkpointing(self) -> None:
-
         base_trainer = self.config.tune_config["run_or_experiment"]
 
         trainer_class = get_trainable_cls(base_trainer)
 
-        class EpisodeParameterProviderSavingTrainer(trainer_class):  # type: ignore[valid-type, misc]
+        def save_checkpoint(cls, checkpoint_path: str) -> None:
             """
-            Tune Trainer that adds capability to restore
-            progress of the EpisodeParameterProvider on restoring training
-            progress
+            adds additional checkpoint saving functionality
+            by also saving any episode parameter providers
+            currently running
             """
+            # mypy complains because the first argument to super isn't the current
+            # `self` but this is actually OK since we in fact don't want super to
+            # ascend the MRO of `self` but rather of `trainer_class`
+            tmp = super(trainer_class, cls).save_checkpoint(checkpoint_path)  # type: ignore
 
-            def save_checkpoint(self, checkpoint_path):
-                """
-                adds additional checkpoint saving functionality
-                by also saving any episode parameter providers
-                currently running
-                """
-                tmp = super().save_checkpoint(checkpoint_path)
+            checkpoint_folder = pathlib.Path(checkpoint_path)
 
-                checkpoint_folder = pathlib.Path(checkpoint_path)
+            # Environment
+            epp_name = ACT3MultiAgentEnv.episode_parameter_provider_name
+            env = cls.workers.local_worker().env
+            epp: EpisodeParameterProvider = env.config.epp
+            epp.save_checkpoint(checkpoint_folder / epp_name)
 
-                # Environment
-                epp_name = ACT3MultiAgentEnv.episode_parameter_provider_name
-                env = self.workers.local_worker().env
-                epp: EpisodeParameterProvider = env.config.epp
-                epp.save_checkpoint(checkpoint_folder / epp_name)
+            # Agents
+            for agent_name, agent_configs in env.agent_dict.items():
+                epp = agent_configs.config.epp
+                epp.save_checkpoint(checkpoint_folder / agent_name)
 
-                # Agents
-                for agent_name, agent_configs in env.agent_dict.items():
-                    epp = agent_configs.config.epp
-                    epp.save_checkpoint(checkpoint_folder / agent_name)
+            return tmp
 
-                return tmp
+        def load_checkpoint(cls, checkpoint_path: str) -> None:
+            """
+            adds additional checkpoint loading functionality
+            by also loading any episode parameter providers
+            with the checkpoint
+            """
+            # mypy complains because the first argument to super isn't the current
+            # `self` but this is actually OK since we in fact don't want super to
+            # ascend the MRO of `self` but rather of `trainer_class`
+            super(trainer_class, cls).load_checkpoint(checkpoint_path)  # type: ignore
 
-            def load_checkpoint(self, checkpoint_path):
-                """
-                adds additional checkpoint loading functionality
-                by also loading any episode parameter providers
-                with the checkpoint
-                """
-                super().load_checkpoint(checkpoint_path)
+            checkpoint_folder = pathlib.Path(checkpoint_path)
 
-                checkpoint_folder = pathlib.Path(checkpoint_path).parent
+            # Environment
+            epp_name = ACT3MultiAgentEnv.episode_parameter_provider_name
+            env = cls.workers.local_worker().env
+            epp: EpisodeParameterProvider = env.config.epp
+            epp.load_checkpoint(checkpoint_folder / epp_name)
 
-                # Environment
-                epp_name = ACT3MultiAgentEnv.episode_parameter_provider_name
-                env = self.workers.local_worker().env
-                epp: EpisodeParameterProvider = env.config.epp
-                epp.load_checkpoint(checkpoint_folder / epp_name)
+            # Agents
+            for agent_name, agent_configs in env.agent_dict.items():
+                epp = agent_configs.config.epp
+                epp.load_checkpoint(checkpoint_folder / agent_name)
 
-                # Agents
-                for agent_name, agent_configs in env.agent_dict.items():
-                    epp = agent_configs.config.epp
-                    epp.load_checkpoint(checkpoint_folder / agent_name)
+        # NOTE: this adds the EPP checkpointing while preserving the trainable name
+        trainer_class.save_checkpoint = save_checkpoint
+        trainer_class.load_checkpoint = load_checkpoint
 
-        self.config.tune_config["run_or_experiment"] = EpisodeParameterProviderSavingTrainer
+        self.config.tune_config["run_or_experiment"] = trainer_class
 
     def _add_trial_creator(self):
-        """Updates the trial name based on the HPC Job Number and the trial name in the configuration
-        """
+        """Updates the trial name based on the HPC Job Number and the trial name in the configuration"""
         if "trial_name_creator" not in self.config.tune_config:
             if self.config.trial_creator_function is None:
+                trial_prefix = os.environ.get("PBS_JOBID", os.environ.get("TRIAL_NAME_PREFIX", ""))
+                trial_name = ""
+
+                if "TrialName" in self.config.env_config:
+                    trial_name = "-" + self.config.env_config["TrialName"] if trial_prefix else self.config.env_config["TrialName"]
 
                 def trial_name_prefix(trial):
                     """
@@ -498,17 +567,9 @@ class RllibExperiment(BaseExperiment):
                     Returns:
                         trial_name (str): String representation of Trial prefixed
                             by the contents of the environment variable:
-                            TRIAL_NAME_PREFIX
-                            Or the prefix 'RUN' if none is set.
+                            PBS_JOBID or TRIAL_NAME_PREFIX
+                            followed by the TrialName element of the environment configuration
                     """
-                    trial_prefix = os.environ.get('PBS_JOBID', os.environ.get('TRIAL_NAME_PREFIX', ""))
-                    trial_name = ""
-
-                    if "TrialName" in self.config.env_config.keys():
-                        if trial_prefix:
-                            trial_name = "-" + self.config.env_config["TrialName"]
-                        else:
-                            trial_name = self.config.env_config["TrialName"]
                     return f"{trial_prefix}{trial_name}-{trial}"
 
                 self.config.tune_config["trial_name_creator"] = trial_name_prefix

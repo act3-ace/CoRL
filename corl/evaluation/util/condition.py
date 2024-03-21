@@ -23,7 +23,7 @@ class Condition(BaseModel):
     """
 
     operator: str
-    lhs: typing.Union[int, float, dict]
+    lhs: int | (float | dict)
 
     _func: typing.Callable[[typing.Any], bool] = PrivateAttr()
     """
@@ -34,9 +34,7 @@ class Condition(BaseModel):
         super().__init__(**data)
 
         # build the lhs
-        if isinstance(self.lhs, float):
-            lhs = self.lhs
-        elif isinstance(self.lhs, int):
+        if isinstance(self.lhs, float | int):
             lhs = self.lhs
         elif isinstance(self.lhs, dict):
             if "functor" in self.lhs:
@@ -65,12 +63,11 @@ class Condition(BaseModel):
         Returns:
             bool: Result of condition
         """
-        return self._func(rhs)  # type: ignore # No idea why this fails
+        return self._func(rhs)
 
 
 class NamedCondition(BaseModel):
-    """Wraps a Condition with a name
-    """
+    """Wraps a Condition with a name"""
 
-    type: str
+    type: str  # noqa: A003
     condition: Condition

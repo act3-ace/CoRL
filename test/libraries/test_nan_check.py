@@ -10,23 +10,31 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
 
-import pytest
 import numpy as np
+import pytest
+
 from corl.libraries.nan_check import nan_check_result
+from corl.libraries.units import corl_get_ureg
 
 
 def test_nan_check():
+    _Quantity = corl_get_ureg().Quantity
 
-    nan_check_result(np.array([0.0, 0.0]))
-    nan_check_result(np.array(0.0))
-    nan_check_result(np.array(False))
+    nan_check_result(_Quantity(np.array([0.0, 0.0]), "dimensionless"))
+    nan_check_result(_Quantity(np.array(0.0), "dimensionless"))
+    nan_check_result(_Quantity(np.array(False), "dimensionless"))
 
+    with pytest.raises(ValueError):
+        nan_check_result(_Quantity(np.array(np.nan), "dimensionless"))
 
-    with pytest.raises(ValueError) as exec_info:
-        nan_check_result(np.array(np.nan))
-
-    with pytest.raises(ValueError) as exec_info:
-        nan_check_result(np.array([np.nan,]))
-
-
-
+    with pytest.raises(ValueError):
+        nan_check_result(
+            _Quantity(
+                np.array(
+                    [
+                        np.nan,
+                    ]
+                ),
+                "dimensionless",
+            )
+        )

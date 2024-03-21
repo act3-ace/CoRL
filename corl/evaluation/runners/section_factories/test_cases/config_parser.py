@@ -15,20 +15,20 @@ import typing
 from collections import abc
 
 # Lowest level of data read from the configuration file
-LOW_DATA = typing.Union[int, float, str]
+LOW_DATA = int | float | str
 LOW_DATA_SEQUENCE = typing.Sequence[LOW_DATA]
 # All possibilities for the "value" field in the configuration file
-INPUT_VALUE = typing.Union[LOW_DATA, LOW_DATA_SEQUENCE, typing.Mapping[str, int]]
+INPUT_VALUE = LOW_DATA | LOW_DATA_SEQUENCE | typing.Mapping[str, int]
 
 # Type of the "randomize" subtree
 RANDOMIZE = typing.Mapping[str, LOW_DATA]
 # Type for all subtrees under the various variable names
-VARIABLE_ELEMENTS = typing.Union[INPUT_VALUE, RANDOMIZE]
+VARIABLE_ELEMENTS = INPUT_VALUE | RANDOMIZE
 
 # Type for each variable within the configuration file
 VARIABLE = typing.Mapping[str, VARIABLE_ELEMENTS]
 # Type for the collection of all variables.  The code handles deeper recursion, such as Mapping[str, Mapping[str, INPUT_VARIABLE]].
-VARIABLE_STRUCTURE = typing.Mapping[str, typing.Union[VARIABLE, typing.Mapping[str, VARIABLE]]]
+VARIABLE_STRUCTURE = typing.Mapping[str, VARIABLE | typing.Mapping[str, VARIABLE]]
 
 # Type for the collection of all variables after it has been flattened to remove recursion
 VARIABLE_STRUCTURE_FLAT = typing.Mapping[str, VARIABLE]
@@ -46,8 +46,8 @@ MUTABLE_RESOLVED_VARIABLE_STRUCTURE_VALUE = typing.MutableMapping[str, LOW_DATA_
 RESOLVED_VARIABLE_STRUCTURE_VALUE = typing.Mapping[str, LOW_DATA_SEQUENCE]
 
 
-def flatten_config(config: VARIABLE_STRUCTURE, _path: typing.Optional[str] = None) -> MUTABLE_VARIABLE_STRUCTURE_FLAT:
-    """ Flatten a nested configuration object to a single collection of keys.
+def flatten_config(config: VARIABLE_STRUCTURE, _path: str | None = None) -> MUTABLE_VARIABLE_STRUCTURE_FLAT:
+    """Flatten a nested configuration object to a single collection of keys.
 
     Parameters
     ----------
@@ -73,14 +73,14 @@ def flatten_config(config: VARIABLE_STRUCTURE, _path: typing.Optional[str] = Non
     output: MUTABLE_VARIABLE_STRUCTURE_FLAT = {}
 
     for key, value in config.items():
-        if '.' in key:
+        if "." in key:
             raise ValueError(f'Cannot use "." in key: {key}')
-        next_path = key if _path is None else _path + '.' + key
+        next_path = key if _path is None else f"{_path}.{key}"
 
         if not isinstance(value, abc.Mapping):
-            raise TypeError(f'Subtree must be a mapping at {next_path}')
+            raise TypeError(f"Subtree must be a mapping at {next_path}")
 
-        if 'value' in value:
+        if "value" in value:
             output[next_path] = copy.deepcopy(typing.cast(VARIABLE, value))
         else:
             output.update(flatten_config(typing.cast(typing.Mapping[str, VARIABLE], value), _path=next_path))
@@ -89,7 +89,7 @@ def flatten_config(config: VARIABLE_STRUCTURE, _path: typing.Optional[str] = Non
 
 
 def unflatten(obj: typing.Mapping[str, typing.Any]) -> typing.Mapping[str, typing.Any]:
-    """ Returned a flattened object to its nested representation
+    """Returned a flattened object to its nested representation
 
     Parameters
     ----------
@@ -109,7 +109,7 @@ def unflatten(obj: typing.Mapping[str, typing.Any]) -> typing.Mapping[str, typin
     output: typing.MutableMapping[str, typing.Any] = {}
 
     for key, value in obj.items():
-        key_split = key.split('.')
+        key_split = key.split(".")
         suboutput = output
         for subkey in key_split[:-1]:
             if subkey not in suboutput:
@@ -120,7 +120,7 @@ def unflatten(obj: typing.Mapping[str, typing.Any]) -> typing.Mapping[str, typin
     return output
 
 
-def extract_config_element(config: VARIABLE_STRUCTURE_FLAT, element: str = 'value') -> MUTABLE_EXTRACTED_VARIABLE_STRUCTURE:
+def extract_config_element(config: VARIABLE_STRUCTURE_FLAT, element: str = "value") -> MUTABLE_EXTRACTED_VARIABLE_STRUCTURE:
     """Extract the items of a particular element from the dictionary
 
     Parameters
@@ -156,9 +156,8 @@ def extract_config_element(config: VARIABLE_STRUCTURE_FLAT, element: str = 'valu
     output: MUTABLE_EXTRACTED_VARIABLE_STRUCTURE = {}
 
     for key, data in config.items():
-
         if not isinstance(data, abc.Mapping):
-            raise TypeError(f'Data for {key} is not a mapping')
+            raise TypeError(f"Data for {key} is not a mapping")
 
         if element in data:
             output[key] = data[element]
@@ -167,7 +166,7 @@ def extract_config_element(config: VARIABLE_STRUCTURE_FLAT, element: str = 'valu
 
 
 def resolve_config_ranges(config: EXTRACTED_VARIABLE_STRUCTURE_VALUE) -> MUTABLE_RESOLVED_VARIABLE_STRUCTURE_VALUE:
-    """ Resolve single values and min/max/step ranges into explicitly listed value arrays
+    """Resolve single values and min/max/step ranges into explicitly listed value arrays
 
     Parameters
     ----------
@@ -192,19 +191,18 @@ def resolve_config_ranges(config: EXTRACTED_VARIABLE_STRUCTURE_VALUE) -> MUTABLE
     output: MUTABLE_RESOLVED_VARIABLE_STRUCTURE_VALUE = {}
 
     for key, data in config.items():
-
         if isinstance(data, abc.Mapping):
-            if set(data.keys()) != set(['min', 'max', 'step']):
-                raise ValueError(f'Unsupported structure at {key}')
+            if set(data.keys()) != {"min", "max", "step"}:
+                raise ValueError(f"Unsupported structure at {key}")
 
             if not all(isinstance(v, int) for v in data.values()):
-                raise TypeError(f'Values within {key} are not integers')
+                raise TypeError(f"Values within {key} are not integers")
 
-            value = typing.cast(typing.Mapping[str, int], data)
-            if value['min'] > value['max']:
-                raise ValueError(f'Bad range at {key}')
+            value = data
+            if value["min"] > value["max"]:
+                raise ValueError(f"Bad range at {key}")
 
-            output[key] = list(range(value['min'], value['max'] + 1, value['step']))
+            output[key] = list(range(value["min"], value["max"] + 1, value["step"]))
 
         elif isinstance(data, str) or not isinstance(data, abc.Sequence):
             # variable is anything that is not a sequence

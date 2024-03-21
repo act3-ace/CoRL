@@ -10,7 +10,6 @@ limitation or restriction. See accompanying README and LICENSE for details.
 """
 import abc
 import random
-import typing
 from functools import partial
 
 from pydantic import BaseModel
@@ -18,18 +17,19 @@ from ray import tune
 
 
 class ParametersPPO:
-    """Utility functions for processing hparam searches in the AACO framework for PPO algorithm
+    """Utility functions for processing hparam searches in the  framework for PPO algorithm
     https://github.com/ray-project/ray/blob/00922817b66ee14ba215972a98f416f3d6fef1ba/rllib/agents/ppo/ppo.py
     https://medium.com/aureliantactics/ppo-hyperparameters-and-ranges-6fc2d29bccbe
     https://blog.openai.com/openai-five/
     https://docs.ray.io/en/master/tune/api_docs/trainable.html#advanced-reusing-actors
     """
+
     LAMBDA_MIN = 0.9
     LAMBDA_MAX = 1.0
     LAMBDA_DIST = tune.uniform(LAMBDA_MIN, LAMBDA_MAX)
 
     @staticmethod
-    def LAMBDA_RANGE(spec):  # pylint: disable=W0613
+    def LAMBDA_RANGE(spec):
         """Sets the default search space for HPARAM
         GAE Parameter Lambda Range: 0.9 to 1
         GAE Parameter Lambda also known as: GAE Parameter (lambda) (PPO Paper), lambda (RLlib),
@@ -42,7 +42,7 @@ class ParametersPPO:
     VF_LOSS_COEFF_DIST = tune.uniform(VF_LOSS_COEFF_MIN, VF_LOSS_COEFF_MAX)
 
     @staticmethod
-    def VF_LOSS_COEFF_RANGE(spec):  # pylint: disable=W0613
+    def VF_LOSS_COEFF_RANGE(spec):
         """Sets the default search space for HPARAM
         Value Function Coefficient Range: 0.5, 1
         Value Function Coefficient also known as: VF coeff. (PPO Paper), vf_loss_coef (RLlib),
@@ -55,7 +55,7 @@ class ParametersPPO:
     ENTROPY_COEFF_DIST = tune.uniform(ENTROPY_COEFF_MIN, ENTROPY_COEFF_MAX)
 
     @staticmethod
-    def ENTROPY_COEFF_RANGE(spec):  # pylint: disable=W0613
+    def ENTROPY_COEFF_RANGE(spec):
         """Sets the default search space for HPARAM
         Entropy Coefficient Range: 0 to 0.01
         Entropy Coefficient also known as: Entropy coeff. (PPO Paper), entropy_coeff (RLlib),
@@ -68,7 +68,7 @@ class ParametersPPO:
     CLIP_PARAM_DIST = tune.choice([0.1, 0.2, 0.3])
 
     @staticmethod
-    def CLIP_PARAM_RANGE(spec):  # pylint: disable=W0613
+    def CLIP_PARAM_RANGE(spec):
         """Sets the default search space for HPARAM
         Clipping Range: 0.1, 0.2, 0.3
         Clipping also known as: Clipping parameter epsilon (PPO Paper), clip_param (RLlib),
@@ -82,10 +82,10 @@ class ParametersPPO:
     KL_TARGET_DIST = tune.uniform(KL_TARGET_MIN, KL_TARGET_MAX)
 
     @staticmethod
-    def KL_TARGET_RANGE(spec):  # pylint: disable=W0613
+    def KL_TARGET_RANGE(spec):
         """Sets the default search space for HPARAM
         https://medium.com/aureliantactics/ppo-hyperparameters-and-ranges-6fc2d29bccbe
-        The KL penalty implementation (third line in the above picture) is available in RLlib’s PPO
+        The KL penalty implementation (third line in the above picture) is available in RLlib's PPO
         implementation. The parameters kl_coeff (initial coefficient for KL divergence) and kl_target
         can be used for the KL implementation.
         KL Target Range: 0.003 to 0.03
@@ -98,9 +98,9 @@ class ParametersPPO:
     KL_COEFF_DIST = tune.uniform(KL_COEFF_MIN, KL_COEFF_MAX)
 
     @staticmethod
-    def KL_COEFF_RANGE(spec):  # pylint: disable=W0613
+    def KL_COEFF_RANGE(spec):
         """Sets the default search space for HPARAM
-        The KL penalty implementation (third line in the above picture) is available in RLlib’s PPO
+        The KL penalty implementation (third line in the above picture) is available in RLlib's PPO
         implementation. The parameters kl_coeff (initial coefficient for KL divergence) and kl_target
         can be used for the KL implementation.
         KL Target Range: 0.003 to 0.03
@@ -113,7 +113,7 @@ class ParametersPPO:
     GAMMA_DIST = tune.uniform(GAMMA_MIN, GAMMA_MAX)
 
     @staticmethod
-    def GAMMA_RANGE(spec):  # pylint: disable=W0613
+    def GAMMA_RANGE(spec):
         """Sets the default search space for HPARAM
         Discount Factor Gamma Range: 0.99 (most common), 0.8 to 0.9997
         Discount Factor Gamma also known as: Discount (gamma) (PPO Paper), gamma (RLlib), gamma (ppo2 baselines),
@@ -126,7 +126,7 @@ class ParametersPPO:
     LR_DIST = tune.uniform(LR_MIN, LR_MAX)
 
     @staticmethod
-    def LR_RANGE(spec):  # pylint: disable=W0613
+    def LR_RANGE(spec):
         """Sets the default search space for HPARAM
         Learning Rate Range: 0.003 to 5e-6
         Learning Rate also known as: Adam stepsize (PPO Paper), sgd_stepsize (RLlib), lr (ppo2 baselines),
@@ -139,7 +139,7 @@ class ParametersPPO:
     NSGD_DIST = tune.choice(list(range(NSGD_MIN, NSGD_MAX + 1)))
 
     @staticmethod
-    def NSGD_RANGE(spec):  # pylint: disable=W0613
+    def NSGD_RANGE(spec):
         """Sets the default search space for HPARAM
         https://medium.com/aureliantactics/ppo-hyperparameters-and-ranges-6fc2d29bccbe
         Epoch Range: 3 to 30
@@ -153,7 +153,7 @@ class ParametersPPO:
     SGD_MINIBATCH_SIZE_DIST = tune.choice([128, 256, 512, 1024, 2048, 4096])
 
     @staticmethod
-    def SGD_MINIBATCH_SIZE_RANGE(spec):  # pylint: disable=W0613
+    def SGD_MINIBATCH_SIZE_RANGE(spec):
         """Sets the default search space for HPARAM"""
         return ParametersPPO.SGD_MINIBATCH_SIZE_DIST
 
@@ -207,7 +207,7 @@ class ParametersPPO:
     TRAIN_BATCH_SIZE_DIST = tune.choice(list(range(2**12, 160000 + TRAIN_BATCH_SIZE_INC, TRAIN_BATCH_SIZE_INC)))
 
     @staticmethod
-    def TRAIN_BATCH_SIZE_RANGE(spec):  # pylint: disable=W0613
+    def TRAIN_BATCH_SIZE_RANGE(spec):
         """Sets the default search space for HPARAM"""
         return ParametersPPO.TRAIN_BATCH_SIZE_DIST
 
@@ -287,20 +287,20 @@ class ParametersPPO:
 
 
 class ParametersModel:
-    """Holds the model parameters
-    """
+    """Holds the model parameters"""
+
     FC_LAYER_CHOICES = [32, 64, 128, 256, 512]
     FC_LAYER_COUNT = [2, 3, 4, 5, 6]
 
     @staticmethod
-    def __get_layers(layer_count, FC_FILTER_LOWER_VALUES_THRESHOLD, layer_choices, MIN_LAYER_INDEX):
-        model_layers: typing.List = []
-        for _ in range(0, layer_count):
+    def __get_layers(layer_count, FC_FILTER_LOWER_VALUES_THRESHOLD, layer_choices, MIN_LAYER_INDEX) -> list:
+        model_layers: list = []
+        for _ in range(layer_count):
             temp_layers = layer_choices[MIN_LAYER_INDEX:] if len(model_layers) < FC_FILTER_LOWER_VALUES_THRESHOLD else layer_choices
             if model_layers:
-                model_layers.append(random.choice([x for x in temp_layers if x <= model_layers[-1]]))
+                model_layers.append(random.choice([x for x in temp_layers if x <= model_layers[-1]]))  # noqa: S311
             else:
-                model_layers.append(random.choice(temp_layers))
+                model_layers.append(random.choice(temp_layers))  # noqa: S311
         return model_layers
 
     @staticmethod
@@ -314,8 +314,8 @@ class ParametersModel:
         """
         model_config = ParametersModel.select_fully_connected_model()
         model_config["use_lstm"] = True
-        model_config["max_seq_len"] = random.choice([2, 3, 5, 10])
-        model_config["lstm_cell_size"] = random.choice([64, 128, 256, 512, 1024, 2048])
+        model_config["max_seq_len"] = random.choice([2, 3, 5, 10])  # noqa: S311
+        model_config["lstm_cell_size"] = random.choice([64, 128, 256, 512, 1024, 2048])  # noqa: S311
         model_config["vf_share_layers"] = True
         # model_config["vf_share_layers"] = random.choice([True, False])
         # model_config["lstm_use_prev_action"] = random.choice([True, False])
@@ -333,7 +333,7 @@ class ParametersModel:
         dict
             [description]
         """
-        layer_count = random.choice(ParametersModel.FC_LAYER_COUNT)
+        layer_count = random.choice(ParametersModel.FC_LAYER_COUNT)  # noqa: S311
         layer_choices = ParametersModel.FC_LAYER_CHOICES
         FC_FILTER_LOWER_VALUES_THRESHOLD = 2
         MIN_LAYER_INDEX = 2
@@ -341,7 +341,7 @@ class ParametersModel:
 
         model_config: dict = {}
         model_config["fcnet_hiddens"] = model_layers
-        model_config["fcnet_activation"] = random.choice(["relu", "tanh"])
+        model_config["fcnet_activation"] = random.choice(["relu", "tanh"])  # noqa: S311
 
         return model_config
 
@@ -354,11 +354,11 @@ class ParametersModel:
         """
         model_config = ParametersModel.select_fully_connected_model()
         model_config["custom_model"] = "TorchFrameStack"
-        model_config["custom_model_config"] = {}  # type: ignore
-        model_config["custom_model_config"]["num_frames"] = random.choice(list(range(1, 11)))
-        model_config["custom_model_config"]["include_actions"] = random.choice([True, False])
-        model_config["custom_model_config"]["include_rewards"] = random.choice([True, False])
-        layer_count = random.choice(ParametersModel.FC_LAYER_COUNT)
+        model_config["custom_model_config"] = {}
+        model_config["custom_model_config"]["num_frames"] = random.choice(list(range(1, 11)))  # noqa: S311
+        model_config["custom_model_config"]["include_actions"] = random.choice([True, False])  # noqa: S311
+        model_config["custom_model_config"]["include_rewards"] = random.choice([True, False])  # noqa: S311
+        layer_count = random.choice(ParametersModel.FC_LAYER_COUNT)  # noqa: S311
         layer_choices = ParametersModel.FC_LAYER_CHOICES
         FC_FILTER_LOWER_VALUES_THRESHOLD = 2
         MIN_LAYER_INDEX = 2
@@ -379,23 +379,22 @@ class ParametersModel:
         """
         model_config = ParametersModel.select_fully_connected_model()
         model_config["use_attention"] = False
-        model_config["attention_num_transformer_units"] = random.choice(list(range(1, 6)))
-        model_config["attention_dim"] = random.choice([64, 128, 256, 512, 1024, 2048])
-        model_config["attention_num_heads"] = random.choice(list(range(1, 6)))
-        model_config["attention_head_dim"] = random.choice([64, 128, 256, 512, 1024, 2048])
+        model_config["attention_num_transformer_units"] = random.choice(list(range(1, 6)))  # noqa: S311
+        model_config["attention_dim"] = random.choice([64, 128, 256, 512, 1024, 2048])  # noqa: S311
+        model_config["attention_num_heads"] = random.choice(list(range(1, 6)))  # noqa: S311
+        model_config["attention_head_dim"] = random.choice([64, 128, 256, 512, 1024, 2048])  # noqa: S311
         model_config["attention_memory_inference"] = 50
         model_config["attention_memory_training"] = 50
-        model_config["attention_position_wise_mlp_dim"] = random.choice([64, 128, 256, 512, 1024, 2048])
+        model_config["attention_position_wise_mlp_dim"] = random.choice([64, 128, 256, 512, 1024, 2048])  # noqa: S311
         # model_config["attention_init_gru_gate_bias"] = 2.0
-        model_config["attention_use_n_prev_actions"] = random.choice(list(range(1, 11)))
-        model_config["attention_use_n_prev_rewards"] = random.choice(list(range(1, 11)))
+        model_config["attention_use_n_prev_actions"] = random.choice(list(range(1, 11)))  # noqa: S311
+        model_config["attention_use_n_prev_rewards"] = random.choice(list(range(1, 11)))  # noqa: S311
         return model_config
 
     @staticmethod
     def select_model(model_choices) -> dict:
-        """The following function provides the start to exploring model configurations.
-        """
-        model_config_func = random.choice(model_choices)
+        """The following function provides the start to exploring model configurations."""
+        model_config_func = random.choice(model_choices)  # noqa: S311
 
         return model_config_func()
 
@@ -414,10 +413,10 @@ class BaseHparamSearch(abc.ABC):
     """
 
     def __init__(self, **kwargs) -> None:
-        self.config: BaseHparamSearchValidator = self.get_validator(**kwargs)
+        self.config: BaseHparamSearchValidator = self.get_validator()(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[BaseHparamSearchValidator]:
+    @staticmethod
+    def get_validator() -> type[BaseHparamSearchValidator]:
         """Gets the validator
 
         Returns
@@ -444,6 +443,7 @@ class HparamSearchValidator_Shared(BaseHparamSearchValidator):
     """
     Base Validator to subclass for search subclassing
     """
+
     # "The training result objective value attribute. Stopping procedures will use this attribute."
     metric: str = "episode_reward_mean"
     # One of {min, max}. Determines whether objective is minimizing or maximizing the metric attribute.
@@ -460,27 +460,28 @@ class HparamSearchValidator_PBT(HparamSearchValidator_Shared):
     """
     Base Validator to subclass for search subclassing
     """
+
     # The probability of resampling from the original distribution when applying hyperparam_mutations.
     # If not resampled, the value will be perturbed by a factor of 1.2 or 0.8 if continuous, or changed
     # to an adjacent value if discrete. Note that resample_probability by default is 0.25, thus
     # hyperparameter with a distribution may go out of the specific range.
     resample_probability: float = 0.25
-    # (float) – Models will be considered for perturbation at this interval of time_attr. Note that
-    # perturbation incurs checkpoint overhead, so you shouldn’t set this to be too frequent.
+    # (float) - Models will be considered for perturbation at this interval of time_attr. Note that
+    # perturbation incurs checkpoint overhead, so you shouldn't set this to be too frequent.
     perturbation_interval: float = 4
-    # (float) – Models will not be considered for perturbation before this interval of time_attr has
+    # (float) - Models will not be considered for perturbation before this interval of time_attr has
     # passed. This guarantees that models are trained for at least a certain amount of time or timesteps
     # before being perturbed.
     burn_in_period: float = 10
 
 
 class HparamSearchPPO_PBT(BaseHparamSearch):
-    """ PPO PBT Search Space
+    """PPO PBT Search Space
     https://medium.com/aureliantactics/ppo-hyperparameters-and-ranges-6fc2d29bccbe
     """
 
-    @property
-    def get_validator(self) -> typing.Type[HparamSearchValidator_PBT]:
+    @staticmethod
+    def get_validator() -> type[HparamSearchValidator_PBT]:
         """gets the configuration for AHBS
 
         Returns
@@ -522,9 +523,9 @@ class HparamSearchPPO_PBT(BaseHparamSearch):
                 "entropy_coeff": ParametersPPO.ENTROPY_COEFF_DIST,
                 "gamma": ParametersPPO.GAMMA_DIST,
                 "kl_coeff": ParametersPPO.KL_COEFF_DIST,
-                "kl_target": ParametersPPO.KL_TARGET_DIST
+                "kl_target": ParametersPPO.KL_TARGET_DIST,
             },
-            custom_explore_fn=ParametersPPO.pbt_ppo_explore
+            custom_explore_fn=ParametersPPO.pbt_ppo_explore,
         )
         # These params start off randomly drawn from a set.
         tune_config["scheduler"] = pbt
@@ -536,6 +537,7 @@ class HparamSearchValidator_AHBS(HparamSearchValidator_Shared):
     """
     Base Validator to subclass for search subclassing
     """
+
     # max time units per trial. Trials will be stopped after max_t time units (determined
     # by time_attr) have passed.
     max_t: float = 1e7
@@ -573,8 +575,8 @@ class HparamSearchPPO_AHBS(BaseHparamSearch):
         if self.config.include_gtrxl_search:  # type: ignore
             self._model_choices.append(ParametersModel.select_gtrxl_model)
 
-    @property
-    def get_validator(self) -> typing.Type[HparamSearchValidator_AHBS]:
+    @staticmethod
+    def get_validator() -> type[HparamSearchValidator_AHBS]:
         """gets the configuration for AHBS
 
         Returns
@@ -602,7 +604,7 @@ class HparamSearchPPO_AHBS(BaseHparamSearch):
             mode=self.config.mode,  # type: ignore
             max_t=self.config.max_t,  # type: ignore
             grace_period=self.config.grace_period,  # type: ignore
-            brackets=self.config.brackets  # type: ignore
+            brackets=self.config.brackets,  # type: ignore
         )
         tune_config["num_samples"] = self.config.samples  # type: ignore
         tune_config["scheduler"] = ahbs

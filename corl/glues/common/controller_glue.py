@@ -1,4 +1,3 @@
-# pylint: disable=no-member
 """
 ---------------------------------------------------------------------------
 Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
@@ -12,14 +11,13 @@ limitation or restriction. See accompanying README and LICENSE for details.
 Controller Glue
 """
 import logging
-import typing
 from collections import OrderedDict
-from functools import lru_cache
-
-import gym
+from functools import cached_property
 
 from corl.glues.base_glue import BaseAgentControllerGlue, BaseAgentPlatformGlueValidator
 from corl.libraries.env_space_util import EnvSpaceUtil
+from corl.libraries.property import DictProp
+from corl.libraries.units import Quantity, corl_get_ureg
 from corl.simulators.base_parts import BaseController
 from corl.simulators.common_platform_utils import get_controller_by_name
 
@@ -29,15 +27,14 @@ code_logger = logging.getLogger("code_timing")
 class ControllerGlueValidator(BaseAgentPlatformGlueValidator):
     """
     controller: Which controller to get from parent platform
-    remove_invalid: removed the invalid field from the obs space of this glue
     """
+
     controller: str
-    remove_invalid: bool = False
 
 
 class ControllerGlue(BaseAgentControllerGlue):
     """
-    This simple glue class wraps a controller and creates an action space based on the controller exclusiveness
+    This simple glue class wraps a controller and creates an action space based on the controller
     This class has no observation space or observations
     """
 
@@ -50,6 +47,16 @@ class ControllerGlue(BaseAgentControllerGlue):
         self._key = self._controller.control_properties.name
         self._control_properties = self._controller.control_properties
 
+        control_properties = self._control_properties
+        if isinstance(control_properties, list):
+            controller_names: list[str] = [controller.name for controller in control_properties]
+            unique_name = "".join([controller_name.capitalize() for controller_name in controller_names])
+        else:
+            assert control_properties.name is not None
+            unique_name = control_properties.name.capitalize()
+
+        self._uname = f"{self.config.controller}_{unique_name}"
+
     @property
     def controller(self) -> BaseController:
         """Returns controller
@@ -61,28 +68,23 @@ class ControllerGlue(BaseAgentControllerGlue):
         """
         return self._controller
 
-    @property
-    def get_validator(self) -> typing.Type[ControllerGlueValidator]:
+    @staticmethod
+    def get_validator() -> type[ControllerGlueValidator]:
         return ControllerGlueValidator
 
-    @lru_cache(maxsize=1)
-    def action_space(self):
-        """
-        Build the action space for the controller, weapons, etc.
-        """
-        action_space_dict = {}
-        if isinstance(self._control_properties, list):
-            action_spaces = [control_prop.create_space() for control_prop in self._control_properties]
-            action_space_dict[self._key] = gym.spaces.tuple.Tuple(tuple(action_spaces))
-        else:
-            action_space_dict[self._key] = self._control_properties.create_space()
+    @cached_property
+    def action_prop(self):
+        return self._control_properties
 
-        return gym.spaces.Dict(action_space_dict)
+    @cached_property
+    def observation_prop(self):
+        tmp = {"control": self._control_properties}
+        return DictProp(spaces=tmp)
 
     def apply_action(
         self, action: EnvSpaceUtil.sample_type, observation: EnvSpaceUtil.sample_type, action_space, obs_space, obs_units
     ) -> None:
-        """Apply the action for the controller, weapons, etc.
+        """Apply the action for the controllers
 
         Parameters
         ----------
@@ -91,55 +93,43 @@ class ControllerGlue(BaseAgentControllerGlue):
         observation : EnvSpaceUtil.sample_type
             The current observable state by the agent (integration focus)
         """
-        if isinstance(action, (tuple, list)):
-            raise ValueError("Unexpected action of type tuple or list")
-        control = action[self._key]
-        self._controller.apply_control(control=control)
+        assert isinstance(action, Quantity) or (
+            isinstance(action, dict) and all(isinstance(action_value, Quantity) for action_value in action.values())
+        )
+        self._controller.apply_control(control=action)
 
-    def get_applied_control(self) -> OrderedDict:
-        control_dict = OrderedDict()
-        if not self._agent_removed:
-            control_dict[self._key] = self._controller.get_validated_applied_control()
-        else:
-            control_dict[self._key] = self.action_space()[self._key].sample()
-
-        return control_dict
-
-    @lru_cache(maxsize=1)
-    def observation_space(self):
-        obs_space = gym.spaces.dict.Dict()
-
-        if not self.config.remove_invalid:
-            obs_space.spaces['invalid'] = gym.spaces.Discrete(2)
-        obs_space.spaces['control'] = self.action_space()[self._key]
-
-        return obs_space
+    def get_applied_control(self):
+        if self._agent_removed:
+            assert self.action_space is not None
+            return corl_get_ureg().Quantity(self.action_space.sample(), self.action_prop.get_units())
+        return self._controller.get_validated_applied_control()
 
     def get_observation(self, other_obs: OrderedDict, obs_space, obs_units) -> OrderedDict:
         obs_dict = OrderedDict()
-        if not self.config.remove_invalid:
-            obs_dict['invalid'] = 1 if self._agent_removed else 0
-            obs_dict['invalid'] = 1 if obs_dict['invalid'] or not self.controller.valid else 0
-        obs_dict['control'] = self.get_applied_control()[self._key]
-
+        obs_dict["control"] = self.get_applied_control()
         return obs_dict
 
-    @lru_cache(maxsize=1)
-    def get_unique_name(self) -> str:
-        """Provies a unique name of the glue to differentiate it from other glues.
-        """
-        control_properties = self._control_properties
-        if isinstance(control_properties, list):
-            controller_names: typing.List[str] = []
-            for controller in control_properties:
-                controller_names.append(controller.name)
-            unique_name = ''.join([controller_name.capitalize() for controller_name in controller_names])
-        else:
-            unique_name = control_properties.name.capitalize()
-
-        return self.config.controller + "_" + unique_name
+    def get_unique_name(self):
+        """Provides a unique name of the glue to differentiate it from other glues."""
+        return self._uname
 
     @property
     def resolved_controller_class_name(self) -> str:
         """Class name of the internal controller."""
         return type(self._controller).__name__
+
+
+class ControllerGlueLegacy(ControllerGlue):
+    """
+    Version of ControllerGlue that matches the corl2 action space, where
+    action space was a Dict
+    """
+
+    @cached_property
+    def action_prop(self):
+        tmp = {self._key: super().action_prop}
+        return DictProp(spaces=tmp)
+
+    def apply_action(self, action, observation, action_space, obs_space, obs_units):
+        control = action[self._key]
+        return super().apply_action(control, observation, action_space, obs_space, obs_units)

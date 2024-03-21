@@ -1,0 +1,50 @@
+# ---------------------------------------------------------------------------
+#
+#
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
+
+run_or_experiment: PPO
+name: "ACT3-RLLIB-AGENTS"
+stop:
+  # An integer giving the maximum value a variable of type Py_ssize_t can take. It’s usually 2**31 - 1 on a 32-bit
+  # platform and 2**63 - 1 on a 64-bit platform. sys.maxunicode
+
+  # training iteration to stop at
+  training_iteration: 9.223372e+18 # 64bit
+  # episode length mean to stop at
+  episode_len_mean: 9.223372e+18
+  # episode reward mean to stop at
+  episode_reward_mean: 9.223372e+18
+  # total time in seconds to train for
+  time_total_s: 9.223372e+18
+  timesteps_total: 9.223372e+18
+
+# number of samples for population based training
+num_samples: 1
+# directory to store results from trials
+storage_path: /tmp/data/corl/ray_results/
+# path to restore point
+restore: null
+# If set will try to resume using restore
+resume: False
+# how frequently to make a checkpoint in iterations
+checkpoint_freq: 25
+# Whether to checkpoint at the end of the experiment regardless of the checkpoint_freq. Default is False.
+checkpoint_at_end: True
+# Whether to reuse actors between different trials
+# when possible. This can drastically speed up experiments that start
+# and stop actors often (e.g., PBT in time-multiplexing mode). This
+# requires trials to have the same resource requirements.
+# reuse_actors: False
+reuse_actors: True
+keep_checkpoints_num: 5
+checkpoint_score_attr: episode_reward_mean
+max_failures: 5
+

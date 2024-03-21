@@ -16,9 +16,8 @@ from corl.evaluation.metrics.metric import TerminalMetric
 
 
 @dataclasses.dataclass
-class String(TerminalMetric):
-    """Terminal Metric to represent a string
-    """
+class String(TerminalMetric):  # noqa: PLW1641
+    """Terminal Metric to represent a string"""
 
     value: str
 

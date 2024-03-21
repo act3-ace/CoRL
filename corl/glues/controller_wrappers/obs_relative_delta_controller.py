@@ -14,18 +14,18 @@ AvailablePlatforms
 import logging
 import typing
 from collections import OrderedDict
-from functools import lru_cache
+from functools import cached_property
 
-import gym
 import numpy as np
-from pydantic import validator
+from gymnasium.spaces import Box, Dict
+from pydantic import field_validator
 
 from corl.glues.base_multi_wrapper import BaseMultiWrapperGlue, BaseMultiWrapperGlueValidator
 from corl.glues.common.controller_glue import ControllerGlue
 from corl.glues.common.observe_sensor import ObserveSensor
 from corl.libraries.env_space_util import EnvSpaceUtil
-from corl.libraries.property import BoxProp
-from corl.libraries.units import Convert
+from corl.libraries.property import BoxProp, DictProp
+from corl.libraries.units import corl_get_ureg
 
 
 class RelativeObsDeltaActionValidator(BaseMultiWrapperGlueValidator):
@@ -36,12 +36,13 @@ class RelativeObsDeltaActionValidator(BaseMultiWrapperGlueValidator):
                     e.g. A throttle DeltaAction.apply_action([0.2]) with step_size=[.05] would move the
                     absolute throttle position to 0.01 higher than it was at the end of the last step.
     """
-    step_size: float = 1.0
-    obs_index: typing.Optional[int] = 0
-    is_wrap: bool = False
-    initial_value: typing.Optional[float] = None
 
-    @validator("step_size")
+    step_size: float = 1.0
+    obs_index: int | None = 0
+    is_wrap: bool = False
+    initial_value: float | None = None
+
+    @field_validator("step_size")
     @classmethod
     def check_step_scale(cls, v):
         """
@@ -81,7 +82,8 @@ class RelativeObsDeltaAction(BaseMultiWrapperGlue):
 
         # verify that the config setup is not going to get the user into a situation where they are
         # only accessing one part of the obs but applying that obs as the base position for multiple actions
-        if self.config.obs_index and len(list(self.controller.action_space().values())[0].low) != 1:
+        assert isinstance(self.controller.action_space, Dict)
+        if self.config.obs_index and len(next(iter(self.controller.action_space.values())).low) != 1:  # type: ignore
             raise RuntimeError(
                 f"ERROR: your glue {self.get_unique_name()} has an action space length of more than 1, "
                 "but you specified though obs_index to access only 1 component of the obs "
@@ -89,104 +91,107 @@ class RelativeObsDeltaAction(BaseMultiWrapperGlue):
             )
 
         self.step_size = EnvSpaceUtil.convert_config_param_to_space(
-            action_space=self.controller.action_space(), parameter=self.config.step_size
+            action_space=self.controller.action_space, parameter=self.config.step_size
         )
 
         self._is_wrap = self.config.is_wrap
 
         self.saved_action_deltas = OrderedDict()
-        for space_name, space in self.action_space().items():
+        assert isinstance(self.action_space, Dict)
+        for space_name, space in self.action_space.items():
             if self.config.initial_value is not None:
-                self.saved_action_deltas[space_name] = np.asarray([self.config.initial_value], dtype=np.float32)
+                self.saved_action_deltas[space_name] = corl_get_ureg().Quantity(
+                    np.array([0], dtype=self.action_prop.spaces[space_name].dtype), self.action_prop.spaces[space_name].get_units()
+                )
             else:
+                assert isinstance(space, Box)
                 self.saved_action_deltas[space_name] = space.low
 
-    @property
-    def get_validator(self) -> typing.Type[RelativeObsDeltaActionValidator]:
-        return RelativeObsDeltaActionValidator
-
-    @lru_cache()
-    def get_unique_name(self) -> str:
-        """Class method that retreives the unique name for the glue instance
-        """
         wrapped_glue_name = self.controller.get_unique_name()
         if wrapped_glue_name is None:
-            return None
-        return wrapped_glue_name + "RelativeDelta"
+            self._uname = None
+        else:
+            self._uname = f"{wrapped_glue_name}RelativeDelta"
 
-    def get_observation(self, other_obs: OrderedDict, obs_space, obs_units) -> typing.Union[np.ndarray, typing.Tuple, typing.Dict]:
+    @staticmethod
+    def get_validator() -> type[RelativeObsDeltaActionValidator]:
+        return RelativeObsDeltaActionValidator
+
+    def get_unique_name(self):
+        """Class method that retrieves the unique name for the glue instance"""
+        return self._uname
+
+    def get_observation(self, other_obs: OrderedDict, obs_space, obs_units) -> np.ndarray | (tuple | dict):
         return {
             "absolute": self.controller.get_observation(other_obs, obs_space, obs_units),
             "delta": self.saved_action_deltas,
         }
 
-    @lru_cache()
-    def observation_space(self):
-        return gym.spaces.Dict({"absolute": self.controller.observation_space(), "delta": self.action_space()})
+    @cached_property
+    def observation_prop(self):
+        return DictProp(spaces={"absolute": self.controller.observation_prop, "delta": self.action_prop})
 
-    @lru_cache()
-    def action_space(self):
-        """
-        Build the action space for the controller, weapons, etc.
-        """
+    @cached_property
+    def action_prop(self):
+        # # get the action space from the parent
+        original_action_space = self.controller.action_prop
 
-        # get the action space from the parent
-        original_action_space = self.controller.action_space()
+        # # zero mean the space so we can scale it easier
+        zero_mean_space = original_action_space.zero_mean()
 
-        # zero mean the space so we can scale it easier
-        zero_mean_space = EnvSpaceUtil.zero_mean_space(original_action_space)
-
-        # scale the size of the unbiased space
-        for space_name, space in zero_mean_space.items():
-            zero_mean_space[space_name] = EnvSpaceUtil.scale_space(space, scale=self.step_size[space_name])
+        # # scale the size of the unbiased space
+        for space_name, space in zero_mean_space.spaces.items():
+            zero_mean_space.spaces[space_name] = space.scale(scale=self.step_size[space_name])
 
         return zero_mean_space
 
     # TODO: assumes self.controller._control_properties has unit attribute
     def apply_action(self, action, observation, action_space, obs_space, obs_units) -> None:
         """
-        Apply the action for the controller, weapons, etc.
+        Apply the action for the controllers
         """
 
         current_observation = self.relative_obs_glue.get_observation(observation, obs_space, obs_units)["direct_observation"]
         # all units in an array must be the same, so this assumption is ok
-        obs_units = self.relative_obs_glue.observation_units()["direct_observation"][0]
-        if self.config.obs_index:
+        obs_units = self.relative_obs_glue.observation_prop.get_units()["direct_observation"]
+        if self.config.obs_index is not None:
             current_observation = current_observation[self.config.obs_index]
-        assert isinstance(self.controller._control_properties, BoxProp), "Unexpected control_properties type"  # pylint: disable=W0212
-        out_unit = self.controller._control_properties.unit[0]  # pylint: disable=W0212
+        assert isinstance(self.controller._control_properties, BoxProp), "Unexpected control_properties type"  # noqa: SLF001
+        out_unit = self.controller._control_properties.unit  # noqa: SLF001
         assert isinstance(out_unit, str)
-        unit_converted_obs = Convert(current_observation, obs_units, out_unit)
+        unit_converted_obs = current_observation.to(out_unit)
 
         new_base_obs = OrderedDict()
-        for control in action.keys():
+        for control in action:
             new_base_obs[control] = unit_converted_obs
 
         self.saved_action_deltas = action
 
+        assert self.action_space is not None
         absolute_action = EnvSpaceUtil.add_space_samples(
-            space_template=self.action_space(),
+            space_template=self.action_space,
             space_sample1=action,
             space_sample2=new_base_obs,
         )
-        absolute_action = EnvSpaceUtil.clip_space_sample_to_space(absolute_action, self.controller.action_space(), self._is_wrap)
+        assert self.controller.action_space is not None
+        absolute_action = EnvSpaceUtil.clip_space_sample_to_space(absolute_action, self.controller.action_space, self._is_wrap)
 
         try:
             self.controller.apply_action(absolute_action, observation, action_space, obs_space, obs_units)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             # Purpose - add additional debugging information and re-raise the exception
             raise ValueError(
-                f'\n'
-                f'action={action}\n'
-                f'current_observation={current_observation}\n'
-                f'obs_unit={obs_units}\n'
-                f'out_unit={out_unit}\n'
-                f'action_space={self.action_space()}\n'
-                f'controller_action_space={self.controller.action_space()}\n'
-                f'is_wrap={self._is_wrap}\n'
+                f"\n"
+                f"action={action}\n"
+                f"current_observation={current_observation}\n"
+                f"obs_unit={obs_units}\n"
+                f"out_unit={out_unit}\n"
+                f"action_space={self.action_space}\n"
+                f"controller_action_space={self.controller.action_space}\n"
+                f"is_wrap={self._is_wrap}\n"
             ) from exc
 
-    def get_info_dict(self):
+    def get_info_dict(self):  # noqa: PLR6301
         """
         Get the user specified metadata/metrics/etc.
         """

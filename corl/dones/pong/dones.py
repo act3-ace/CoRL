@@ -3,7 +3,6 @@ This module defines functions that determine terminal conditions for the 1D Dock
 """
 
 from corl.dones.done_func_base import DoneFuncBase, DoneStatusCodes
-from corl.libraries.environment_dict import DoneDict
 from corl.simulators.common_platform_utils import get_platform_by_name
 from corl.simulators.pong.paddle_platform import PaddleType
 from corl.simulators.pong.pong import GameStatus
@@ -35,13 +34,12 @@ class PongGameDoneFunction(DoneFuncBase):
 
         """
 
-        done = DoneDict()
         paddle_type = get_platform_by_name(next_state, self.config.platform_name).paddle_type
         game_status = next_state.game_status
 
-        done[self.config.platform_name] = False
+        done = False
         if game_status is not GameStatus.IN_PROGRESS:
-            done[self.config.platform_name] = True
+            done = True
             if self._win_left(game_status, paddle_type) or self._win_right(game_status, paddle_type):
                 next_state.episode_state[self.config.platform_name][self.name] = DoneStatusCodes.WIN
             else:
@@ -49,7 +47,6 @@ class PongGameDoneFunction(DoneFuncBase):
         # else:
         #     next_state.episode_state[self.config.platform_name][self.name] = DoneStatusCodes.DRAW
 
-        self._set_all_done(done)
         return done
 
     @staticmethod

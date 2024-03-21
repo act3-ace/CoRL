@@ -12,49 +12,47 @@ Normalizer
 """
 import abc
 import copy
-import typing
 from collections import OrderedDict
 
-import gym.spaces
+import gymnasium.spaces
 import numpy as np
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 from corl.libraries.env_space_util import EnvSpaceUtil
 
 
 class Normalizer(abc.ABC):
-    """Class defining normalization of space and samples
-    """
+    """Class defining normalization of space and samples"""
 
-    def __init__(self, **kwargs):
-        self.config = self.get_validator(**kwargs)
+    def __init__(self, **kwargs) -> None:
+        self.config = self.get_validator()(**kwargs)
 
-    @property
-    def get_validator(self):
+    @staticmethod
+    def get_validator():
         """
         get validator for this Normalizer
         """
 
     @abc.abstractmethod
-    def normalize_space(self, space: gym.spaces.Space) -> gym.spaces.Space:
+    def normalize_space(self, space: gymnasium.spaces.Space) -> gymnasium.spaces.Space:
         """
         normalize_space
 
         Parameters:
-            space: gym.spaces.Space
+            space: gymnasium.spaces.Space
                 unnormalized space to be normalized
         Returns:
-            gym.spaces.Space
+            gymnasium.spaces.Space
                 Normalized space
         """
 
     @abc.abstractmethod
-    def normalize_sample(self, space: gym.spaces.Space, sample: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
+    def normalize_sample(self, space: gymnasium.spaces.Space, sample: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
         """
         normalize_sample
 
         Parameters:
-            space: gym.spaces.Space
+            space: gymnasium.spaces.Space
                 unnormalized space
             sample: EnvSpaceUtil.sample_type
                 unnormalized sample space to be normalized
@@ -64,12 +62,12 @@ class Normalizer(abc.ABC):
         """
 
     @abc.abstractmethod
-    def unnormalize_sample(self, space: gym.spaces.Space, sample: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
+    def unnormalize_sample(self, space: gymnasium.spaces.Space, sample: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
         """
         unnormalize_sample
 
         Parameters:
-            space: gym.spaces.Space
+            space: gymnasium.spaces.Space
                 unnormalized space
             sample: EnvSpaceUtil.sample_type
                 normalized sample space to be unnormalized
@@ -88,20 +86,20 @@ class LinearNormalizerValidator(BaseModel):
         maximum: float
             maximum normalized value
     """
+
     minimum: float = -1.0
     maximum: float = 1.0
 
 
 class LinearNormalizer(Normalizer):
-    """Class defining linear normalization of space and samples
-    """
+    """Class defining linear normalization of space and samples"""
 
     def __init__(self, **kwargs) -> None:
         self.config: LinearNormalizerValidator
         super().__init__(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[LinearNormalizerValidator]:
+    @staticmethod
+    def get_validator() -> type[LinearNormalizerValidator]:
         """get validator for this LinearNormalizer
 
         Returns:
@@ -109,26 +107,26 @@ class LinearNormalizer(Normalizer):
         """
         return LinearNormalizerValidator
 
-    def normalize_space(self, space: gym.spaces.Space) -> gym.spaces.Space:
+    def normalize_space(self, space: gymnasium.spaces.Space) -> gymnasium.spaces.Space:
         """
         normalize_space
 
         Parameters:
-            space: gym.spaces.Space
+            space: gymnasium.spaces.Space
                 unnormalized space to be normalized
         Returns:
-            gym.spaces.Space
+            gymnasium.spaces.Space
                 Normalized space between minimum and maximum
         """
 
         return EnvSpaceUtil.normalize_space(space=space, out_min=self.config.minimum, out_max=self.config.maximum)
 
-    def normalize_sample(self, space: gym.spaces.Space, sample: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
+    def normalize_sample(self, space: gymnasium.spaces.Space, sample: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
         """
         normalize_sample
 
         Parameters:
-            space: gym.spaces.Space
+            space: gymnasium.spaces.Space
                 unnormalized space
             sample: EnvSpaceUtil.sample_type
                 unnormalized sample space to be normalized
@@ -140,12 +138,12 @@ class LinearNormalizer(Normalizer):
             space=space, space_sample=sample, out_min=self.config.minimum, out_max=self.config.maximum
         )
 
-    def unnormalize_sample(self, space: gym.spaces.Space, sample: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
+    def unnormalize_sample(self, space: gymnasium.spaces.Space, sample: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
         """
         unnormalize_sample
 
         Parameters:
-            space: gym.spaces.Space
+            space: gymnasium.spaces.Space
                 unnormalized space
             sample: EnvSpaceUtil.sample_type
                 normalized sample space from min to max vale be unnormalized
@@ -167,10 +165,12 @@ class StandardNormalNormalizerValidator(BaseModel):
         sigma: float
             standard devivation
     """
-    mu: typing.List[float] = [0.0]
-    sigma: typing.List[float] = [1.0]
 
-    @validator('mu', 'sigma', pre=True)
+    mu: list[float] = [0.0]
+    sigma: list[float] = [1.0]
+
+    @field_validator("mu", "sigma", mode="before")
+    @classmethod
     def check_iterable(cls, v):
         """
         Check if mu, sigma are iterable.
@@ -181,15 +181,14 @@ class StandardNormalNormalizerValidator(BaseModel):
 
 
 class StandardNormalNormalizer(Normalizer):
-    """Class defining standard norm normalization of space and samples
-    """
+    """Class defining standard norm normalization of space and samples"""
 
     def __init__(self, **kwargs) -> None:
         self.config: StandardNormalNormalizerValidator
         super().__init__(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[StandardNormalNormalizerValidator]:
+    @staticmethod
+    def get_validator() -> type[StandardNormalNormalizerValidator]:
         """get validator for this StandardNormalNormalizer
 
         Returns:
@@ -197,15 +196,15 @@ class StandardNormalNormalizer(Normalizer):
         """
         return StandardNormalNormalizerValidator
 
-    def normalize_space(self, space: gym.spaces.Space) -> gym.spaces.Space:
+    def normalize_space(self, space: gymnasium.spaces.Space) -> gymnasium.spaces.Space:
         """
         normalize_space
 
         Parameters:
-            space: gym.spaces.Space
+            space: gymnasium.spaces.Space
                 unnormalized space to be normalized
         Returns:
-            gym.spaces.Space
+            gymnasium.spaces.Space
                 Normalized space between minimum and maximum
         """
         return EnvSpaceUtil.iterate_over_space(
@@ -215,11 +214,11 @@ class StandardNormalNormalizer(Normalizer):
             sigma=self.config.sigma,
         )
 
-    def normalize_sample(self, space: gym.spaces.Space, sample: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
+    def normalize_sample(self, space: gymnasium.spaces.Space, sample: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
         """normalize_sample
 
         Parameters:
-            space: gym.spaces.Space
+            space: gymnasium.spaces.Space
                 unnormalized space
             sample: EnvSpaceUtil.sample_type
                 unnormalized sample space to be normalized
@@ -232,12 +231,12 @@ class StandardNormalNormalizer(Normalizer):
             func=StandardNormalNormalizer.standard_normalize_sample, space=space, sample=sample, mu=self.config.mu, sigma=self.config.sigma
         )
 
-    def unnormalize_sample(self, space: gym.spaces.Space, sample: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
+    def unnormalize_sample(self, space: gymnasium.spaces.Space, sample: EnvSpaceUtil.sample_type) -> EnvSpaceUtil.sample_type:
         """
         unnormalize_sample
 
         Parameters:
-            space: gym.spaces.Space
+            space: gymnasium.spaces.Space
                 unnormalized space
             sample: EnvSpaceUtil.sample_type
                 normalized sample space from min to max vale be unnormalized
@@ -252,23 +251,23 @@ class StandardNormalNormalizer(Normalizer):
             sigma=self.config.sigma,
             return_space=False,
         )
-        if not isinstance(tmp, gym.spaces.Space):
+        if not isinstance(tmp, gymnasium.spaces.Space):
             return tmp
         raise RuntimeError("bug spat, should never happen")
 
     @staticmethod
     def __standard_normalize_space(
-        space_likes: typing.Tuple[gym.spaces.Space, EnvSpaceUtil.sample_type],
+        space_likes: tuple[gymnasium.spaces.Space, EnvSpaceUtil.sample_type],
         mu: float = 0.0,
         sigma: float = 1.0,
-    ) -> gym.spaces.Space:
+    ) -> gymnasium.spaces.Space:
         """
-        Normalizes a given gym box using the provided mu and sigma.
+        Normalizes a given gymnasium box using the provided mu and sigma.
 
         Parameters
         ----------
-        space_likes: typing.Tuple[gym.spaces.Space]
-            The gym space to turn all boxes into the scaled space.
+        space_likes: typing.Tuple[gymnasium.spaces.Space]
+            The gymnasium space to turn all boxes into the scaled space.
         mu: float = 0.0
             Mu for normalization.
         sigma: float = 1.0
@@ -276,29 +275,29 @@ class StandardNormalNormalizer(Normalizer):
 
         Returns
         -------
-        gym.spaces.Space:
-            The new gym spaces where all boxes have had their bounds changed.
+        gymnasium.spaces.Space:
+            The new gymnasium spaces where all boxes have had their bounds changed.
         """
         space_arg = space_likes[0]
-        if isinstance(space_arg, gym.spaces.Box):
+        if isinstance(space_arg, gymnasium.spaces.Box):
             low = np.divide(np.subtract(space_arg.low, mu), sigma)
             high = np.divide(np.subtract(space_arg.high, mu), sigma)
-            return gym.spaces.Box(low=low, high=high, shape=space_arg.shape, dtype=np.float32)
+            return gymnasium.spaces.Box(low=low, high=high, shape=space_arg.shape, dtype=np.float32)
         return copy.deepcopy(space_arg)
 
     @staticmethod
     def standard_normalize_sample(
-        space_likes: typing.Tuple[gym.spaces.Space, typing.Union[OrderedDict, dict, tuple, np.ndarray, list]],
+        space_likes: tuple[gymnasium.spaces.Space, OrderedDict | (dict | (tuple | (np.ndarray | list)))],
         mu: float = 0.0,
         sigma: float = 1,
-    ) -> typing.Union[OrderedDict, dict, tuple, np.ndarray, list]:
+    ) -> OrderedDict | (dict | (tuple | (np.ndarray | list))):
         """
         This normalizes a sample from a box space using the mu and sigma arguments.
 
         Parameters
         ----------
-        space_likes: typing.Tuple[gym.spaces.Space, sample_type]
-            The first element is the gym space.
+        space_likes: typing.Tuple[gymnasium.spaces.Space, sample_type]
+            The first element is the gymnasium space.
             The second element is the sample of this space to scale.
         mu: float
             The mu used for normalizing the sample.
@@ -311,31 +310,31 @@ class StandardNormalNormalizer(Normalizer):
             The normalized sample.
         """
         (space_arg, space_sample_arg) = space_likes
-        if isinstance(space_arg, gym.spaces.Box):
-            val = np.array(space_sample_arg)
-            norm_value = np.subtract(val, mu)
+        if isinstance(space_arg, gymnasium.spaces.Box):
+            assert isinstance(space_sample_arg, np.ndarray | list)
+            norm_value = np.subtract(space_sample_arg, mu)
             norm_value = np.divide(norm_value, sigma)
             return norm_value.astype(np.float32)
         return copy.deepcopy(space_sample_arg)
 
     @staticmethod
     def unnormalize_sample_from_mu_sigma(
-        space_likes: typing.Tuple[gym.spaces.Space, typing.Union[OrderedDict, dict, tuple, np.ndarray, list]],
+        space_likes: tuple[gymnasium.spaces.Space, OrderedDict | (dict | (tuple | (np.ndarray | list)))],
         mu: float = 0.0,
         sigma: float = 1,
-    ) -> typing.Union[OrderedDict, dict, tuple, np.ndarray, list]:
+    ) -> OrderedDict | (dict | (tuple | (np.ndarray | list))):
         """
         This unnormalizes a sample from a box space using the mu and sigma arguments.
 
         Parameters
         ----------
-        space_likes: typing.Tuple[gym.spaces.Space, sample_type]
-            The first element is the gym space.
+        space_likes: typing.Tuple[gymnasium.spaces.Space, sample_type]
+            The first element is the gymnasium space.
             The second element is the sample of this space to scale.
         mu: float
-            The mu used for unnormalizing the sample.
+            The mu used for un-normalizing the sample.
         sigma: float
-            The sigma used for unnormalizing the sample.
+            The sigma used for un-normalizing the sample.
 
         Returns
         -------
@@ -343,7 +342,7 @@ class StandardNormalNormalizer(Normalizer):
             The unnormalized sample.
         """
         (space_arg, space_sample_arg) = space_likes
-        if isinstance(space_arg, gym.spaces.Box):
+        if isinstance(space_arg, gymnasium.spaces.Box):
             val = np.array(space_sample_arg)
             norm_value = np.add(np.multiply(val, sigma), mu)
             return norm_value.astype(np.float32)

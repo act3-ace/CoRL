@@ -1,77 +1,90 @@
 [tool.poetry]
 name = "corl"
-version = "2.8.0"
-description = "Core ACT3 Reinforcement Learning (RL) Library - Core framework and base implementations of common things such as controllers, glues, observes, sensors, evaluation, and ect"
+version = "3.14.10"
+description = "Core ACT3 Reinforcement Learning (RL) Library - Core framework and base implementations of common things such as controllers, glues, observes, sensors, evaluation, and etc"
 authors = [
-        "Benjamin K Heiner <benjamin.heiner@us.af.mil>",
-        "Brian Stieber <bstieber@toyon.com>",
-        "Cameron Long <clong@toyon.com>",
-        "Joshua Blackburn <joshua.blackburn@stresearch.com>",
-        "Steven Fierro <sfierro@toyon.com>",
-        "Madison Blake <madison.blake@shield.ai>"
-    ]
-maintainers  = [
-        "Benjamin K Heiner <benjamin.heiner@us.af.mil>",
-        "Brian Stieber <bstieber@toyon.com>",
-        "Cameron Long clong@toyon.com",
-        "Joshua Blackburn <joshua.blackburn@stresearch.com>"
-    ]
+    "Benjamin K Heiner <benjamin.heiner@us.af.mil>",
+    "Brian Stieber <bstieber@toyon.com>",
+    "Cameron Long <clong@toyon.com>",
+    "Joshua Blackburn <joshua.blackburn@stresearch.com>",
+    "Steven Fierro <sfierro@toyon.com>",
+    "Madison Blake <madison.blake@shield.ML>",
+]
+maintainers = [
+    "Benjamin K Heiner <benjamin.heiner@us.af.mil>",
+    "Brian Stieber <bstieber@toyon.com>",
+    "Cameron Long clong@toyon.com",
+]
 readme = "README.md"
 homepage = "https://github.com/act3-ace/CoRL"
 repository = "https://github.com/act3-ace/CoRL"
 documentation = "https://github.com/act3-ace/CoRL"
-keywords = ["Deep", "Reinforcement", "Learning", "CoRL"]
-include = ["docs/*","config/*"]
+keywords = ["Deep", "Reinforcement", "Learning", "CoRL", "***", "ACT3"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
-license = "Distribution A"
+license = ""
 packages = [
-        {include = "corl"},
-        {include = "docs"},
-    ]
+    { include = "corl" },
+]
+
+[tool.poetry.build]
+generate-setup-file = false
+script = "scripts/build.py"
 
 [tool.poetry.dependencies]
-python = ">=3.8, <3.11"
-ray = {version = "2.2.0", extras = ["all"]}
-pydantic = "^1.9.2"
+python = ">=3.10,<3.12"
+ray = {version = "~2.9.0", extras = ["all"]}
+pydantic = "^2.5.0"
 numpy-ringbuffer = "^0.2.2"
-jsonargparse = {version = "3.19.4", extras = ["signatures", "argcomplete"]}
+jsonargparse = { version = "^4", extras = ["signatures", "argcomplete"] }
 flatten-dict = "0.4.1"
 deepmerge = "0.3.0"
 GitPython = "3.1.27"
 h5py = ">=3.7"
 tensorboard = "^2.10"
-graphlib-backport = {version = "^1.0.3", python = "<3.9"}
 pygame = "^2.1.2"
-gym = "0.23.0"
-tensorflow = "2.11.0"
-tensorflow-probability = "0.19.0"
+gymnasium = "0.28.1"
 pygifsicle = "^1.0.7"
-numpy = "<1.24.0"
+numpy = "^1.24.0"
+scipy = "^1.10.1"
+streamlit = "^1.22.0"
+plotly = "^5.14.1"
+stqdm = "^0.0.5"
+tabulate = "^0.9.0"
+types-tabulate = "^0.9.0.2"
+matplotlib = "^3.7.2"
+codetiming = "^1.4.0"
+fastapi = "^0.104.1"
+uvicorn = "^0.24.0.post1"
+tensorflow = "2.15.0"
+# this is required on python 3.11 as it is not properly installed for some reason
+async_timeout = "^4.0.3"
+tensorflow-probability = "^0.23.0"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.20.0"
 pre-commit-hooks = "^4.3.0"
-tensorboard = "^2.10"
 types-PyYAML = "5.4.11"
 rope = "0.19.0"
 jupyter-core = "<5.0"
 
 [tool.poetry.group.torch.dependencies]
-torch = "^1.12.0"
+torch = ">=2.0.0, !=2.0.1, !=2.1.0"
 
 [tool.poetry.group.lint.dependencies]
-pylint = "2.15.4"
-flake8 = "3.9.2"
-yapf = "^0.32.0"
-mypy = "0.981"
-isort = "5.9.3"
+ruff = "^0.0.291"
+mypy = "1.5.1"
+types-toml =">=0.10.8.7"
+black = "^23.7.0"
 bashate = "^2.1.0"
 velin = "^0.0.11"
 blacken-docs = "^1.12.1"
 detect-secrets = "1.1.0"
+toml = "^0.10.2"
+types-setuptools = ">=68.2.0.1"
+codespell = ">=2.2.6"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.1.2"
@@ -79,31 +92,47 @@ pytest-cov = "2.11.1"
 pyinstrument = "^4.3.0"
 mock = "^5.0.1"
 
-[tool.poetry.group.docs.dependencies]
-mkdocs = "^1.3.1"
-mkdocs-git-revision-date-localized-plugin = "^1.1.0"
-mkdocs-macros-plugin = "^0.7.0"
-mkdocs-material = "^8.4.2"
-mkdocs-material-extensions = "^1.0.3"
-mkdocs-mermaid-plugin = "^0.1.1"
-mkdocs-pdf-export-plugin = "^0.5.10"
-mktheapidocs = {extras = ["plugin"], version = "^0.3.1"}
-mkdocstrings = "0.18.0"
-mkdocs-autorefs = "^0.4.1"
-mkdocs-coverage = "^0.2.5"
-mkdocs-gen-files = "^0.4.0"
-mkdocs-literate-nav = "^0.4.1"
-mkdocs-section-index = "^0.3.4"
-mkdocs-with-pdf = "^0.9.3"
-papermill = "^2.4.0"
-Pillow = "^9.2.0"
-pymdown-extensions = "^9.5"
-
 [tool.poetry.group.profile.dependencies]
 memray = "^1.3.1"
 memory-profiler = "^0.60.0"
 snakeviz = "^2.1.1"
 pyinstrument = "^4.3.0"
+openpyxl = "^3.1.2"
+xlsxwriter = "^0.9.0"
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = ">=1.3.1"
+mkdocs-autorefs = ">=0.4.1"
+mkdocs-gen-files = ">=0.4.0"
+mkdocstrings=">=0.23.0"
+mkdocstrings-python = ">=1.7.3"
+mkdocs-include-markdown-plugin = ">=6.0.3"
+mkdocs-with-pdf = ">=0.9.3"
+mktestdocs = ">=0.2.1"
+mkdocs-video = ">=1.5.0"
+mkdocs-git-authors-plugin = ">=0.7.2"
+mkdocs-git-revision-date-localized-plugin = "^1.2.1"
+mkdocs-macros-plugin = ">=1.0.5"
+mkdocs-material = ">=9.4.7"
+# mkdocs-material-extensions = ">=1.3"
+# pymdown-extensions = ">=10.4"
+mkdocs-pdf = ">=0.1.1"
+mkdocs-table-reader-plugin = ">=2.0.3"
+mkdocs-glightbox = ">=0.3.4"
+pydeps = ">=1.12.17"
+pipdeptree = ">=2.13.1"
+termynal = ">=0.11.1"
+markdown_exec = ">=1.7.0"
+anybadge = ">=1.14.0"
+mkdocs-page-pdf = ">=0.1.1"
+# mkdocs-print-site-plugin = ">=2.3.6"
+mike = ">=2.0.0"
+fuzzywuzzy = ">=0.18.0"
+
+[tool.poetry.group.pipeline.dependencies]
+twine = "^4.0.2"
+coverage-badge = "^1.1.0"
+pylint-gitlab = "^1.2.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -116,3 +145,170 @@ corl_eval_metrics = 'corl.evaluation.launchers.launch_generate_metrics:pre_main'
 corl_eval_visualize = 'corl.evaluation.launchers.launch_visualize:pre_main'
 corl_eval_pipeline = 'corl.evaluation.launchers.launch_pipeline:main'
 corl_eval_storage = 'corl.evaluation.launchers.launch_storage:pre_main'
+
+##################
+# black sections #
+##################
+# For a list of configurations go to https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html
+[tool.black]
+line-length = 140
+target-version = ["py310"]
+
+#################
+# ruff sections #
+#################
+# For a list of configurations go to https://docs.astral.sh/ruff/settings/
+[tool.ruff]
+select = [
+    "A",
+    "B",
+    "BLE",
+    "C",
+    "C4",
+    "COM",
+    "E",
+    "F",
+    "FURB",
+    "G002",
+    "I",
+    "ISC",
+    "NPY",
+    "PERF",
+    "PIE",
+    "PL",
+    "Q",
+    "RET",
+    "RUF",
+    "S",
+    "SIM",
+    "SLF",
+    "T",
+    "UP",
+    "W",
+]
+ignore = [
+    "E203",
+    "E731",
+    "E266",
+    "B024",
+    "B027",
+    "B028",
+    "B905",
+    "C901",
+    "C408",
+    "PIE804",
+    "COM812",
+    "RUF012",
+    "PLR2004",
+    "S101",
+    "T201",
+]
+# ignored due to non-existence when repo created:
+# flake8: B024, B027, B028, B905
+# pylint: R2004
+
+exclude = [
+    ".svn",
+    "CVS",
+    ".bzr",
+    ".hg",
+    ".git",
+    "__pycache__",
+    ".tox",
+    ".nox",
+    ".eggs",
+    "*.egg",
+    "test/*",
+]
+line-length = 140
+target-version = "py310"
+preview = true # necessary for E266 and FURB
+
+fix = true
+fixable = ["ALL"]
+unfixable = []
+
+external = ["W503", "W504"]
+
+[tool.ruff.pylint]
+# min-public-methods = 1 # not supported
+max-args = 15
+# max-locals=25 # not supported
+# max-attributes=15 # not supported
+# max-parents=15 # not supported
+max-branches = 20
+
+# ignored codes:
+#     C0103: ignored by default since 'N' codes were not selected
+#     R0801: not supported
+#     R0902: not supported
+#     R0903: not supported
+#     W0511: ignored by default since 'FIX' codes were not selected
+#     W1202: ignored by default since 'G' codes were not selected
+#     W1203: ignored by default since 'G' codes were not selected
+#     R0401: not supported
+#     E0213: ignored by default since 'N' codes were not selected
+#     E1101: not supported
+
+[tool.ruff.isort]
+split-on-trailing-comma = false
+
+[tool.ruff.flake8-unused-arguments]
+ignore-variadic-names = true
+
+
+#################
+# mypy sections #
+#################
+# For a list of configurations go to https://mypy.readthedocs.io/en/stable/config_file.html
+[tool.mypy]
+plugins = "pydantic.mypy"
+ignore_missing_imports = true
+show_error_codes = true
+files = "corl"
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+###################
+# pytest sections #
+###################
+# For a list of configurations go to https://docs.pytest.org/en/stable/customize.html
+[tool.pytest.ini_options]
+testpaths = "test"
+addopts = "--strict-markers -m 'not slow' --disable-pytest-warnings"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "serial",
+    "skipif_activemq_down",
+    "ray_debug_mode: sets ray to self managed to easily allow debugging of unit tests that run ray",
+    "integration",
+]
+junit_family = "xunit1"
+
+###########################
+# pytest coverage section #
+###########################
+# For a list of configurations go to https://pytest-cov.readthedocs.io/en/latest/config.html
+# must manually tell pytest coverage to use this file with --cov-config=setup.cfg
+[tool.coverage.run]
+branch = true
+source = ["corl"]
+
+
+[tool.coverage.report]
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+    "if self\\.debug",
+
+    # Don't complain if tests don't hit defensive assertion code:
+    "raise AssertionError",
+    "raise NotImplementedError",
+
+    # Don't complain if non-runnable code isn't run:
+    "if 0:",
+    "if __name__ == .__main__.:",
+]

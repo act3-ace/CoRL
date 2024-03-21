@@ -2,11 +2,11 @@
 This module defines the controller used by the agent to interact with its environment.
 """
 
-import numpy as np
 
 from corl.libraries.plugin_library import PluginLibrary
+from corl.libraries.units import Quantity
 from corl.simulators.base_parts import BaseController
-from corl.simulators.docking_1d.available_platforms import Docking1dAvailablePlatformTypes
+from corl.simulators.docking_1d.available_platforms import Docking1dAvailablePlatformType
 from corl.simulators.docking_1d.properties import ThrustProp
 from corl.simulators.docking_1d.simulator import Docking1dSimulator
 
@@ -20,7 +20,7 @@ class Thrust1dController(BaseController):
     parent_platform : Docking1dPlatform
         the platform to which the controller belongs
     config : dict
-        contains configuration proprties
+        contains configuration properties
     control_properties : corl.libraries.property.BoxProp
         a class to define the acceptable bounds and units of the controller's control
     """
@@ -30,8 +30,7 @@ class Thrust1dController(BaseController):
         parent_platform,
         config,
         control_properties=ThrustProp,
-    ):  # pylint: disable=W0102
-        self.config: Thrust1dControllerValidator  # noqa # pylint: disable=undefined-variable
+    ) -> None:
         super().__init__(property_class=control_properties, parent_platform=parent_platform, config=config)
 
     @property
@@ -44,7 +43,7 @@ class Thrust1dController(BaseController):
         """
         return self.config.name
 
-    def apply_control(self, control: np.ndarray) -> None:
+    def apply_control(self, control):
         """
         Applies control to the parent platform
 
@@ -53,15 +52,16 @@ class Thrust1dController(BaseController):
         control
             ndarray describing the control to the platform
         """
+        assert isinstance(control, Quantity)
         self.parent_platform.save_action_to_platform(action=control)
 
-    def get_applied_control(self) -> np.ndarray:
+    def get_applied_control(self) -> Quantity:
         """
-        Retreive the applied control to the parent platform
+        Retrieve the applied control to the parent platform
 
         Returns
         -------
-        np.ndarray
+        Quantity
             Previously applied action
 
         """
@@ -72,8 +72,5 @@ class Thrust1dController(BaseController):
 # a dict defining associated Simulator class and platform type enum.
 
 PluginLibrary.AddClassToGroup(
-    Thrust1dController,
-    "1D_Controller_Thrust", {
-        "simulator": Docking1dSimulator, "platform_type": Docking1dAvailablePlatformTypes.DOCKING1D
-    }
+    Thrust1dController, "1D_Controller_Thrust", {"simulator": Docking1dSimulator, "platform_type": Docking1dAvailablePlatformType}
 )

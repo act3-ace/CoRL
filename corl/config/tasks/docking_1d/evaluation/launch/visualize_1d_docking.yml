@@ -1,0 +1,11 @@
+artifact_metrics:
+  location: <SAVE_LOCATION>
+  
+artifact_visualization:
+  location: <SAVE_LOCATION>/visualizations/
+
+visualizations:
+- class_path: corl.evaluation.visualization.print.Print
+  init_args:
+    event_table_print: true
+    

@@ -10,21 +10,15 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
 
-import gym
-import numpy as np
-import pytest
-from gym import spaces
-import typing
 
 import corl.simulators.six_dof.base_six_dof_properties as six_dof_props
 
 
 def test_6dof_default_props():
-
     six_dof_props.LatLonProp()
-    six_dof_props.LatLonAltProp()
+    six_dof_props.LatLonProp()
     six_dof_props.AltitudePropMeters(high=[1000.0])
-    six_dof_props.AltitudeRateProp(low=[-1000.0],high=[1000.0],unit=["m/s"])
+    six_dof_props.AltitudeRateProp(low=[-1000.0], high=[1000.0], unit="meter / second")
     six_dof_props.OrientationProp()
     six_dof_props.OrientationRateProp()
     six_dof_props.FuelProp()
@@ -35,7 +29,7 @@ def test_6dof_default_props():
     six_dof_props.AccelerationNEDProp()
     six_dof_props.FlightPathAngleProp()
     six_dof_props.FlightPathAngleRadProp()
-    six_dof_props.GloadProp()
+    six_dof_props.GLoadProp()
     six_dof_props.GloadNzProp()
     six_dof_props.GloadNyProp()
     six_dof_props.AngleOfAttackProp()
@@ -45,4 +39,3 @@ def test_6dof_default_props():
     six_dof_props.FuelWeightProp()
     six_dof_props.WindDirectionProp()
     six_dof_props.WindSpeedProp()
-

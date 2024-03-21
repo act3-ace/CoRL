@@ -2,10 +2,9 @@
 This module defines the measurement and control properties for Double Integrator spacecraft sensors and controllers.
 """
 
-import typing
+from typing import Annotated
 
-from pydantic import Field, StrictFloat, StrictStr
-from typing_extensions import Annotated
+from pydantic import Field, StrictFloat
 
 from corl.libraries.property import BoxProp
 
@@ -27,9 +26,9 @@ class PositionProp(BoxProp):
     """
 
     name: str = "position"
-    low: Annotated[typing.List[StrictFloat], Field(min_items=1, max_items=1)] = [-50000.0]
-    high: Annotated[typing.List[StrictFloat], Field(min_items=1, max_items=1)] = [50000.0]
-    unit: Annotated[typing.List[StrictStr], Field(min_items=1, max_items=1)] = ["m"]
+    low: Annotated[list[StrictFloat], Field(min_length=1, max_length=1)] = [-150.0]
+    high: Annotated[list[StrictFloat], Field(min_length=1, max_length=1)] = [150.0]
+    unit: str = "meter"
     description: str = "Position Sensor Properties"
 
 
@@ -50,9 +49,9 @@ class VelocityProp(BoxProp):
     """
 
     name: str = "velocity"
-    low: Annotated[typing.List[StrictFloat], Field(min_items=1, max_items=1)] = [-2000.0]
-    high: Annotated[typing.List[StrictFloat], Field(min_items=1, max_items=1)] = [2000.0]
-    unit: Annotated[typing.List[StrictStr], Field(min_items=1, max_items=1)] = ["m/s"]
+    low: Annotated[list[StrictFloat], Field(min_length=1, max_length=1)] = [-50.0]
+    high: Annotated[list[StrictFloat], Field(min_length=1, max_length=1)] = [50.0]
+    unit: str = "meter / second"
     description: str = "Velocity Sensor Properties"
 
 
@@ -73,7 +72,7 @@ class ThrustProp(BoxProp):
     """
 
     name: str = "thrust"
-    low: Annotated[typing.List[StrictFloat], Field(min_items=1, max_items=1)] = [-1.0]
-    high: Annotated[typing.List[StrictFloat], Field(min_items=1, max_items=1)] = [1.0]
-    unit: Annotated[typing.List[StrictStr], Field(min_items=1, max_items=1)] = ["newtons"]
+    low: Annotated[list[StrictFloat], Field(min_length=1, max_length=1)] = [-1.0]
+    high: Annotated[list[StrictFloat], Field(min_length=1, max_length=1)] = [1.0]
+    unit: str = "newtons"
     description: str = "Direct Thrust Control"

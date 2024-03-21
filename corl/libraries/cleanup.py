@@ -13,17 +13,27 @@ import typing
 
 
 def cleanup(fn: typing.Callable):
-    """Returns an object that will call fn when it goes out of scope
-    """
+    """Returns an object that will call fn when it goes out of scope"""
 
     class ScopedDestructor:
         """calls fn when this goes out of scope"""
 
         def __init__(self):
             self.abort = False
+            self.clean = False
 
         def __del__(self):
-            if not self.abort:
+            self.cleanup()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self.cleanup()
+
+        def cleanup(self):
+            if not self.abort and not self.clean:
+                self.clean = True
                 fn()
 
     return ScopedDestructor()

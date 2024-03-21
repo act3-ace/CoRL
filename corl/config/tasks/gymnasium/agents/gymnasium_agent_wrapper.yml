@@ -1,0 +1,98 @@
+# ---------------------------------------------------------------------------
+#
+#
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
+
+"agent": "corl.agents.base_agent.TrainableBaseAgent"
+"config":
+    {
+        "parts":
+            [{ "part": "Controller_Gymnasium" }, { "part": "Sensor_State" }],
+        "episode_parameter_provider": !include ./baseline_epp.yml,
+        "glues":
+            [
+                {
+                    "functor": "corl.glues.common.controller_glue.ControllerGlue",
+                    "config": { "controller": "Controller_Gymnasium" },
+                },
+                {
+                    "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+                    "config":
+                        {
+                            "sensor": "Sensor_State",
+                            "normalization": { "enabled": False },
+                        },
+                },
+                {
+                    "functor": "corl.glues.common.target_value_difference.TargetValueDifference",
+                    "wrapped":
+                        {
+                            "sensor":
+                                {
+                                    "functor": "corl.glues.common.observe_sensor.ObserveSensor",
+                                    "config":
+                                        {
+                                            "sensor": "Sensor_State",
+                                            "normalization":
+                                                { "enabled": False },
+                                        },
+                                },
+                        },
+                    "config":
+                        {
+                            "target_value":
+                                { "value": [0.0], "unit": dimensionless },
+                            "index": 0,
+                            "limit":
+                                {
+                                    "minimum":
+                                        {
+                                            "value": [-5000],
+                                            "unit": dimensionless,
+                                        },
+                                    "maximum":
+                                        {
+                                            "value": [5000],
+                                            "unit": dimensionless,
+                                        },
+                                    "unit": dimensionless,
+                                },
+                        },
+                },
+            ],
+        "dones": !include ./baseline_dones.yml,
+        "rewards":
+            [
+                {
+                    "name": "GymnasiumReward",
+                    "functor": "corl.rewards.gymnasium_reward.GymnasiumReward",
+                    "config": {},
+                },
+                {
+                    "name": "GymnasiumExtractorReward",
+                    "functor": "corl.rewards.exponential_decay_from_target_value.ExponentialDecayFromTargetValue",
+                    "config": {
+                            "observation":
+                                {
+                                    "fields":
+                                        [
+                                            "Obs_Sensor_StateDiff",
+                                            "direct_observation_diff",
+                                        ],
+                                },
+                            "index": 0,
+                            "eps": 1, # THIS IS RADIANS
+                            "reward_scale": .000000000001,
+                            "is_closer": true,
+                            "closer_tolerance": 10,
+                        },
+                },
+            ],
+    }

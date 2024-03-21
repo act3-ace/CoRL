@@ -8,9 +8,9 @@ This is a US Government Work not subject to copyright protection in the US.
 The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
-The following module contains the implementation for the AACO stacked observation
+The following module contains the implementation for the  stacked observation
 """
-import gym
+import gymnasium
 import numpy as np
 from ray.rllib.models import ModelCatalog
 from ray.rllib.models.tf.misc import normc_initializer
@@ -24,8 +24,8 @@ from ray.rllib.utils.typing import Dict, List, TensorType
 tf1, tf, tfv = try_import_tf()
 
 
-class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
-    """ The following class is a slight modification of the base Fully Connected Model within RLLIB. The model adds on
+class FrameStackingModel(TFModelV2):
+    """The following class is a slight modification of the base Fully Connected Model within RLLIB. The model adds on
         the ability to do frame stacking. This is done within the model to (1) enable the HPARAM search over the setting
         for the number of frames - Not possible with environment wrappers (2) enable a more in line view of the
         framestacking inline with paper representation.
@@ -66,7 +66,7 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
         Inputs  = 1 X Frames X (Obs + Rewards + Actions)
         Outputs = 1 X Actions
 
-        The following is a example summary of the model from tensor flow on the AACO base Single Environments
+        The following is a example summary of the model from tensor flow on the  base Single Environments
         Model: "functional_1"
         __________________________________________________________________________________________________
         Layer (type)                    Output Shape         Param #     Connected to
@@ -117,10 +117,10 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
         """Class constructor
 
         Arguments:
-            obs_space (gym.spaces.Space): Observation space of the target gym
+            obs_space (gymnasium.spaces.Space): Observation space of the target gymnasium
                 env. This may have an `original_space` attribute that
                 specifies how to unflatten the tensor into a ragged tensor.
-            action_space (gym.spaces.Space): Action space of the target gym
+            action_space (gymnasium.spaces.Space): Action space of the target gymnasium
                 env.
             num_outputs (int): Number of output units of the model.
             model_config (ModelConfigDict): Config for the model, documented
@@ -166,23 +166,17 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
         # Select the input layer configuration based on input arguments
         self.include_rewards = include_rewards
         self.include_actions = include_actions
-        self.input_list, self.inputs = FrameStackingModel.select_input_layer_configuration(include_rewards,
-                                                                                           include_actions,
-                                                                                           observations,
-                                                                                           actions,
-                                                                                           rewards)
+        self.input_list, self.inputs = FrameStackingModel.select_input_layer_configuration(
+            include_rewards, include_actions, observations, actions, rewards
+        )
 
         # Create layers 0 to second-last.
         last_layer = self.create_dense_hidden_layers(hiddens, self.inputs, activation, "fc")
 
         # The action distribution outputs.
-        logits_out, last_layer = self.create_last_fc_layer_output(no_final_linear,
-                                                                  num_outputs,
-                                                                  activation,
-                                                                  last_layer,
-                                                                  hiddens,
-                                                                  post_fcnet_hiddens,
-                                                                  obs_space)
+        logits_out, last_layer = self.create_last_fc_layer_output(
+            no_final_linear, num_outputs, activation, last_layer, hiddens, post_fcnet_hiddens, obs_space
+        )
 
         # Concat the log std vars to the end of the state-dependent means.
         if free_log_std and logits_out is not None:
@@ -195,8 +189,9 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
 
         last_vf_layer = self.build_vf_network(vf_share_layers, self.inputs, hiddens, post_fcnet_hiddens, activation)
 
-        value_out = tf.keras.layers.Dense(1, name="value_out", activation=None, kernel_initializer=normc_initializer(0.01)
-                                          )(last_vf_layer if last_vf_layer is not None else last_layer)
+        value_out = tf.keras.layers.Dense(1, name="value_out", activation=None, kernel_initializer=normc_initializer(0.01))(
+            last_vf_layer if last_vf_layer is not None else last_layer
+        )
 
         self.base_model = tf.keras.Model(self.input_list, [(logits_out if logits_out is not None else last_layer), value_out])
         # print(self.base_model.summary())
@@ -232,11 +227,11 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
         return input_list, inputs
 
     def create_input_layers(self, obs_space, action_space):
-        """Creats the input layers for starting the graph
+        """Creates the input layers for starting the graph
 
         Arguments:
-            obs_space {gym.Space} -- The input space - flattended
-            action_space {gym.Space} -- The input space - flattended
+            obs_space {gymnasium.Space} -- The input space - flattended
+            action_space {gymnasium.Space} -- The input space - flattended
 
         Returns:
             tuple[tensor] -- The input layers for observations, rewards, actions
@@ -281,11 +276,12 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
                 )
 
             if num_outputs:
-                logits_out = tf.keras.layers.Dense(num_outputs, name="fc_out", activation=None,
-                                                   kernel_initializer=normc_initializer(0.01))(last_layer)
+                logits_out = tf.keras.layers.Dense(num_outputs, name="fc_out", activation=None, kernel_initializer=normc_initializer(0.01))(
+                    last_layer
+                )
             # Adjust num_outputs to be the number of nodes in the last layer.
             else:
-                self.num_outputs = ([int(np.product(obs_space.shape))] + hiddens[-1:])[-1]
+                self.num_outputs = ([int(np.prod(obs_space.shape))] + hiddens[-1:])[-1]
         return logits_out, last_layer
 
     def build_vf_network(self, vf_share_layers, inputs, hiddens, flatten_plus_dense, activation):
@@ -318,20 +314,25 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
             obs_space: The observation space definition
             flattened_action_space: flattened action space
         """
-        self.view_requirements[FrameStackingModel.PREV_N_OBS
-                               ] = ViewRequirement(data_col="obs", shift=f"-{num_frames - 1}:0", space=obs_space)
+        self.view_requirements[FrameStackingModel.PREV_N_OBS] = ViewRequirement(
+            data_col="obs", shift=f"-{num_frames - 1}:0", space=obs_space
+        )
         if self.include_rewards:
             self.view_requirements[FrameStackingModel.PREV_N_REWARDS] = ViewRequirement(data_col="rewards", shift=f"-{self.num_frames}:-1")
         if self.include_actions:
             self.view_requirements[FrameStackingModel.PREV_N_ACTIONS] = ViewRequirement(
                 data_col="actions",
                 shift=f"-{self.num_frames}:-1",
-                space=gym.spaces.box.Box(low=-np.inf, high=np.inf, shape=(len(flattened_action_space), ), dtype=np.int64)
+                space=gymnasium.spaces.box.Box(low=-np.inf, high=np.inf, shape=(len(flattened_action_space),), dtype=np.int64),
             )
 
-    def forward(self, input_dict: Dict[str, TensorType], state: List[TensorType],
-                seq_lens: TensorType) -> (TensorType, List[TensorType]):  # type: ignore
-        """ Call the model with the given input tensors and state.
+    def forward(
+        self,
+        input_dict: Dict[str, TensorType],
+        state: List[TensorType],
+        seq_lens: TensorType,
+    ) -> (TensorType, List[TensorType]):  # type: ignore
+        """Call the model with the given input tensors and state.
 
         Any complex observations (dicts, tuples, etc.) will be unpacked by __call__ before being passed to forward(). To access
         the flattened observation tensor, refer to input_dict[“obs”].
@@ -343,25 +344,31 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
         Custom models should override this instead of __call__.
 
         Arguments:
-            input_dict (dict) – dictionary of input tensors, including “obs”, “obs_flat”, “prev_action”, “prev_reward”, “is_training”,
+            input_dict (dict) - dictionary of input tensors, including “obs”, “obs_flat”, “prev_action”, “prev_reward”, “is_training”,
                                 “eps_id”, “agent_id”, “infos”, and “t”.
-            state (list) – list of state tensors with sizes matching those returned by get_initial_state + the batch dimension
-            seq_lens (Tensor) – 1d tensor holding input sequence lengths
+            state (list) - list of state tensors with sizes matching those returned by get_initial_state + the batch dimension
+            seq_lens (Tensor) - 1d tensor holding input sequence lengths
 
         Returns:
             The model output tensor of size [BATCH, num_outputs], and the new RNN state.
         """
 
         if self.include_actions and not self.include_rewards:
-            model_out, self._value_out = self.base_model([input_dict[FrameStackingModel.PREV_N_OBS],
-                                                          input_dict[FrameStackingModel.PREV_N_ACTIONS]])
+            model_out, self._value_out = self.base_model(
+                [input_dict[FrameStackingModel.PREV_N_OBS], input_dict[FrameStackingModel.PREV_N_ACTIONS]]
+            )
         elif not self.include_actions and self.include_rewards:
-            model_out, self._value_out = self.base_model([input_dict[FrameStackingModel.PREV_N_OBS],
-                                                          input_dict[FrameStackingModel.PREV_N_REWARDS]])
+            model_out, self._value_out = self.base_model(
+                [input_dict[FrameStackingModel.PREV_N_OBS], input_dict[FrameStackingModel.PREV_N_REWARDS]]
+            )
         elif self.include_actions and self.include_rewards:
-            model_out, self._value_out = self.base_model([input_dict[FrameStackingModel.PREV_N_OBS],
-                                                          input_dict[FrameStackingModel.PREV_N_ACTIONS],
-                                                          input_dict[FrameStackingModel.PREV_N_REWARDS]])
+            model_out, self._value_out = self.base_model(
+                [
+                    input_dict[FrameStackingModel.PREV_N_OBS],
+                    input_dict[FrameStackingModel.PREV_N_ACTIONS],
+                    input_dict[FrameStackingModel.PREV_N_REWARDS],
+                ]
+            )
         else:
             model_out, self._value_out = self.base_model([input_dict[FrameStackingModel.PREV_N_OBS]])
         return model_out, state
@@ -398,7 +405,7 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
         """Creates the hidden dense layers
 
         Arguments:
-            hiddens {List[int]} -- The list of hidden layers for the FC componets
+            hiddens {List[int]} -- The list of hidden layers for the FC components
             layer {Tensor} -- [description] --- TODO Remove as not needed to pass in...
             activation {Function} -- [description]
             prefix {str} -- The string to use for the naming of the layer
@@ -428,8 +435,9 @@ class FrameStackingModel(TFModelV2):  # pylint: disable=abstract-method
         flatten_name = f"{prefix}_flatten_{index}"
         dense_name = f"{prefix}_{index}"
         layer = tf.keras.layers.Flatten(name=flatten_name)(layer)
-        layer = tf.keras.layers.Dense(hiddens[index], name=dense_name, activation=activation,
-                                      kernel_initializer=normc_initializer(1.0))(layer)
+        layer = tf.keras.layers.Dense(hiddens[index], name=dense_name, activation=activation, kernel_initializer=normc_initializer(1.0))(
+            layer
+        )
         for index_cat, size in enumerate(post_fcnet_hiddens):
             layer = tf.keras.layers.Dense(
                 size, name=f"{dense_name}_cat_{index_cat}", activation=activation, kernel_initializer=normc_initializer(1.0)

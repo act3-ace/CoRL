@@ -10,25 +10,27 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 policy mapping functions
 """
-import typing
 from abc import abstractmethod
 
 from pydantic import BaseModel
 
 
-class PolicyMappingBase():
-    '''Base class for policy mapping implementations
-    '''
+class PolicyMappingValidatorBase(BaseModel):
+    ...
 
-    def __init__(self, **kwargs):
-        self.config = self.get_validator(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[BaseModel]:
+class PolicyMappingBase:
+    """Base class for policy mapping implementations"""
+
+    def __init__(self, **kwargs) -> None:
+        self.config = self.get_validator()(**kwargs)
+
+    @staticmethod
+    def get_validator() -> type[PolicyMappingValidatorBase]:
         """
         get validator for this Done Functor
         """
-        return BaseModel
+        return PolicyMappingValidatorBase
 
     @abstractmethod
     def __call__(self, agent_id, episode, worker):
@@ -39,29 +41,27 @@ class PolicyMappingBase():
 
 
 class PolicyIsAgent(PolicyMappingBase):
-    '''Map all agents to same policy
-    '''
+    """Map all agents to same policy"""
 
     def __call__(self, agent_id, episode, worker):
         return agent_id
 
 
-class SinglePolicyValidator(BaseModel):
-    '''SinglePolicyValidator
-    '''
-    policy_id: str = 'blue0'
+class SinglePolicyValidator(PolicyMappingValidatorBase):
+    """SinglePolicyValidator"""
+
+    policy_id: str = "blue0"
 
 
 class SinglePolicy(PolicyMappingBase):
-    '''Map all agents to same policy
-    '''
+    """Map all agents to same policy"""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         self.config: SinglePolicyValidator
         super().__init__(**kwargs)
 
-    @property
-    def get_validator(self) -> typing.Type[SinglePolicyValidator]:
+    @staticmethod
+    def get_validator() -> type[SinglePolicyValidator]:
         """
         get validator for this Done Functor
         """

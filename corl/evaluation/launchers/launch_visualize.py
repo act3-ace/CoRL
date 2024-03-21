@@ -29,21 +29,16 @@ def get_args(path=None):
     parser.add_class_arguments(EvaluationArtifact_Visualization, "artifact_visualization", instantiate=True)
 
     # Link location such that if visualization isn't given, the metrics location will be used
-    parser.link_arguments('artifact_metrics.location', 'artifact_visualization.location', apply_on='instantiate')
+    parser.link_arguments("artifact_metrics.location", "artifact_visualization.location", apply_on="instantiate")
 
-    parser.add_argument('--visualizations', type=typing.List[Visualization])
+    parser.add_argument("--visualizations", type=list[Visualization])
 
-    if path is None:
-        args = parser.parse_args()
-        instantiate = parser.instantiate_classes(args)
-    else:
-        args = parser.parse_path(path)
-        instantiate = parser.instantiate_classes(args)
-
+    args = parser.parse_args() if path is None else parser.parse_path(path)
+    instantiate = parser.instantiate_classes(args)
     return args, instantiate
 
 
-def main(instantiate: typing.Dict[str, typing.Any]):
+def main(instantiate: dict[str, typing.Any] | jsonargparse.Namespace):
     """
     Execute the visualization portion of the evaluation framework
 
@@ -63,7 +58,7 @@ def pre_main():
     """
     calls gets current args and passes them to main
     """
-    instantiated, _ = get_args()
+    _, instantiated = get_args()
     main(instantiated)
 
 
