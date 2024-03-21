@@ -1,0 +1,44 @@
+{
+	"name": "Training with GPU",
+	"dockerComposeFile": "../docker/docker-compose.yml",
+	"service": "develop",
+	"runServices": [
+		"develop"
+	],
+	"workspaceFolder": "/opt/project",
+	"remoteUser": "developer",
+	"overrideCommand": true,
+	"customizations": {
+	  "vscode": {
+		"settings": {
+		  "terminal.integrated.defaultProfile.linux": "bash",
+		  "terminal.integrated.profiles.linux": {
+			"bash": {
+			  "path": "/bin/bash",
+			  "icon": "terminal-bash"
+			}
+		  },
+		  "python.defaultInterpreterPath": "/home/developer/virtualenvs/bin/python",
+		  "python.testing.unittestEnabled": false,
+		  "python.testing.nosetestsEnabled": false,
+		  "python.testing.pytestEnabled": true,
+		  "autoDocstring.docstringFormat": "numpy",
+		  "remote.extensionKind": {
+			"ms-azuretools.vscode-docker": "workspace"
+		  },
+		  "files.insertFinalNewline": false,
+		  "files.trimTrailingWhitespace": true,
+		  "[markdown]": {
+			"files.trimTrailingWhitespace": false
+		  },
+		  "trailing-spaces.highlightCurrentLine": false,
+		  "trailing-spaces.trimOnSave": true
+		},
+		"extensions": [
+		  "ms-azuretools.vscode-docker",
+		  "ms-python.python",
+		  "ms-python.vscode-pylance"
+		]
+	  }
+	}
+}

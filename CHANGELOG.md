@@ -1,16 +1,19 @@
 ## 3.14.10
 
+
 ### Bug Fixes
 
-* Move self out of trial_name_prefix closure
+* Move self out of trial_name_prefix closure 
 
 ## 3.14.9
 
+
 ### Bug Fixes
 
-* Resolve "Fix reading policy configs"
+* Resolve "Fix reading policy configs" 
 
 ## 3.14.8
+
 
 ### Bug Fixes
 
@@ -20,11 +23,13 @@
 
 ## 3.14.7
 
+
 ### Bug Fixes
 
 * Update breaking scipy dependency ()
 
 ## 3.14.6
+
 
 ### Bug Fixes
 
@@ -33,11 +38,13 @@
 
 ## 3.14.5
 
+
 ### Bug Fixes
 
 * various eval fixes ()
 
 ## 3.14.4
+
 
 ### Bug Fixes
 
@@ -46,11 +53,13 @@
 
 ## 3.14.3
 
+
 ### Bug Fixes
 
 * only copy if config dir exists ()
 
 ## 3.14.2
+
 
 ### Bug Fixes
 
@@ -58,11 +67,13 @@
 
 ## 3.14.1
 
+
 ### Bug Fixes
 
 * fix_eval_test_cases ()
 
 # 3.14.0
+
 
 ### Features
 
@@ -70,11 +81,13 @@
 
 ## 3.13.3
 
+
 ### Bug Fixes
 
 * **docs:** update badges macro script ()
 
 ## 3.13.2
+
 
 ### Bug Fixes
 
@@ -82,17 +95,20 @@
 
 ## 3.13.1
 
+
 ### Bug Fixes
 
 * docs update with act3-pt template, revise qsg ()
 
 # 3.13.0
 
+
 ### Features
 
 * include configs from installed packages ()
 
 ## 3.12.1
+
 
 ### Bug Fixes
 
@@ -101,11 +117,13 @@
 
 ## 3.12.1
 
+
 ### Bug Fixes
 
 * lock tensorflow to 2.15 ()
 
 # 3.12.0
+
 
 ### Features
 
@@ -113,11 +131,13 @@
 
 ## 3.11.1
 
+
 ### Bug Fixes
 
 * add corl_path yaml directive ()
 
 # 3.11.0
+
 
 ### Features
 
@@ -125,11 +145,13 @@
 
 ## 3.10.4
 
+
 ### Bug Fixes
 
 * re-add trial creator ()
 
 ## 3.10.3
+
 
 ### Bug Fixes
 
@@ -137,11 +159,13 @@
 
 ## 3.10.2
 
+
 ### Bug Fixes
 
 * air bugfix ()
 
 ## 3.10.1
+
 
 ### Bug Fixes
 
@@ -149,11 +173,13 @@
 
 # 3.10.0
 
+
 ### Features
 
 * ray2.9 + pydantic 2 ()
 
 ## 3.9.4
+
 
 ### Bug Fixes
 
@@ -161,11 +187,13 @@
 
 ## 3.9.3
 
+
 ### Bug Fixes
 
 * Python3.11 support ()
 
 ## 3.9.2
+
 
 ### Bug Fixes
 
@@ -173,11 +201,13 @@
 
 ## 3.9.1
 
+
 ### Bug Fixes
 
 * update to ray 2.8 ()
 
 # 3.9.0
+
 
 ### Features
 
@@ -185,11 +215,13 @@
 
 ## 3.8.1
 
+
 ### Bug Fixes
 
 * convert_evaluator_to_pydantic ()
 
 # 3.8.0
+
 
 ### Features
 
@@ -197,11 +229,13 @@
 
 ## 3.7.3
 
+
 ### Bug Fixes
 
 * add_save_metadata ()
 
 ## 3.7.2
+
 
 ### Bug Fixes
 
@@ -209,11 +243,13 @@
 
 ## 3.7.1
 
+
 ### Bug Fixes
 
 * updates to the eval for working with air --- still needs other fixes /... ()
 
 # 3.7.0
+
 
 ### Features
 
@@ -221,11 +257,13 @@
 
 ## 3.6.9
 
+
 ### Bug Fixes
 
 * add corldirectory paths ()
 
 ## 3.6.8
+
 
 ### Bug Fixes
 
@@ -233,11 +271,13 @@
 
 ## 3.6.7
 
+
 ### Bug Fixes
 
 * fix_space_normalization ()
 
 ## 3.6.6
+
 
 ### Bug Fixes
 
@@ -245,17 +285,20 @@
 
 ## 3.6.5
 
+
 ### Bug Fixes
 
 * updates for the auto documentation via the Export setup experiment ()
 
 ## 3.6.4
 
+
 ### Bug Fixes
 
 * Updates to the spelling in the code base --- Fixes the export setup experiment. ()
 
 ## 3.6.3
+
 
 ### Bug Fixes
 
@@ -264,11 +307,13 @@
 
 ## 3.6.2
 
+
 ### Bug Fixes
 
 * updates for the public release process. ()
 
 ## 3.6.1
+
 
 ### Bug Fixes
 
@@ -276,11 +321,13 @@
 
 # 3.6.0
 
+
 ### Bug Fixes
 
 * Add "pass" to BaseAgent reset() ()
 * Fix linting errors ()
 * Remove pass from BaseAgent.reset() ()
+
 
 ### Features
 
@@ -288,11 +335,13 @@
 
 ## 3.5.10
 
+
 ### Bug Fixes
 
 * Evaluate generic recorder ()
 
 ## 3.5.9
+
 
 ### Bug Fixes
 
@@ -300,11 +349,13 @@
 
 ## 3.5.8
 
+
 ### Bug Fixes
 
 * fix environment_wrappers file spelling mistake ()
 
 ## 3.5.7
+
 
 ### Bug Fixes
 
@@ -312,17 +363,20 @@
 
 ## 3.5.6
 
+
 ### Bug Fixes
 
 * attempt to remove the cwd from ray init ()
 
 ## 3.5.5
 
+
 ### Bug Fixes
 
-* hot fix to add missing **init**.py file -- no impact to functionality ()
+* hot fix to add missing __init__.py file -- no impact to functionality ()
 
 ## 3.5.4
+
 
 ### Bug Fixes
 
@@ -330,11 +384,13 @@
 
 ## 3.5.3
 
+
 ### Bug Fixes
 
 * add new yml loading capabilities and fix bug related to dict patches ()
 
 ## 3.5.2
+
 
 ### Bug Fixes
 
@@ -342,11 +398,13 @@
 
 ## 3.5.1
 
+
 ### Bug Fixes
 
 * fix scalar values not being seen properly by Quantities ()
 
 # 3.5.0
+
 
 ### Features
 
@@ -354,11 +412,13 @@
 
 # 3.4.0
 
+
 ### Features
 
 * replace pint with built-in corl library ()
 
 ## 3.3.11
+
 
 ### Bug Fixes
 
@@ -366,11 +426,13 @@
 
 ## 3.3.10
 
+
 ### Bug Fixes
 
 * init_ray_method ()
 
 ## 3.3.9
+
 
 ### Bug Fixes
 
@@ -378,11 +440,13 @@
 
 ## 3.3.8
 
+
 ### Bug Fixes
 
 * New Pytorch base Image, CoRL, and Poetry ()
 
 ## 3.3.7
+
 
 ### Bug Fixes
 
@@ -390,11 +454,13 @@
 
 ## 3.3.6
 
+
 ### Bug Fixes
 
 * fix_corrupted_measurment_units ()
 
 ## 3.3.5
+
 
 ### Bug Fixes
 
@@ -402,11 +468,13 @@
 
 ## 3.3.4
 
+
 ### Bug Fixes
 
 * use CorlRepeated so is_np_flattenable works ()
 
 ## 3.3.3
+
 
 ### Bug Fixes
 
@@ -414,11 +482,13 @@
 
 ## 3.3.2
 
+
 ### Bug Fixes
 
 * adds the cwd to the working dir of the ray remote actors ()
 
 ## 3.3.1
+
 
 ### Bug Fixes
 
@@ -426,11 +496,13 @@
 
 # 3.3.0
 
+
 ### Features
 
 * updates from initial downstream integrations ()
 
 ## 3.2.6
+
 
 ### Bug Fixes
 
@@ -438,17 +510,20 @@
 
 ## 3.2.5
 
+
 ### Bug Fixes
 
 * documentation/linting updates ()
 
 ## 3.2.4
 
+
 ### Bug Fixes
 
 * mem store issues ()
 
 ## 3.2.3
+
 
 ### Bug Fixes
 
@@ -457,11 +532,13 @@
 
 ## 3.2.2
 
+
 ### Bug Fixes
 
 * Resolve "migrate linting to ruff" ()
 
 ## 3.2.1
+
 
 ### Bug Fixes
 
@@ -469,9 +546,11 @@
 
 # 3.2.0
 
+
 ### Bug Fixes
 
 * dockerfile pulled from *** ()
+
 
 ### Features
 
@@ -479,11 +558,13 @@
 
 ## 3.1.3
 
+
 ### Bug Fixes
 
 * corl 3.0 bug fixes based on down stream integrations ()
 
 ## 3.1.2
+
 
 ### Bug Fixes
 
@@ -491,11 +572,13 @@
 
 ## 3.1.1
 
+
 ### Bug Fixes
 
 * dockerfile release pipeline fix? ()
 
 # 3.1.0
+
 
 ### Features
 
@@ -503,7 +586,9 @@
 
 # 3.0.0
 
+
 * Merge branch 'linting' into 'main' ()
+
 
 ### BREAKING CHANGES
 
@@ -513,17 +598,20 @@ See merge request /act3-rl/corl!34
 
 ## 2.14.1
 
+
 ### Bug Fixes
 
 * **cicd:** remove deprecated cicd scripts, functionality has been moved to a job ()
 
 # 2.14.0
 
+
 ### Features
 
 * support repeated obs ()
 
 ## 2.13.11
+
 
 ### Bug Fixes
 
@@ -544,15 +632,17 @@ See merge request /act3-rl/corl!34
 
 ## 2.13.10
 
+
 ### Bug Fixes
 
 * update act3 python job ()
 
 # 1.0.0 (2023-07-27)
 
+
 ### Bug Fixes
 
-* too many lines of code in run_experiment() ()
+*  too many lines of code in run_experiment() ()
 * 1. update requirements, 2. Make dict mapping, 3. add requirement ()
 * A number of changes related to output units ()
 * *** 163v2 ()
@@ -581,7 +671,7 @@ See merge request /act3-rl/corl!34
 * Add int ()
 * Add int ()
 * Add int to assert ()
-* add missing **init**.py ()
+* add missing __init__.py ()
 * add missing commit and fix test ()
 * add missing install command ()
 * Add mkdocstrings)
@@ -862,25 +952,25 @@ See merge request /act3-rl/corl!34
 * Log at bound successes ()
 * Logic improvements ()
 * made normalization automatic; fixed raw_obs issue ()
-* make _add_git_hashes_to_config() and_update_rllib_config() private. ()
+* make _add_git_hashes_to_config() and _update_rllib_config() private. ()
 * Make dependent parameters a dictionary ()
 * Make error checking more precise ()
 * Make filepath parsing recursive ()
 * Make plugin library fail on partial incompatible match ()
 * make release.sh +x and undo revert ()
 * March cicd updates ()
-* Merge branch '126-evaluator-supports-explore-false' into 'main' (), closes
-* Merge branch '135-evaluation-framework-can-output-multiple-visualizations' into 'main' (), closes
-* Merge branch '143-acedt-integration-integrate-acedt-utility-to-evaluation-framework-pipeline' into 'main' (), closes
-* Merge branch '145-add-obs-space-and-units-to-call-for-done-conditions' into 'main' (), closes
+* Merge branch '126-evaluator-supports-explore-false' into 'main' (), closes 
+* Merge branch '135-evaluation-framework-can-output-multiple-visualizations' into 'main' (), closes 
+* Merge branch '143-acedt-integration-integrate-acedt-utility-to-evaluation-framework-pipeline' into 'main' (), closes 
+* Merge branch '145-add-obs-space-and-units-to-call-for-done-conditions' into 'main' (), closes 
 * Merge branch '168-temp-hack' into 'main' ()
-* Merge branch '203-parametervalidator-dependent_parameters-typing' into 'main' (), closes
-* Merge branch '43-add-debug-flag-to-train_rl' into 'main' (), closes
-* Merge branch '47-validators-as-properties' into 'main' (), closes
-* Merge branch '48-exclusiveness-as-property' into 'main' (), closes
-* Merge branch '49-baseplatformpart-validator' into 'main' (), closes
+* Merge branch '203-parametervalidator-dependent_parameters-typing' into 'main' (), closes 
+* Merge branch '43-add-debug-flag-to-train_rl' into 'main' (), closes 
+* Merge branch '47-validators-as-properties' into 'main' (), closes 
+* Merge branch '48-exclusiveness-as-property' into 'main' (), closes 
+* Merge branch '49-baseplatformpart-validator' into 'main' (), closes 
 * Merge branch '67-observesensor-output-units' into 'main' (), closes  
-* Merge branch '74_configurable_sanity_check' into 'main' (), closes
+* Merge branch '74_configurable_sanity_check' into 'main' (), closes 
 * Merge branch '***-163v2' into 'main' ()
 * Merge branch 'add_create_training_observations_fallback' into 'main' ()
 * Merge branch 'auto_updates' of *****:act3-rl/act3-rl-core into auto_updates ()
@@ -1259,7 +1349,9 @@ See merge request /act3-rl/corl!34
 * **warning:** Fix precision warning ()
 * **warning:** Fix precision warning ()
 
+
 * Merge branch 'commander_agent_class' into 'main' ()
+
 
 ### Features
 
@@ -1324,8 +1416,8 @@ See merge request /act3-rl/corl!34
 * Initial copy from *** act3 core ()
 * initial pass at dependent random variables ()
 * make curl stage external container ()
-* Merge branch '17-update-ray-to-version-1.7' into 'main' (), closes
-* Merge branch '7-agent-config-variable-store' into 'main' (), closes
+* Merge branch '17-update-ray-to-version-1.7' into 'main' (), closes 
+* Merge branch '7-agent-config-variable-store' into 'main' (), closes 
 * Merge branch 'evaluation-support' into 'main' ()
 * Merge branch 'fix-container-package' into 'main' ()
 * Merge branch 'fix/package2' into 'main' ()
@@ -1389,6 +1481,7 @@ See merge request /act3-rl/corl!34
 * Utilize validators for done conditions ()
 * working docking 1d test cases config ()
 
+
 ### BREAKING CHANGES
 
 * CoRL 2.0
@@ -1397,11 +1490,13 @@ See merge request act3-rl/corl!317
 
 ## 2.13.8
 
+
 ### Bug Fixes
 
 * Streamlit: Agent Steps Options ()
 
 ## 2.13.7
+
 
 ### Bug Fixes
 
@@ -1409,11 +1504,13 @@ See merge request act3-rl/corl!317
 
 ## 2.13.6
 
+
 ### Bug Fixes
 
 * configurable state pickle writing on obs fail ()
 
 ## 2.13.5
+
 
 ### Bug Fixes
 
@@ -1421,11 +1518,13 @@ See merge request act3-rl/corl!317
 
 ## 2.13.4
 
+
 ### Bug Fixes
 
 * Resolve "Log short episodes to tensorboard" ()
 
 ## 2.13.3
+
 
 ### Bug Fixes
 
@@ -1433,11 +1532,13 @@ See merge request act3-rl/corl!317
 
 ## 2.13.2
 
+
 ### Bug Fixes
 
 * Remove redundant lines in reset and fixes the observer sensor so that you can set names ()
 
 ## 2.13.1
+
 
 ### Bug Fixes
 
@@ -1446,10 +1547,12 @@ See merge request act3-rl/corl!317
 
 # 2.13.0
 
+
 ### Bug Fixes
 
 * Fix annotation state alignment ()
 * update for task needed for flight tests ()
+
 
 ### Features
 
@@ -1457,11 +1560,13 @@ See merge request act3-rl/corl!317
 
 ## 2.12.1
 
+
 ### Bug Fixes
 
 * adds step time in seconds and steps to episode metadata ()
 
 # 2.12.0
+
 
 ### Features
 
@@ -1469,11 +1574,13 @@ See merge request act3-rl/corl!317
 
 # 2.11.0
 
+
 ### Features
 
 * streamlit unit conversion ()
 
 ## 2.10.8
+
 
 ### Bug Fixes
 
@@ -1481,11 +1588,13 @@ See merge request act3-rl/corl!317
 
 ## 2.10.7
 
+
 ### Bug Fixes
 
 * Resolve "Use actual units rather than configured for OverridableParameterWrapper" ()
 
 ## 2.10.6
+
 
 ### Bug Fixes
 
@@ -1493,11 +1602,13 @@ See merge request act3-rl/corl!317
 
 ## 2.10.5
 
+
 ### Bug Fixes
 
 * traces with units disappear ()
 
 ## 2.10.4
+
 
 ### Bug Fixes
 
@@ -1505,11 +1616,13 @@ See merge request act3-rl/corl!317
 
 ## 2.10.3
 
+
 ### Bug Fixes
 
 * Make dependent parameters a dictionary ()
 
 ## 2.10.2
+
 
 ### Bug Fixes
 
@@ -1517,13 +1630,15 @@ See merge request act3-rl/corl!317
 
 ## 2.10.1
 
+
 ### Bug Fixes
 
-* Merge branch '203-parametervalidator-dependent_parameters-typing' into 'main' (), closes
+* Merge branch '203-parametervalidator-dependent_parameters-typing' into 'main' (), closes 
 * Resolve "Environment simulator parameter magic strings" ()
 * Resolve "ParameterValidator.dependent_parameters typing" ()
 
 # 2.10.0
+
 
 ### Features
 
@@ -1531,15 +1646,18 @@ See merge request act3-rl/corl!317
 
 ## 2.9.1
 
+
 ### Bug Fixes
 
 * flatten arrays into new fields ()
 
 # 2.9.0
 
+
 ### Bug Fixes
 
 * Update gitlab pipeline version ()
+
 
 ### Features
 
@@ -1547,11 +1665,13 @@ See merge request act3-rl/corl!317
 
 ## 2.8.18
 
+
 ### Bug Fixes
 
 * revert changes that disabled auto rollout fragments ()
 
 ## 2.8.17
+
 
 ### Bug Fixes
 
@@ -1559,11 +1679,13 @@ See merge request act3-rl/corl!317
 
 ## 2.8.16
 
+
 ### Bug Fixes
 
 * updates to how we create the topological search ()
 
 ## 2.8.15
+
 
 ### Bug Fixes
 
@@ -1571,17 +1693,20 @@ See merge request act3-rl/corl!317
 
 ## 2.8.14
 
+
 ### Bug Fixes
 
 * sdf/comms ()
 
 ## 2.8.13
 
+
 ### Bug Fixes
 
 * Resolve "Create simulator callbacks" ()
 
 ## 2.8.12
+
 
 ### Bug Fixes
 
@@ -1590,6 +1715,7 @@ See merge request act3-rl/corl!317
 
 ## 2.8.11
 
+
 ### Bug Fixes
 
 * remove words ()
@@ -1597,11 +1723,13 @@ See merge request act3-rl/corl!317
 
 ## 2.8.10
 
+
 ### Bug Fixes
 
 * do not return empty obs for platforms without any glues ()
 
 ## 2.8.9
+
 
 ### Bug Fixes
 
@@ -1609,17 +1737,20 @@ See merge request act3-rl/corl!317
 
 ## 2.8.8
 
+
 ### Bug Fixes
 
 * Fix sps ()
 
 ## 2.8.7
 
+
 ### Bug Fixes
 
 * enable different parts and glue on each platform in multiplatform agent ()
 
 ## 2.8.6
+
 
 ### Bug Fixes
 
@@ -1632,11 +1763,13 @@ See merge request act3-rl/corl!317
 
 ## 2.8.5
 
+
 ### Bug Fixes
 
 * Ability to evaluate array action space ()
 
 ## 2.8.4
+
 
 ### Bug Fixes
 
@@ -1644,11 +1777,13 @@ See merge request act3-rl/corl!317
 
 ## 2.8.3
 
+
 ### Bug Fixes
 
 * sdf/fix-custom-policy-batches ()
 
 ## 2.8.2
+
 
 ### Bug Fixes
 
@@ -1657,11 +1792,13 @@ See merge request act3-rl/corl!317
 
 ## 2.8.1
 
+
 ### Bug Fixes
 
 * Make error checking more precise ()
 
 # 2.8.0
+
 
 ### Features
 
@@ -1669,17 +1806,20 @@ See merge request act3-rl/corl!317
 
 ## 2.7.10
 
+
 ### Bug Fixes
 
 * The following updates move to the latest docker images and support setup of act3_corl. ()
 
 ## 2.7.10-beta.5
 
+
 ### Bug Fixes
 
 * Framer rate step arg ()
 
 ## 2.7.10-beta.4
+
 
 ### Bug Fixes
 
@@ -1693,17 +1833,20 @@ See merge request act3-rl/corl!317
 
 ## 2.7.10-beta.3
 
+
 ### Bug Fixes
 
 * updates for the develop target ()
 
 ## 2.7.10-beta.2
 
+
 ### Bug Fixes
 
 * Merge remote-tracking branch 'origin/main' into beta ()
 
 ## 2.7.10-beta.1
+
 
 ### Bug Fixes
 
@@ -1737,11 +1880,13 @@ See merge request act3-rl/corl!317
 
 ## 2.7.9
 
+
 ### Bug Fixes
 
 * Eval episode artifact ()
 
 ## 2.7.8
+
 
 ### Bug Fixes
 
@@ -1749,11 +1894,13 @@ See merge request act3-rl/corl!317
 
 ## 2.7.7
 
+
 ### Bug Fixes
 
 * remove runtime error from eval pipeline checkpoint loading ()
 
 ## 2.7.6
+
 
 ### Bug Fixes
 
@@ -1761,17 +1908,20 @@ See merge request act3-rl/corl!317
 
 ## 2.7.5
 
+
 ### Bug Fixes
 
 * bugfix launch pipeline.py ()
 
 ## 2.7.4
 
+
 ### Bug Fixes
 
 * fix frozen weight loading not working, and allow target value diff to ignore invalid parts ()
 
 ## 2.7.3
+
 
 ### Bug Fixes
 
@@ -1781,11 +1931,13 @@ See merge request act3-rl/corl!317
 
 ## 2.7.2
 
+
 ### Bug Fixes
 
 * Resolve "Add validation to base agent glues that reference parts exist" ()
 
 ## 2.7.1
+
 
 ### Bug Fixes
 
@@ -1793,11 +1945,13 @@ See merge request act3-rl/corl!317
 
 # 2.7.0
 
+
 ### Features
 
 * update to python 3.10 ()
 
 ## 2.6.4
+
 
 ### Bug Fixes
 
@@ -1805,11 +1959,13 @@ See merge request act3-rl/corl!317
 
 ## 2.6.3
 
+
 ### Bug Fixes
 
 * fix commander pong eval and bugs in iterate_test_cases ()
 
 ## 2.6.2
+
 
 ### Bug Fixes
 
@@ -1817,11 +1973,13 @@ See merge request act3-rl/corl!317
 
 ## 2.6.1
 
+
 ### Bug Fixes
 
 * APRS 2 Release ()
 
 # 2.6.0
+
 
 ### Features
 
@@ -1829,11 +1987,13 @@ See merge request act3-rl/corl!317
 
 ## 2.5.2
 
+
 ### Bug Fixes
 
 * sdf/inference2.0 ()
 
 ## 2.5.1
+
 
 ### Bug Fixes
 
@@ -1841,11 +2001,13 @@ See merge request act3-rl/corl!317
 
 # 2.5.0
 
+
 ### Features
 
 * reference store deeper config use, added lots of data for glue extractors to use ()
 
 ## 2.4.1
+
 
 ### Bug Fixes
 
@@ -1853,11 +2015,13 @@ See merge request act3-rl/corl!317
 
 # 2.4.0
 
+
 ### Features
 
 * add visualizations for the pong simulator ()
 
 # 2.3.0
+
 
 ### Features
 
@@ -1865,11 +2029,13 @@ See merge request act3-rl/corl!317
 
 # 2.2.0
 
+
 ### Features
 
 * Operable platforms ()
 
 ## 2.1.2
+
 
 ### Bug Fixes
 
@@ -1877,11 +2043,13 @@ See merge request act3-rl/corl!317
 
 ## 2.1.1
 
+
 ### Bug Fixes
 
 * Resolve "add agent_platform names to reward base config / initialization args" ()
 
 # 2.1.0
+
 
 ### Features
 
@@ -1889,7 +2057,9 @@ See merge request act3-rl/corl!317
 
 # 2.0.0
 
+
 * Merge branch 'commander_agent_class' into 'main' ()
+
 
 ### BREAKING CHANGES
 
@@ -1899,11 +2069,13 @@ See merge request act3-rl/corl!317
 
 ## 1.60.1
 
+
 ### Bug Fixes
 
 * require tf until rllib fixes issues with tf_prob. Also updated lock file ()
 
 # 1.60.0
+
 
 ### Features
 
@@ -1911,11 +2083,13 @@ See merge request act3-rl/corl!317
 
 # 1.59.0
 
+
 ### Bug Fixes
 
 * Hotfix ray 2 ()
 * poetry to use a single gym ()
 * turn of mkdocstring for multi_agent_env ()
+
 
 ### Features
 
@@ -1924,11 +2098,13 @@ See merge request act3-rl/corl!317
 
 # 1.58.0
 
+
 ### Features
 
 * Pong SAC Flatten Normalized Actions ()
 
 # 1.57.0
+
 
 ### Features
 
@@ -1936,11 +2112,13 @@ See merge request act3-rl/corl!317
 
 # 1.56.0
 
+
 ### Features
 
 * add pong simulator ()
 
 # 1.55.0
+
 
 ### Features
 
@@ -1948,11 +2126,13 @@ See merge request act3-rl/corl!317
 
 ## 1.54.8
 
+
 ### Bug Fixes
 
 * Resolve "Evaluation metric for done percentages" ()
 
 ## 1.54.7
+
 
 ### Bug Fixes
 
@@ -1960,11 +2140,13 @@ See merge request act3-rl/corl!317
 
 ## 1.54.6
 
+
 ### Bug Fixes
 
 * add glue obs clipping functionality and add AT_LEAST DoneStatusCode tensorboard output ()
 
 ## 1.54.5
+
 
 ### Bug Fixes
 
@@ -1973,11 +2155,13 @@ See merge request act3-rl/corl!317
 
 ## 1.54.4
 
+
 ### Bug Fixes
 
 * fix the normalization issue for repeated spaces ()
 
 ## 1.54.3
+
 
 ### Bug Fixes
 
@@ -1987,11 +2171,13 @@ See merge request act3-rl/corl!317
 
 ## 1.54.2
 
+
 ### Bug Fixes
 
 * add gputil ()
 
 ## 1.54.1
+
 
 ### Bug Fixes
 
@@ -1999,11 +2185,13 @@ See merge request act3-rl/corl!317
 
 # 1.54.0
 
+
 ### Features
 
 * Eval framework docs ()
 
 ## 1.53.4
+
 
 ### Bug Fixes
 
@@ -2011,11 +2199,13 @@ See merge request act3-rl/corl!317
 
 ## 1.53.3
 
+
 ### Bug Fixes
 
 * remove utf encoding in binary ()
 
 ## 1.53.2
+
 
 ### Bug Fixes
 
@@ -2023,11 +2213,13 @@ See merge request act3-rl/corl!317
 
 ## 1.53.1
 
+
 ### Bug Fixes
 
 * fix-memory-store-initialization ()
 
 # 1.53.0
+
 
 ### Features
 
@@ -2035,11 +2227,13 @@ See merge request act3-rl/corl!317
 
 ## 1.52.9
 
+
 ### Bug Fixes
 
 * fix-6dof-platform --- approved by BKH and CL ()
 
 ## 1.52.8
+
 
 ### Bug Fixes
 
@@ -2047,11 +2241,13 @@ See merge request act3-rl/corl!317
 
 ## 1.52.7
 
+
 ### Bug Fixes
 
 * custom policy interface changes to support inference ()
 
 ## 1.52.6
+
 
 ### Bug Fixes
 
@@ -2059,11 +2255,13 @@ See merge request act3-rl/corl!317
 
 ## 1.52.5
 
+
 ### Bug Fixes
 
 * correct the eval pipeline to use correct paths ()
 
 ## 1.52.4
+
 
 ### Bug Fixes
 
@@ -2107,6 +2305,7 @@ See merge request act3-rl/corl!317
 
 ## 1.52.3
 
+
 ### Bug Fixes
 
 * Merge branch '168-temp-hack' into 'main' ()
@@ -2114,12 +2313,14 @@ See merge request act3-rl/corl!317
 
 ## 1.52.2
 
+
 ### Bug Fixes
 
 * Evaluation framework can output multiple visualizations ()
-* Merge branch '135-evaluation-framework-can-output-multiple-visualizations' into 'main' (), closes
+* Merge branch '135-evaluation-framework-can-output-multiple-visualizations' into 'main' (), closes 
 
 ## 1.52.1
+
 
 ### Bug Fixes
 
@@ -2127,11 +2328,13 @@ See merge request act3-rl/corl!317
 
 # 1.52.0
 
+
 ### Features
 
 * handling for checkpoint types beside rllib checkpoint, h5 and heuristic ()
 
 ## 1.51.1
+
 
 ### Bug Fixes
 
@@ -2140,11 +2343,13 @@ See merge request act3-rl/corl!317
 
 # 1.51.0
 
+
 ### Features
 
 * add platform valdiation and remove required internal platform ()
 
 ## 1.50.7
+
 
 ### Bug Fixes
 
@@ -2161,6 +2366,7 @@ See merge request act3-rl/corl!317
 
 ## 1.50.6
 
+
 ### Bug Fixes
 
 * Adding environment to extract items from environment state and manipulates accumulate non-terminal metric ()
@@ -2168,12 +2374,14 @@ See merge request act3-rl/corl!317
 
 ## 1.50.5
 
+
 ### Bug Fixes
 
 * Acedt integration with evaluation framework ()
-* Merge branch '143-acedt-integration-integrate-acedt-utility-to-evaluation-framework-pipeline' into 'main' (), closes
+* Merge branch '143-acedt-integration-integrate-acedt-utility-to-evaluation-framework-pipeline' into 'main' (), closes 
 
 ## 1.50.4
+
 
 ### Bug Fixes
 
@@ -2181,6 +2389,7 @@ See merge request act3-rl/corl!317
 * Merge branch 'feature/eval-visualization' into 'main' ()
 
 ## 1.50.3
+
 
 ### Bug Fixes
 
@@ -2190,6 +2399,7 @@ See merge request act3-rl/corl!317
 
 ## 1.50.2
 
+
 ### Bug Fixes
 
 * adds fallback code to create_training_observations so that agent's that... ()
@@ -2197,17 +2407,20 @@ See merge request act3-rl/corl!317
 
 ## 1.50.1
 
+
 ### Bug Fixes
 
 * add trial_str_functor plugin and fix verbosity argument to train_rl which was broken ()
 
 # 1.50.0
 
+
 ### Features
 
 * update interface to simulator.mark_episode_done to allow more fine tuned simulator processing of info ()
 
 ## 1.49.12
+
 
 ### Bug Fixes
 
@@ -2216,6 +2429,7 @@ See merge request act3-rl/corl!317
 
 ## 1.49.11
 
+
 ### Bug Fixes
 
 * Avoid double platform delete ()
@@ -2223,11 +2437,13 @@ See merge request act3-rl/corl!317
 
 ## 1.49.10
 
+
 ### Bug Fixes
 
 * bump the code-server version and add tags for the GPUs (non specific to nvidia ()
 
 ## 1.49.9
+
 
 ### Bug Fixes
 
@@ -2238,12 +2454,14 @@ See merge request act3-rl/corl!317
 
 ## 1.49.7
 
+
 ### Bug Fixes
 
-* Merge branch '145-add-obs-space-and-units-to-call-for-done-conditions' into 'main' (), closes
+* Merge branch '145-add-obs-space-and-units-to-call-for-done-conditions' into 'main' (), closes 
 * Resolve "Add obs space and units to call for done conditions" ()
 
 ## 1.49.6
+
 
 ### Bug Fixes
 
@@ -2252,11 +2470,13 @@ See merge request act3-rl/corl!317
 
 ## 1.49.5
 
+
 ### Bug Fixes
 
 * Ensure noop controller uses proper API ()
 
 ## 1.49.4
+
 
 ### Bug Fixes
 
@@ -2265,6 +2485,7 @@ See merge request act3-rl/corl!317
 
 ## 1.49.3
 
+
 ### Bug Fixes
 
 * Merge branch 'vista_challenge_problem_1' into 'main' ()
@@ -2272,11 +2493,13 @@ See merge request act3-rl/corl!317
 
 ## 1.49.2
 
+
 ### Bug Fixes
 
 * corrected the implementation of StatusCode and updated 1d docking config ()
 
 ## 1.49.1
+
 
 ### Bug Fixes
 
@@ -2284,15 +2507,18 @@ See merge request act3-rl/corl!317
 
 # 1.49.0
 
+
 ### Bug Fixes
 
 * **controller:** continuous gym cntrllers work now ()
+
 
 ### Features
 
 * **simulator:** gym simulator accepts env kwargs ()
 
 ## 1.48.11
+
 
 ### Bug Fixes
 
@@ -2301,6 +2527,7 @@ See merge request act3-rl/corl!317
 
 ## 1.48.10
 
+
 ### Bug Fixes
 
 * Merge branch 'update/vista_updates' into 'main' ()
@@ -2308,17 +2535,20 @@ See merge request act3-rl/corl!317
 
 ## 1.48.9
 
+
 ### Bug Fixes
 
 * Minor error handling improvements ()
 
 ## 1.48.8
 
+
 ### Bug Fixes
 
 * second try at exclusivity bypass ()
 
 ## 1.48.7
+
 
 ### Bug Fixes
 
@@ -2330,9 +2560,10 @@ See merge request act3-rl/corl!317
 
 ## 1.48.6
 
+
 ### Bug Fixes
 
-* too many lines of code in run_experiment() ()
+*  too many lines of code in run_experiment() ()
 * **Dockerfile:** update registry arg ()
 * **gitlab-ci:** add stage ()
 * **gitlab-ci:** buildkit release ()
@@ -2348,7 +2579,7 @@ See merge request act3-rl/corl!317
 * **gitlab-ci:** update mkdocs job ()
 * **gitlab-ci:** update to new pipeline ()
 * **gitlab-ci:** yaml lint fix ()
-* make _add_git_hashes_to_config() and_update_rllib_config() private. ()
+* make _add_git_hashes_to_config() and _update_rllib_config() private. ()
 * Merge branch 'make_run_experiment_loc_smaller' into 'main' ()
 * re-add slashes ()
 * Resolve "add git hashes to env_config" ()
@@ -2360,11 +2591,13 @@ See merge request act3-rl/corl!317
 
 ## 1.48.5
 
+
 ### Bug Fixes
 
 * change to nvidia-pytorch ()
 
 ## 1.48.4
+
 
 ### Bug Fixes
 
@@ -2372,11 +2605,13 @@ See merge request act3-rl/corl!317
 
 ## 1.48.3
 
+
 ### Bug Fixes
 
 * bugfix to disable_exclusivity ()
 
 ## 1.48.2
+
 
 ### Bug Fixes
 
@@ -2385,12 +2620,14 @@ See merge request act3-rl/corl!317
 
 ## 1.48.1
 
+
 ### Bug Fixes
 
 * move to ray 1.13.0 and make callbacks a plugin system ()
 * remove pickle5 because ray was whining about it ()
 
 # 1.48.0
+
 
 ### Features
 
@@ -2413,12 +2650,14 @@ See merge request act3-rl/corl!317
 
 ## 1.47.2
 
+
 ### Bug Fixes
 
 * Evaluate supports "explore: False" ()
-* Merge branch '126-evaluator-supports-explore-false' into 'main' (), closes
+* Merge branch '126-evaluator-supports-explore-false' into 'main' (), closes 
 
 ## 1.47.1
+
 
 ### Bug Fixes
 
@@ -2428,9 +2667,11 @@ See merge request act3-rl/corl!317
 
 # 1.47.0
 
+
 ### Bug Fixes
 
 * change default value for skip_win_lose_sanity_check ()
+
 
 ### Features
 
@@ -2446,6 +2687,7 @@ See merge request act3-rl/corl!317
 
 ## 1.46.4
 
+
 ### Bug Fixes
 
 * added obs_relative_controller_dict ()
@@ -2453,11 +2695,13 @@ See merge request act3-rl/corl!317
 
 ## 1.46.3
 
+
 ### Bug Fixes
 
 * use dst name instead of src name during unit resolution ()
 
 ## 1.46.2
+
 
 ### Bug Fixes
 
@@ -2466,16 +2710,19 @@ See merge request act3-rl/corl!317
 
 ## 1.46.1
 
+
 ### Bug Fixes
 
 * fix bug in obs_relative_delta_controller when dealing with multiple actions in a space ()
 
 # 1.46.0
 
+
 ### Bug Fixes
 
 * small bounds tweak ()
 * updates to linting ()
+
 
 ### Features
 
@@ -2483,12 +2730,14 @@ See merge request act3-rl/corl!317
 
 ## 1.45.1
 
+
 ### Bug Fixes
 
 * fixed issues for hierarchical learning ()
 * Merge remote-tracking branch 'origin/main' into fix-hierarchical-learning ()
 
 # 1.45.0
+
 
 ### Features
 
@@ -2502,6 +2751,7 @@ See merge request act3-rl/corl!317
 
 ## 1.44.3
 
+
 ### Bug Fixes
 
 * added ability for EpisodeDoneReward to consolidate done conditions and added optional sanity check ()
@@ -2509,17 +2759,20 @@ See merge request act3-rl/corl!317
 
 ## 1.44.2
 
+
 ### Bug Fixes
 
 * force build of reverting cuda update ()
 
 ## 1.44.1
 
+
 ### Bug Fixes
 
 * update agent base to new path and update ray to 1.12.1 ()
 
 # 1.44.0
+
 
 ### Bug Fixes
 
@@ -2528,11 +2781,13 @@ See merge request act3-rl/corl!317
 * Ensure functor wrappers manage parameters correctly ()
 * Pin mkdocstrings to 0.18.0 ()
 
+
 ### Features
 
 * foot / second^2 added as acceleration unit ()
 
 ## 1.43.8
+
 
 ### Bug Fixes
 
@@ -2553,6 +2808,7 @@ See merge request act3-rl/corl!317
 
 ## 1.43.7
 
+
 ### Bug Fixes
 
 * updates for challenge problem on LLA ()
@@ -2560,11 +2816,13 @@ See merge request act3-rl/corl!317
 
 ## 1.43.6
 
+
 ### Bug Fixes
 
 * Allow non-agent platforms ()
 
 ## 1.43.5
+
 
 ### Bug Fixes
 
@@ -2572,11 +2830,13 @@ See merge request act3-rl/corl!317
 
 ## 1.43.4
 
+
 ### Bug Fixes
 
 * change memray to only install on linux ()
 
 ## 1.43.3
+
 
 ### Bug Fixes
 
@@ -2584,11 +2844,13 @@ See merge request act3-rl/corl!317
 
 ## 1.43.2
 
+
 ### Bug Fixes
 
 * Change velocity ned property to mpstas ()
 
 ## 1.43.1
+
 
 ### Bug Fixes
 
@@ -2597,6 +2859,7 @@ See merge request act3-rl/corl!317
 
 # 1.43.0
 
+
 ### Features
 
 * added part validity concept as well as getter/setter functions for validity ()
@@ -2604,11 +2867,13 @@ See merge request act3-rl/corl!317
 
 ## 1.42.3
 
+
 ### Bug Fixes
 
 * Move function out of loop; add exception logging ()
 
 ## 1.42.2
+
 
 ### Bug Fixes
 
@@ -2617,6 +2882,7 @@ See merge request act3-rl/corl!317
 
 ## 1.42.1
 
+
 ### Bug Fixes
 
 * updates for HL example ()
@@ -2624,10 +2890,12 @@ See merge request act3-rl/corl!317
 
 # 1.42.0
 
+
 ### Bug Fixes
 
 * change paths and name to corl ()
 * update image paths, changes for 620 ()
+
 
 ### Features
 
@@ -2635,11 +2903,13 @@ See merge request act3-rl/corl!317
 
 ## 1.41.4
 
+
 ### Bug Fixes
 
 * update to add css ()
 
 ## 1.41.3
+
 
 ### Bug Fixes
 
@@ -2649,11 +2919,13 @@ See merge request act3-rl/corl!317
 
 ## 1.41.2
 
+
 ### Bug Fixes
 
 * allow rllib experiment to allow non trainable only runs ()
 
 ## 1.41.1
+
 
 ### Bug Fixes
 
@@ -2670,6 +2942,7 @@ See merge request act3-rl/corl!317
 * updates to remove files that are not in main ()
 
 # 1.41.0
+
 
 ### Bug Fixes
 
@@ -2693,11 +2966,13 @@ See merge request act3-rl/corl!317
 * updates to docker ()
 * updates to the code base for pdf ()
 
+
 ### Features
 
 * remove non trinables ()
 
 ## 1.40.2
+
 
 ### Bug Fixes
 
@@ -2707,6 +2982,7 @@ See merge request act3-rl/corl!317
 * updates linting ()
 
 ## 1.40.1
+
 
 ### Bug Fixes
 
@@ -2720,11 +2996,13 @@ See merge request act3-rl/corl!317
 
 # 1.40.0
 
+
 ### Features
 
 * Enabled parts to be both a sensor and controller simultaneously; added part - MemoryStore, which stors data locally (i.e. not in the sim) that can be added to the action or obs space of any agent on the platform, thus providing a mechanism to communicate a single value ()
 
 ## 1.39.3
+
 
 ### Bug Fixes
 
@@ -2732,11 +3010,13 @@ See merge request act3-rl/corl!317
 
 ## 1.39.2
 
+
 ### Bug Fixes
 
-* Merge branch '74_configurable_sanity_check' into 'main' (), closes
+* Merge branch '74_configurable_sanity_check' into 'main' (), closes 
 
 ## 1.39.1
+
 
 ### Bug Fixes
 
@@ -2744,15 +3024,18 @@ See merge request act3-rl/corl!317
 
 # 1.39.0
 
+
 ### Bug Fixes
 
 * changed return type to float ()
+
 
 ### Features
 
 * added convert_to method directly onto the ValueWithUnits validator class ()
 
 ## 1.38.4
+
 
 ### Bug Fixes
 
@@ -2767,6 +3050,7 @@ See merge request act3-rl/corl!317
 
 ## 1.38.3
 
+
 ### Bug Fixes
 
 * Added check for properties key ()
@@ -2777,6 +3061,7 @@ See merge request act3-rl/corl!317
 * Updated typing ()
 
 ## 1.38.2
+
 
 ### Bug Fixes
 
@@ -2790,6 +3075,7 @@ See merge request act3-rl/corl!317
 * Updated ObserveSensor unit tests ()
 
 ## 1.38.1
+
 
 ### Bug Fixes
 
@@ -2837,9 +3123,11 @@ See merge request act3-rl/corl!317
 
 # 1.38.0
 
+
 ### Bug Fixes
 
 * Moved reset from ScriptedAction policy to CustomPolicy ()
+
 
 ### Features
 
@@ -2847,10 +3135,12 @@ See merge request act3-rl/corl!317
 
 # 1.37.0
 
+
 ### Bug Fixes
 
 * fixed configs to work with new interface ()
 * interface issue with agent validation test ()
+
 
 ### Features
 
@@ -2859,12 +3149,14 @@ See merge request act3-rl/corl!317
 
 ## 1.36.2
 
+
 ### Bug Fixes
 
 * Merge remote-tracking branch 'origin/main' into docking1d ()
 * updates for orginizatio, linting and testing ()
 
 ## 1.36.1
+
 
 ### Bug Fixes
 
@@ -2877,6 +3169,7 @@ See merge request act3-rl/corl!317
 
 # 1.36.0
 
+
 ### Bug Fixes
 
 * change wrap_dict to wrapped ()
@@ -2884,11 +3177,13 @@ See merge request act3-rl/corl!317
 * typing and formatting pipeline fails ()
 * typos ()
 
+
 ### Features
 
 * functor and base glue/reward/done ()
 
 ## 1.35.1
+
 
 ### Bug Fixes
 
@@ -2896,11 +3191,13 @@ See merge request act3-rl/corl!317
 
 # 1.35.0
 
+
 ### Features
 
 * rewrote obs extractor to simplify interface ()
 
 ## 1.34.4
+
 
 ### Bug Fixes
 
@@ -2908,12 +3205,14 @@ See merge request act3-rl/corl!317
 
 ## 1.34.3
 
+
 ### Bug Fixes
 
 * Merge branch 'main' of github.com/act3-ace:act3-rl/corl into main ()
 * trying to get a new runner - updates docs ()
 
 ## 1.34.2
+
 
 ### Bug Fixes
 
@@ -2926,17 +3225,20 @@ See merge request act3-rl/corl!317
 
 ## 1.34.1
 
+
 ### Bug Fixes
 
 * fix Nonetype and None used in required units causing issues ()
 
 # 1.34.0
 
+
 ### Features
 
 * MultiMeasurementOperation class ()
 
 # 1.33.0
+
 
 ### Bug Fixes
 
@@ -2947,11 +3249,13 @@ See merge request act3-rl/corl!317
 * reverted changes w.r.t. disabling normalization via the policy_config ()
 * updated and ensured that it also works with the cartpole env ()
 
+
 ### Features
 
 * (wip) added scripted_action policy ()
 
 ## 1.32.1
+
 
 ### Bug Fixes
 
@@ -2960,15 +3264,18 @@ See merge request act3-rl/corl!317
 
 # 1.32.0
 
+
 ### Bug Fixes
 
 * Added units class to list ()
+
 
 ### Features
 
 * Adds plumbing for KIAS sensor ()
 
 ## 1.31.5
+
 
 ### Bug Fixes
 
@@ -3003,17 +3310,20 @@ See merge request act3-rl/corl!317
 
 ## 1.31.4
 
+
 ### Bug Fixes
 
 * Eliminate delete before use with done platforms ()
 
 ## 1.31.3
 
+
 ### Bug Fixes
 
 * cleaned
 
 ## 1.31.2
+
 
 ### Bug Fixes
 
@@ -3026,11 +3336,13 @@ See merge request act3-rl/corl!317
 
 ## 1.31.1
 
+
 ### Bug Fixes
 
 * move to latest code server 4.0.2 - tested local ()
 
 # 1.31.0
+
 
 ### Features
 
@@ -3038,12 +3350,14 @@ See merge request act3-rl/corl!317
 
 ## 1.30.4
 
+
 ### Bug Fixes
 
 * add reward_wrapper base classes ()
 * added wrappers for dones and rewards, updated base agent to support ()
 
 ## 1.30.3
+
 
 ### Bug Fixes
 
@@ -3055,6 +3369,7 @@ See merge request act3-rl/corl!317
 
 ## 1.30.2
 
+
 ### Bug Fixes
 
 * Fixed episode_id ()
@@ -3062,6 +3377,7 @@ See merge request act3-rl/corl!317
 * Updated unit test ()
 
 ## 1.30.1
+
 
 ### Bug Fixes
 
@@ -3071,9 +3387,11 @@ See merge request act3-rl/corl!317
 
 # 1.30.0
 
+
 ### Bug Fixes
 
 * Update embed_propreties to new variable names ()
+
 
 ### Features
 
@@ -3081,6 +3399,7 @@ See merge request act3-rl/corl!317
 * Merge branch 'tas_cas_unit' into 'main' ()
 
 ## 1.29.8
+
 
 ### Bug Fixes
 
@@ -3090,14 +3409,16 @@ See merge request act3-rl/corl!317
 
 ## 1.29.7
 
+
 ### Bug Fixes
 
 * Changed argument names ()
-* Merge branch '49-baseplatformpart-validator' into 'main' (), closes
+* Merge branch '49-baseplatformpart-validator' into 'main' (), closes 
 * Removed pylint disable ()
 * Rename properties to property_class ()
 
 ## 1.29.6
+
 
 ### Bug Fixes
 
@@ -3110,15 +3431,17 @@ See merge request act3-rl/corl!317
 
 ## 1.29.5
 
+
 ### Bug Fixes
 
 * Exclusiveness as property ()
-* Merge branch '48-exclusiveness-as-property' into 'main' (), closes
+* Merge branch '48-exclusiveness-as-property' into 'main' (), closes 
 * Removed comment ()
 * Removed unneeded inits ()
 * Removed unneeded property ()
 
 ## 1.29.4
+
 
 ### Bug Fixes
 
@@ -3128,14 +3451,16 @@ See merge request act3-rl/corl!317
 
 ## 1.29.3
 
+
 ### Bug Fixes
 
 * Added asserts ()
 * Added asserts ()
-* Merge branch '47-validators-as-properties' into 'main' (), closes
+* Merge branch '47-validators-as-properties' into 'main' (), closes 
 * Validators as properties ()
 
 ## 1.29.2
+
 
 ### Bug Fixes
 
@@ -3143,6 +3468,7 @@ See merge request act3-rl/corl!317
 * Update controllers and platform parts also ()
 
 ## 1.29.1
+
 
 ### Bug Fixes
 
@@ -3153,6 +3479,7 @@ See merge request act3-rl/corl!317
 
 # 1.29.0
 
+
 ### Features
 
 * Add controller wrappers ()
@@ -3160,9 +3487,11 @@ See merge request act3-rl/corl!317
 
 # 1.28.0
 
+
 ### Bug Fixes
 
 * Raise instance not class ()
+
 
 ### Features
 
@@ -3171,11 +3500,13 @@ See merge request act3-rl/corl!317
 
 ## 1.27.2
 
+
 ### Bug Fixes
 
 * Make plugin library fail on partial incompatible match ()
 
 ## 1.27.1
+
 
 ### Bug Fixes
 
@@ -3183,16 +3514,19 @@ See merge request act3-rl/corl!317
 
 # 1.27.0
 
+
 ### Bug Fixes
 
 * fix trainable class check ()
 * merge in the master to branch ()
+
 
 ### Features
 
 * avoid adding policies for agents not accessed by rllib ()
 
 ## 1.26.15
+
 
 ### Bug Fixes
 
@@ -3201,12 +3535,14 @@ See merge request act3-rl/corl!317
 
 ## 1.26.14
 
+
 ### Bug Fixes
 
 * clean up linting ()
 * small updates for code to support HLP - small cleanup i ()
 
 ## 1.26.13
+
 
 ### Bug Fixes
 
@@ -3216,11 +3552,13 @@ See merge request act3-rl/corl!317
 
 ## 1.26.12
 
+
 ### Bug Fixes
 
 * update to allow reset of agent config as part of reset of simulator ()
 
 ## 1.26.11
+
 
 ### Bug Fixes
 
@@ -3228,17 +3566,20 @@ See merge request act3-rl/corl!317
 
 ## 1.26.10
 
+
 ### Bug Fixes
 
 * updates so that aers go to the same dir every time --- skip the date and pbs keys ()
 
 ## 1.26.9
 
+
 ### Bug Fixes
 
 * updates to the code base to allow skipping setup of the simulator on reinit. ()
 
 ## 1.26.8
+
 
 ### Bug Fixes
 
@@ -3247,13 +3588,15 @@ See merge request act3-rl/corl!317
 
 ## 1.26.7
 
+
 ### Bug Fixes
 
 * Add debug flag ()
 * Add help message to debug flag ()
-* Merge branch '43-add-debug-flag-to-train_rl' into 'main' (), closes
+* Merge branch '43-add-debug-flag-to-train_rl' into 'main' (), closes 
 
 ## 1.26.6
+
 
 ### Bug Fixes
 
@@ -3261,11 +3604,13 @@ See merge request act3-rl/corl!317
 
 ## 1.26.5
 
+
 ### Bug Fixes
 
 * Log at bound successes ()
 
 ## 1.26.4
+
 
 ### Bug Fixes
 
@@ -3273,11 +3618,13 @@ See merge request act3-rl/corl!317
 
 ## 1.26.3
 
+
 ### Bug Fixes
 
 * Error checking, horizon from rllib_config ()
 
 ## 1.26.2
+
 
 ### Bug Fixes
 
@@ -3286,6 +3633,7 @@ See merge request act3-rl/corl!317
 
 ## 1.26.1
 
+
 ### Bug Fixes
 
 * Add support for calling method on remote epp ()
@@ -3293,12 +3641,14 @@ See merge request act3-rl/corl!317
 
 # 1.26.0
 
+
 ### Bug Fixes
 
 * Add string value support to ConstantParameter ()
 * Improved TabularParameterProvider validators ()
 * Removed comment ()
 * TabularParameterProvider related typing ()
+
 
 ### Features
 
@@ -3308,6 +3658,7 @@ See merge request act3-rl/corl!317
 
 ## 1.25.8
 
+
 ### Bug Fixes
 
 * the following fixes formatting... ()
@@ -3315,12 +3666,14 @@ See merge request act3-rl/corl!317
 
 ## 1.25.7
 
+
 ### Bug Fixes
 
 * fix value error from nvidia-smi being on the cpu nodes ()
 * Merge branch 'fix/nvidia-smi-resource-error-cpu' into 'main' ()
 
 ## 1.25.6
+
 
 ### Bug Fixes
 
@@ -3330,6 +3683,7 @@ See merge request act3-rl/corl!317
 
 ## 1.25.5
 
+
 ### Bug Fixes
 
 * hot fix to update epp parameter signature in experiment to match for save and load ()
@@ -3337,6 +3691,7 @@ See merge request act3-rl/corl!317
 * hot fix to update epp parameter signature in experiment to match for save and load ()
 
 ## 1.25.4
+
 
 ### Bug Fixes
 
@@ -3347,6 +3702,7 @@ See merge request act3-rl/corl!317
 
 ## 1.25.3
 
+
 ### Bug Fixes
 
 * add back policy ()
@@ -3354,11 +3710,13 @@ See merge request act3-rl/corl!317
 
 ## 1.25.2
 
+
 ### Bug Fixes
 
 * small changes ()
 
 ## 1.25.1
+
 
 ### Bug Fixes
 
@@ -3367,11 +3725,13 @@ See merge request act3-rl/corl!317
 
 # 1.25.0
 
+
 ### Features
 
 * add no op agents and controllers ()
 
 # 1.24.0
+
 
 ### Bug Fixes
 
@@ -3382,11 +3742,13 @@ See merge request act3-rl/corl!317
 * Remove debugging print statements ()
 * Use new buffer size variable ()
 
+
 ### Features
 
 * Automatic Domain Randomization ()
 
 ## 1.23.2
+
 
 ### Bug Fixes
 
@@ -3394,11 +3756,13 @@ See merge request act3-rl/corl!317
 
 ## 1.23.1
 
+
 ### Bug Fixes
 
-* add missing **init**.py ()
+* add missing __init__.py ()
 
 # 1.23.0
+
 
 ### Features
 
@@ -3406,11 +3770,13 @@ See merge request act3-rl/corl!317
 
 # 1.22.0
 
+
 ### Features
 
 * **dones:** added shared dones, fixed aer strings ()
 
 ## 1.21.2
+
 
 ### Bug Fixes
 
@@ -3420,16 +3786,19 @@ See merge request act3-rl/corl!317
 
 ## 1.21.1
 
+
 ### Bug Fixes
 
 * updates to add obs to the apply at agent level ()
 
 # 1.21.0
 
+
 ### Bug Fixes
 
 * Ignore pylint error ()
 * Remove position hack ()
+
 
 ### Features
 
@@ -3437,11 +3806,13 @@ See merge request act3-rl/corl!317
 
 ## 1.20.1
 
+
 ### Bug Fixes
 
 * **configs:** change default configs to ignore_reinit_error True ()
 
 # 1.20.0
+
 
 ### Bug Fixes
 
@@ -3449,6 +3820,7 @@ See merge request act3-rl/corl!317
 * EPP.get_params validation ()
 * Parameter provider tests and fixes ()
 * Remove unused pydantic models ()
+
 
 ### Features
 
@@ -3459,6 +3831,7 @@ See merge request act3-rl/corl!317
 
 ## 1.19.2
 
+
 ### Bug Fixes
 
 * Add episode length done automatically ()
@@ -3466,11 +3839,13 @@ See merge request act3-rl/corl!317
 
 ## 1.19.1
 
+
 ### Bug Fixes
 
 * Create environment on driver in rllib experiment ()
 
 # 1.19.0
+
 
 ### Features
 
@@ -3478,15 +3853,18 @@ See merge request act3-rl/corl!317
 
 # 1.18.0
 
+
 ### Features
 
 * add non trainable base ()
 
 # 1.17.0
 
+
 ### Bug Fixes
 
 * **rewards:** fixed post_process_trajectory reward function signature ()
+
 
 ### Features
 
@@ -3494,11 +3872,13 @@ See merge request act3-rl/corl!317
 
 ## 1.16.2
 
+
 ### Bug Fixes
 
 * **dones:** added shared done base class ()
 
 ## 1.16.1
+
 
 ### Bug Fixes
 
@@ -3508,6 +3888,7 @@ See merge request act3-rl/corl!317
 
 # 1.16.0
 
+
 ### Bug Fixes
 
 * Change functor from iterator to sequence. ()
@@ -3516,12 +3897,14 @@ See merge request act3-rl/corl!317
 * Move functors to library ()
 * Rename environment glue/reward/done creation methods ()
 
+
 ### Features
 
 * Environment parameters passed to agent ()
 * Pydantic checking of ACT3MultiAgentEnv ()
 
 # 1.15.0
+
 
 ### Bug Fixes
 
@@ -3538,11 +3921,12 @@ See merge request act3-rl/corl!317
 * **units:** Added strict types and fixed handling of none unit ()
 * **units:** Added value validator to automatically convert numpy types ()
 
+
 ### Features
 
 * Better reference handling ()
 * Connect dones to new functor argument ()
-* Merge branch '7-agent-config-variable-store' into 'main' (), closes
+* Merge branch '7-agent-config-variable-store' into 'main' (), closes 
 * **parameter:** Switch to using the core Parameter class ()
 * Sensor bounds done and delayed unit resolution ()
 * **test:** Added units unit test ()
@@ -3550,11 +3934,13 @@ See merge request act3-rl/corl!317
 
 ## 1.14.1
 
+
 ### Bug Fixes
 
 * **gitlab-ci:** Change stages ()
 
 # 1.14.0
+
 
 ### Features
 
@@ -3562,11 +3948,13 @@ See merge request act3-rl/corl!317
 
 ## 1.13.1
 
+
 ### Bug Fixes
 
 * **vscode:** fix debugging in vscode ()
 
 # 1.13.0
+
 
 ### Features
 
@@ -3574,11 +3962,13 @@ See merge request act3-rl/corl!317
 
 ## 1.12.2
 
+
 ### Bug Fixes
 
 * check array shape ()
 
 ## 1.12.1
+
 
 ### Bug Fixes
 
@@ -3589,11 +3979,13 @@ See merge request act3-rl/corl!317
 
 # 1.12.0
 
+
 ### Features
 
-* Merge branch '17-update-ray-to-version-1.7' into 'main' (), closes
+* Merge branch '17-update-ray-to-version-1.7' into 'main' (), closes 
 
 # 1.11.0
+
 
 ### Features
 
@@ -3601,11 +3993,13 @@ See merge request act3-rl/corl!317
 
 ## 1.10.6
 
+
 ### Bug Fixes
 
 * bad key name ()
 
 ## 1.10.5
+
 
 ### Bug Fixes
 
@@ -3614,11 +4008,13 @@ See merge request act3-rl/corl!317
 
 ## 1.10.4
 
+
 ### Bug Fixes
 
 * use policy config ()
 
 ## 1.10.3
+
 
 ### Bug Fixes
 
@@ -3627,12 +4023,14 @@ See merge request act3-rl/corl!317
 
 ## 1.10.2
 
+
 ### Bug Fixes
 
 * Merge branch 'fix/update_correct_names' into 'main' ()
 * update to correct names for targets in .gitlab-ci.yml ()
 
 ## 1.10.1
+
 
 ### Bug Fixes
 
@@ -3641,12 +4039,14 @@ See merge request act3-rl/corl!317
 
 # 1.10.0
 
+
 ### Features
 
 * add container stages for release ()
 * Merge branch 'fix-container-package' into 'main' ()
 
 # 1.9.0
+
 
 ### Features
 
@@ -3655,16 +4055,19 @@ See merge request act3-rl/corl!317
 
 # 1.8.0
 
+
 ### Features
 
 * plumbing for aer file writing ()
 
 # 1.7.0
 
+
 ### Bug Fixes
 
 * force mypy to pass in ci ()
 * use pytest ()
+
 
 ### Features
 
@@ -3672,11 +4075,13 @@ See merge request act3-rl/corl!317
 
 ## 1.6.2
 
+
 ### Bug Fixes
 
 * Fix versioning problems for packages. Updates to docker to support development environments. ()
 
 ## 1.6.1
+
 
 ### Bug Fixes
 
@@ -3685,9 +4090,11 @@ See merge request act3-rl/corl!317
 
 # 1.6.0
 
+
 ### Bug Fixes
 
 * Fix header ()
+
 
 ### Features
 
@@ -3696,17 +4103,20 @@ See merge request act3-rl/corl!317
 
 # 1.5.0
 
+
 ### Features
 
 * added in configuration to enable per-agent policy configurations ()
 
 ## 1.4.2
 
+
 ### Bug Fixes
 
 * Update Dockerfile ()
 
 ## 1.4.1
+
 
 ### Bug Fixes
 
@@ -3716,9 +4126,11 @@ See merge request act3-rl/corl!317
 
 # 1.4.0
 
+
 ### Bug Fixes
 
 * fixed dict -> ordereddict ()
+
 
 ### Features
 
@@ -3726,11 +4138,13 @@ See merge request act3-rl/corl!317
 
 ## 1.3.5
 
+
 ### Bug Fixes
 
 * Update Dockerfile ()
 
 ## 1.3.4
+
 
 ### Bug Fixes
 
@@ -3743,11 +4157,13 @@ See merge request act3-rl/corl!317
 
 ## 1.3.3
 
+
 ### Bug Fixes
 
 * Add in missing init file ()
 
 ## 1.3.2
+
 
 ### Bug Fixes
 
@@ -3755,11 +4171,13 @@ See merge request act3-rl/corl!317
 
 ## 1.3.1
 
+
 ### Bug Fixes
 
 * updates to the build number version ()
 
 # 1.3.0
+
 
 ### Bug Fixes
 
@@ -3781,6 +4199,7 @@ See merge request act3-rl/corl!317
 * update doc strings ()
 * validate control against gym space ()
 
+
 ### Features
 
 * add tests ()
@@ -3788,11 +4207,13 @@ See merge request act3-rl/corl!317
 
 # 1.2.0
 
+
 ### Features
 
 * move to ME parts to platform ()
 
 # 1.1.0
+
 
 ### Bug Fixes
 
@@ -3827,12 +4248,14 @@ See merge request act3-rl/corl!317
 * Update plugin library dependency ()
 * updates required for extension repo ()
 
+
 ### Features
 
 * add plugin lib ()
 * Initial copy from other repo act3 core ()
 
 # 1.0.0 (2021-10-05)
+
 
 ### Bug Fixes
 

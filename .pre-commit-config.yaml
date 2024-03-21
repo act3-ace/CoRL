@@ -1,3 +1,7 @@
+# -------------------------------------------------------------------------------
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# -------------------------------------------------------------------------------
 # https://github.com/apache/airflow/blob/master/.pre-commit-config.yaml
 
 default_language_version:
@@ -49,7 +53,7 @@ repos:
         entry: check-yaml
         language: python
         types: [ yaml ]
-        exclude: "(^config.*|^test.*|^docs.*|mkdocs.yml$)"
+        exclude: "(^config.*|.gitlab-ci.yml|^test.*|^docs.*|mkdocs.yml$)"
         args: [ "--allow-multiple-documents" ]
       - id: debug-statements
         name: Debug Statements (Python)
@@ -93,44 +97,31 @@ repos:
         language_version: python3
         files: '\.(rst|md|markdown|py|tex)$'
 # Start python formatters
-      - id: isort
-        name: isort
+      - id: black
+        name: black
         files: corl
-        description: "isort: import sorter"
-        entry: python -m isort
+        description: "Black: The uncompromising code formatter"
+        entry: black
+        language: python
+        minimum_pre_commit_version: 2.9.2
+        types_or: [python, pyi]
+        require_serial: true
+      - id: ruff
+        name: ruff
+        description: ruff linting
+        entry: ruff
+        files: corl
+        stages: [ commit ]
         language: system
+        args: [ --fix, --exit-non-zero-on-fix ]
         types: [ python ]
-      - id: yapf
-        name: yapf
-        files: corl/
-        description: "YAPF: Yet Another Python Formatter"
-        entry: python -m yapf
-        language: system
-        types: [ python ]
-        args: [ "--recursive", "--parallel", "--in-place" ]
 # Start python linters
       - id: mypy
         name: mypy
         files: corl
         stages: [ commit ]
         language: system
-        entry: python -m mypy
-        types: [ python ]
-      - id: flake8
-        description: "Flake8: Your Tool For Style Guide Enforcement"
-        name: flake8
-        files: corl
-        stages: [ commit ]
-        language: system
-        entry: python -m flake8
-        types: [ python ]
-        verbose: false
-      - id: pylint
-        name: pylint
-        files: corl
-        stages: [ commit ]
-        language: system
-        entry: python -m pylint
+        entry: bash -c "pip --disable-pip-version-check install types-tabulate && python -m mypy . --check-untyped-defs"
         types: [ python ]
       - id: velin
         name: Velin
@@ -142,3 +133,27 @@ repos:
         types_or: [python]
         args: ["--write","--no-fixers"]
         stages: [ commit ]
+      - id: black-test
+        name: black-test
+        files: test
+        description: "Black: The uncompromising code formatter"
+        entry: black
+        language: python
+        minimum_pre_commit_version: 2.9.2
+        types_or: [python, pyi]
+        require_serial: true
+      - id: ruff-test
+        name: ruff-test
+        description: ruff linting
+        entry: ruff
+        files: test
+        stages: [ commit ]
+        language: system
+        args: [ --fix, --exit-non-zero-on-fix ]
+        types: [ python ]
+      - id: codespell
+        name: codespell
+        description: Checks for common misspellings in text files.
+        entry: codespell --ignore-words scripts/valid_words.txt --skip="*html,poetry.lock,pyproject.toml,valid_words.txt,*.css*,*.js*" .
+        language: python
+        types: [text]

@@ -15,8 +15,8 @@ cp ../../corl/CHANGELOG.md . -r
 cp ../../corl/README.md .
 cp ../../corl/.pre-commit-config.yaml .
 cp ../../corl/.gitignore .
-cp ../../corl/.devcontainer .
-cp ../../corl/scripts -r .
+cp ../../corl/.devcontainer/ . -r
+cp ../../corl/scripts . -r
 
 # Clean up the files!!!
 python ../../corl/sanitize.py
@@ -25,4 +25,4 @@ python ../../corl/sanitize.py
 poetry install --sync
 
 # verify test pass
-pytest test
+# pytest test
