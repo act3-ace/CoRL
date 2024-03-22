@@ -102,10 +102,11 @@ class PlotlyTrajectoryAnimation(BaseAnimator):
     @staticmethod
     def _check_and_parse_position(position: list | tuple, position_units: list | tuple):
         assert len(position) in [
+            1,
             2,
             3,
         ], f"""
-        The position must either be 2- or 3- dimensional.
+        The position must either be 1- 2- or 3- dimensional.
         Found: {len(position)} dimensions in {position}"""
         coordinate_keys = ["x", "y", "z"]
         parsed_position = {}
@@ -141,9 +142,9 @@ class PlotlyTrajectoryAnimation(BaseAnimator):
         expected_dims = self.get_dimensionality()
 
         # Redraw is False for 2D - this speeds up the animation
-        redraw = expected_dims != 2
+        redraw = expected_dims != 2 or 1
         trajectory_position = {"row": 1, "col": 1}
-        subplot_kwargs = {"rows": 1, "cols": 1, "specs": [[{"type": "scatter" if expected_dims == 2 else "scene"}]]}
+        subplot_kwargs = {"rows": 1, "cols": 1, "specs": [[{"type": "scatter" if expected_dims <= 2 else "scene"}]]}
         fig = make_subplots(**subplot_kwargs)
         fig.update_layout({"width": self.figure_width, "height": self.figure_height})
         # When region bounds are passed in, constrain the view of the animation to the region bounds.
@@ -466,15 +467,15 @@ def draw_point(
     >>> fig = go.Figure(dot)
     >>> fig.show()
     """
-    assert len(input_coordinates) in [2, 3], "Input coordinates must either be 2- or 3-dimensions"
+    assert len(input_coordinates) in [1, 2, 3], "Input coordinates must either be 1- 2- or 3-dimensions"
     mode = "markers"
+
     if plot_text:
         mode = f"{mode}+text"
-
-    if len(input_coordinates) == 2:
+    if len(input_coordinates) < 3:
         dot = go.Scatter(
             x=[input_coordinates[0]],
-            y=[input_coordinates[1]],
+            y=[0] if len(input_coordinates) == 1 else [input_coordinates[1]],
             marker={"color": marker_color, "size": marker_size},
             mode=mode,
             name=name,

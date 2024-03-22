@@ -12,7 +12,7 @@ version: "3.8"
 services:
   # <<<Purpose>>> --- Startup service for the CoRL develop image.
   develop:
-    image: *****/***-docker-all/act3-rl/corl/develop:latest
+    image: https://github.com/act3-ace/CoRL/act3-docker-all/act3-rl/corl/develop:latest
     working_dir: /opt/project
     user: ${UID}:${GID}
 

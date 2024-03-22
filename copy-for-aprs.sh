@@ -1,28 +1,54 @@
 #!/bin/bash
 
-# COPY over the target files from the internal source
-cp ../../corl/corl/ . -r
-cp ../../corl/config/ . -r
-cp ../../corl/test/ . -r
-cp ../../corl/docker . -r
-cp ../../corl/pyproject.toml . -r
-cp ../../corl/poetry.lock . -r
-cp ../../corl/docker . -r
-cp ../../corl/corl/ . -r
-cp ../../corl/config/ . -r
-cp ../../corl/test . -r
-cp ../../corl/CHANGELOG.md . -r
-cp ../../corl/README.md .
-cp ../../corl/.pre-commit-config.yaml .
-cp ../../corl/.gitignore .
-cp ../../corl/.devcontainer/ . -r
-cp ../../corl/scripts . -r
+#
+# The following script is intended as a quick use item to pull items
+# across to the public repositories.
+#
+
+# COPY START - Move internal directories
+
+internal_corl_path=$1
+strings=(
+    corl/
+    config/
+    test/
+    docker/
+    .devcontainer/
+    pyproject.toml
+    poetry.lock
+    docker
+    CHANGELOG.md
+    README.md
+    .pre-commit-config.yaml
+    .gitignore
+    scripts
+)
+for i in "${strings[@]}"; do
+    cp -r $internal_corl_path/$i .
+done
+
+# Remove internal specific items
+rm -rf docker/*.crt
+rm -rf docker/*.sh
 
 # Clean up the files!!!
 python ../../corl/sanitize.py
 
-# poetry lock
+# Install the items need and make sure lock is good
+poetry lock
 poetry install --sync
 
 # verify test pass
-# pytest test
+pytest test
+
+# Run the workflow tests for github
+curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+
+./bin/act
+
+rm -rf bin
+
+# Generate corl pdf
+pip install code_to_pdf
+sudo apt install wkhtmltopdf
+code_to_pdf --title CoRL-$(date +%F).pdf corl

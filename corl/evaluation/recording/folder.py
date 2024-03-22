@@ -190,7 +190,7 @@ class EpisodeArtifactLoggingCallbackLoader(IRecord):
             # we grab the information from the episode artifact
             sim_reset_dict = episode_artifact.params
             # Add prefix so the columns match with what gets generated during IterateTestCases
-            sim_reset_dict = {f"environment.{k}": v.value for k, v in sim_reset_dict.items()}
+            sim_reset_dict = {f"environment.{k}": v for k, v in sim_reset_dict.items()}
             sim_reset_dict["test_case"] = idx
             test_cases.append(sim_reset_dict)
         if test_cases:

@@ -146,3 +146,7 @@ docker-compose-di2e.yml
 
 auth.toml
 pip.conf
+
+# github
+
+bin/

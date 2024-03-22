@@ -161,20 +161,23 @@ class PPOTorchNetworkExplainability:
             rewards = np.array([np.array(list(reward.values())).sum() for reward in rewards])
             rewards = np.array(rewards)
             # Get dones: does not include the initial state
-            dones = np.zeros_like(rewards)
+            # --> rllib SampleBatch expects truncated and terminated conditions not dones
+            terminateds = np.zeros_like(rewards)
+            truncateds = np.zeros_like(rewards)
             # Check if the episode completed with a done condition.
             # If so, add a True (=1) to the end of the done condition
             # array (assuming here that the done is the last step in
             # the episode).
+
             _agent_platforms = episode_artifact.agent_to_platforms[_agent_id]
             for _agent_platform in _agent_platforms:
                 if any(episode_artifact.dones[_agent_platform].values()):
-                    dones[-1] = 1
+                    terminateds[-1] = 1
+                    truncateds[-1] = 1
                     # If the episode ends in a done condition, remove the value
                     # prediction of the terminal state. It will be replaced by a reward
                     # of 0 when `ray_postprocessing.compute_gae_for_sample_batch` is called
                     vf_preds = vf_preds[:-1]
-                break
 
             # Add rewards, dones, and vf_preds to new sample batch
             # We create a new SampleBatch instance because the
@@ -185,7 +188,8 @@ class PPOTorchNetworkExplainability:
             sample_batch_new = SampleBatch(
                 {
                     SampleBatch.REWARDS: rewards,
-                    SampleBatch.DONES: dones,
+                    SampleBatch.TERMINATEDS: terminateds,
+                    SampleBatch.TRUNCATEDS: truncateds,
                     SampleBatch.VF_PREDS: vf_preds,
                 }
             )
@@ -416,7 +420,6 @@ class PPOTorchNetworkExplainability:
             when the key is the mean of the acceration, the array represents the gradients of all
             observations with respect to the mean acceelration. Each array is shaped: [batch_size, num_input_feats]
         """
-
         policy_network: PPOTorchPolicy = self.env_policy_input_transformer.policies[agent_id]
 
         # requires_grad must be set to true in order to compute the gradient below.

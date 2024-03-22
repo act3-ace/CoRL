@@ -41,9 +41,8 @@ if __name__ == "__main__":
             st.session_state.default_app.display_units_selector()
             st.session_state.default_app.display_agent_steps_section()
             if st.session_state.layout_config:
-                section_name = DefaultStreamlitPage.display_trajectory_animation_section.__name__
                 st.session_state.default_app.display_trajectory_animation_section(
-                    **st.session_state.layout_config["streamlit_layout"][section_name]
+                    **st.session_state.layout_config["streamlit_layout"]["display_trajectory_animation_section"]
                 )
             else:
                 st.warning("Missing Trajectory animation configuration. No animation is provided.")

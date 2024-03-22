@@ -58,11 +58,10 @@ class Task:
                 elif "simulator" not in env_config or "episode_parameter_provider" not in env_config:
                     raise ValueError(f"Invalid experiment config for environment {values.data['environment']}")
                 experiment_config["config"]["env_config"] = env_config
+
             return ExperimentParse(**experiment_config)
 
-        assert not values.data[
-            "config_yaml_file"
-        ], "Invalid configuration - only one of [config_yaml_file, experiment_parse] may be defined"
+        assert isinstance(v, ExperimentParse), "experiment_parse was provided but was not an instance of ExperimentParse"
         return v
 
 
@@ -88,7 +87,7 @@ class Experiment(BaseModel):
         experiment_parse = values["task"].experiment_parse
         exp = experiment_parse.experiment_class(**experiment_parse.config)
 
-        # HACK: Ensure that the simultorSimulator generates output AERs for every worker
+        # HACK: Ensure that the Simulator generates output AERs for every worker
         exp.config.env_config["simulator"]["config"]["limit_extra_data"] = False
 
         tmp = exp.create_agents(

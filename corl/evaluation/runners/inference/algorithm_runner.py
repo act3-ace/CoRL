@@ -85,7 +85,7 @@ class AlgorithmRunner:
                 self.__runner = None
 
                 # if self._algorithm is not None:
-                #     # HACK: Cleanup  simulator
+                #     # HACK: Cleanup simulator simulator
                 #     def shutdown_env(env):
                 #         try:
                 #             env.simulator.shutdown()

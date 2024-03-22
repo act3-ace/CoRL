@@ -11,6 +11,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 Base animator class for streamlit application.
 """
 from abc import ABC, abstractmethod
+from typing import TypeVar
 
 import matplotlib.colors as mcolors
 import numpy as np
@@ -45,7 +46,7 @@ class Polygon(BaseModel):
 class BaseAnimatorValidator(BaseModel):
     """Validator for the BaseAnimator"""
 
-    episode_artifact: EpisodeArtifact
+    episode_artifact: TypeVar(EpisodeArtifact)  # type: ignore
     platform_serializer_map: dict[str, str]
     platform_color_map: dict[str, str] | None = None
     model_config = ConfigDict(arbitrary_types_allowed=True)

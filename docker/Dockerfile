@@ -1,13 +1,4 @@
 # -------------------------------------------------------------------------------
-# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-#
-# This is a US Government Work not subject to copyright protection in the US.
-#
-# The use, dissemination or disclosure of data in this file is subject to
-# limitation or restriction. See accompanying README and LICENSE for details.
-# -------------------------------------------------------------------------------
-
-# -------------------------------------------------------------------------------
 # 
 #
 # Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
@@ -17,6 +8,7 @@
 # The use, dissemination or disclosure of data in this file is subject to
 # limitation or restriction. See accompanying README and LICENSE for details.
 # -------------------------------------------------------------------------------
+
 # -------------------------------------------------------------------------------
 # ROOT USER ITEMS
 # -------------------------------------------------------------------------------
@@ -139,7 +131,7 @@ ENV VENV_PATH=/home/$NEW_USER/virtualenvs
 ENV PATH="$VENV_PATH/bin:$PATH" VIRTUAL_ENV=$VENV_PATH
 ENV WORKDIR=/opt/project
 ENV SRCDIR=/opt/project
-ENV CORL_CODE_PATH=/opt/project
+ENV ACT3_CODE_PATH=/opt/project
 ENV AI_ARTIFACTS_FOLDER=/opt/data
 WORKDIR ${WORKDIR}
 RUN python -m venv $VENV_PATH

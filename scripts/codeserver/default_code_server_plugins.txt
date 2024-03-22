@@ -14,7 +14,7 @@ bodil.prettier-toml
 bungcip.better-toml
 eamodio.gitlens
 exiasr.hadolint
-GitLab.gitlab-workflow
+github.github-workflow
 ms-python.isort
 ms-python.python
 ms-python.vscode-pylance
