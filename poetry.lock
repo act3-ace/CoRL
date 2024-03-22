@@ -5001,12 +5001,12 @@ testutils = ["gitpython (>3)"]
 [[package]]
 name = "pylint-gitlab"
 version = "1.2.0"
-description = "This project provides pylint formatters for a nice integration with GitLab CI."
+description = "This project provides pylint formatters for a nice integration with github CI."
 optional = false
 python-versions = ">=3.7"
 files = [
     {file = "pylint-gitlab-1.2.0.tar.gz", hash = "sha256:9802350b7fafe9e5fb0749252beff4e10c76b6c33dc7a3be1166158894d22fa7"},
-    {file = "pylint_gitlab-1.2.0-py3-none-any.whl", hash = "sha256:5327e919a3b03d7eb0f08bab1c77bf108061dc6b14b66851595d98a06594ed4e"},
+    {file = "pylint_github-1.2.0-py3-none-any.whl", hash = "sha256:5327e919a3b03d7eb0f08bab1c77bf108061dc6b14b66851595d98a06594ed4e"},
 ]
 
 [package.dependencies]
