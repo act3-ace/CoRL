@@ -1,0 +1,29 @@
+name: Make Poetry Badges
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: action-badges/create-orphan-branch@0.1.1
+        with:
+          branch-name: badges
+
+      - name: Make version Badge
+        uses: action-badges/poetry-badges@0.3.0
+        with:
+          file-name: poetry-version.svg
+          badge-branch: badges
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          integration: version
+
+      - name: Make license badge
+        uses: action-badges/poetry-badges@0.3.0
+        with:
+          file-name: poetry-license.svg
+          badge-branch: badges
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          integration: license
