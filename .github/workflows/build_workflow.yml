@@ -13,71 +13,71 @@ env:
   POETRY_VER: "1.6.1"
 
 jobs:
-  # lint:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     #
-  #     # Pull down the code
-  #     #
-  #     - name: Check out repository
-  #       uses: actions/checkout@v4
-  #     #
-  #     # Setup python
-  #     #
-  #     - name: Setup Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: ${{ env.PY_VER }}
-  #     #
-  #     # Install poetry package manager
-  #     #
-  #     - name: Install Poetry
-  #       uses: snok/install-poetry@v1
-  #       with:
-  #         version: ${{ env.POETRY_VER }}
-  #         virtualenvs-create: false
-  #     #
-  #     # Install the poetry deps for CoRL
-  #     #
-  #     - name: Install Dependencies
-  #       run: poetry install --sync
-  #     #
-  #     # Linting
-  #     #
-  #     - name: check-added-large-files
-  #       run: pre-commit run --all-files check-added-large-files
-  #     - name: check-case-conflict
-  #       run: pre-commit run --all-files check-case-conflict
-  #     - name: check-json
-  #       run: pre-commit run --all-files check-json
-  #     - name: pretty-format-json
-  #       run: pre-commit run --all-files pretty-format-json
-  #     - name: check-merge-conflict
-  #       run: pre-commit run --all-files check-merge-conflict
-  #     # - name: check-symlinks # <--- need to look at this at some point
-  #     #   run: pre-commit run --all-files check-yaml
-  #     # - name: check-yaml # <--- need to look at this at some point
-  #     #   run: pre-commit run --all-files check-yaml
-  #     - name: debug-statements
-  #       run: pre-commit run --all-files debug-statements
-  #     - name: Detect Private Key
-  #       run: pre-commit run --all-files detect-private-key
-  #     - name: RUFF ${{ env.SRC_DIR }}
-  #       run: ruff --fix --exit-non-zero-on-fix ${{ env.SRC_DIR }}
-  #     - name: RUFF ${{ env.TEST_DIR }}
-  #       run: ruff --fix --exit-non-zero-on-fix ${{ env.TEST_DIR }}
-  #     # - name: mypy
-  #     #   run: bash -c "pip --disable-pip-version-check install types-tabulate && python -m mypy . --check-untyped-defs"
-  #     - name: Velin ${{ env.SRC_DIR }}
-  #       run: velin --write --no-fixers ${{ env.SRC_DIR }}
-  #     - name: Velin ${{ env.TEST_DIR }}
-  #       run: velin --write --no-fixers ${{ env.TEST_DIR }}
-  #     - name: BLACK ${{ env.SRC_DIR }}
-  #       run: black ${{ env.SRC_DIR }}
-  #     - name: BLACK ${{ env.TEST_DIR }}
-  #       run: black ${{ env.TEST_DIR }}
-  #     - name: codespell
-  #       run: codespell --ignore-words scripts/valid_words.txt --skip="*html,poetry.lock,pyproject.toml,valid_words.txt,*.css*,*.js*" .
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      #
+      # Pull down the code
+      #
+      - name: Check out repository
+        uses: actions/checkout@v4
+      #
+      # Setup python
+      #
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PY_VER }}
+      #
+      # Install poetry package manager
+      #
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VER }}
+          virtualenvs-create: false
+      #
+      # Install the poetry deps for CoRL
+      #
+      - name: Install Dependencies
+        run: poetry install --sync
+      #
+      # Linting
+      #
+      - name: check-added-large-files
+        run: pre-commit run --all-files check-added-large-files
+      - name: check-case-conflict
+        run: pre-commit run --all-files check-case-conflict
+      - name: check-json
+        run: pre-commit run --all-files check-json
+      - name: pretty-format-json
+        run: pre-commit run --all-files pretty-format-json
+      - name: check-merge-conflict
+        run: pre-commit run --all-files check-merge-conflict
+      # - name: check-symlinks # <--- need to look at this at some point
+      #   run: pre-commit run --all-files check-yaml
+      # - name: check-yaml # <--- need to look at this at some point
+      #   run: pre-commit run --all-files check-yaml
+      - name: debug-statements
+        run: pre-commit run --all-files debug-statements
+      - name: Detect Private Key
+        run: pre-commit run --all-files detect-private-key
+      - name: RUFF ${{ env.SRC_DIR }}
+        run: ruff --fix --exit-non-zero-on-fix ${{ env.SRC_DIR }}
+      - name: RUFF ${{ env.TEST_DIR }}
+        run: ruff --fix --exit-non-zero-on-fix ${{ env.TEST_DIR }}
+      # - name: mypy
+      #   run: bash -c "pip --disable-pip-version-check install types-tabulate && python -m mypy . --check-untyped-defs"
+      - name: Velin ${{ env.SRC_DIR }}
+        run: velin --write --no-fixers ${{ env.SRC_DIR }}
+      - name: Velin ${{ env.TEST_DIR }}
+        run: velin --write --no-fixers ${{ env.TEST_DIR }}
+      - name: BLACK ${{ env.SRC_DIR }}
+        run: black ${{ env.SRC_DIR }}
+      - name: BLACK ${{ env.TEST_DIR }}
+        run: black ${{ env.TEST_DIR }}
+      - name: codespell
+        run: codespell --ignore-words scripts/valid_words.txt --skip="*html,poetry.lock,pyproject.toml,valid_words.txt,*.css*,*.js*" .
 
   test:
     runs-on: ubuntu-latest
