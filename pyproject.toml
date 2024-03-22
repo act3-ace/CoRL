@@ -41,7 +41,7 @@ numpy-ringbuffer = "^0.2.2"
 jsonargparse = { version = "^4", extras = ["signatures", "argcomplete"] }
 flatten-dict = "0.4.1"
 deepmerge = "0.3.0"
-GitPython = "3.1.27"
+GitPython = "3.1.41"
 h5py = ">=3.7"
 tensorboard = "^2.10"
 pygame = "^2.1.2"
