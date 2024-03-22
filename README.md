@@ -4,7 +4,7 @@ title: CoRL
 
 <!-- {{ include_top_banner() }} -->
 
-<!-- {{ include_gitlab_badges() }} -->
+<!-- {{ include_github_badges() }} -->
 
 <!-- {{ include_repo_badges() }} -->
 

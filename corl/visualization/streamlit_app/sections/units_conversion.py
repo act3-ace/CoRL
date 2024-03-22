@@ -38,7 +38,7 @@ def unit_selection_and_table_update(tables_dict: dict[str, pd.DataFrame], obs_un
     """
     st.markdown("## Unit Conversion")
     # Check if there are any values with real units
-    none_units = [unit_str != "dimensionless" for _, unit_str in obs_units_flattened.items()]
+    none_units = [unit_str == "dimensionless" for _, unit_str in obs_units_flattened.items()]
     if len(obs_units_flattened) == 0 or all(none_units):
         st.warning("No observation unit information was found or all units are dimensionless types.")
         return tables_dict
@@ -63,9 +63,13 @@ def unit_selection_and_table_update(tables_dict: dict[str, pd.DataFrame], obs_un
     for dimension_name in present_dimensions:
         if dimension_name in ignore_dimensions:
             continue
-        options = [str(x) for x in corl_get_ureg().get_unit(dimension_name).compatible_units()]
-        # Reorders the options list so that the default units are listed first
-        options = ["default_unit", *options]
+
+        ureg = corl_get_ureg()
+        options = []
+        for u in ureg.units:
+            if corl_get_ureg().get_unit(dimension_name).is_compatible_with(u) and corl_get_ureg().get_unit(u) not in options:
+                options.append(str(corl_get_ureg().get_unit(u)))
+
         # dimension_name -> desired_units
         if col_idx % 4 == 0:
             col_idx = 0
@@ -102,9 +106,7 @@ def update_units_flattened_agent_steps(tables_dict: dict, old_to_new_units_dict:
     if not dataframe.empty:
 
         def apply_unit_conversion_to_row(row):
-            tmp = corl_get_ureg().Quantity(row["attribute_value"], unit=row["units"])
-            if old_to_new_units_dict[row["units"]] == "default_unit":
-                return tmp.to_base_units().m
+            tmp = corl_get_ureg().Quantity(row["attribute_value"], units=row["units"])
             return tmp.m_as(old_to_new_units_dict[row["units"]])
 
         idx_has_units = dataframe["units"].notnull()
@@ -128,9 +130,7 @@ def update_units_space_table(tables_dict: dict, new_units_map: dict) -> dict:
     if not dataframe.empty:
 
         def apply_unit_conversion_to_row(row, prefix, column):
-            tmp = corl_get_ureg().Quantity(row[f"{prefix}{column}"], unit=row["_prev_units"])
-            if row["units"] == "default_unit":
-                return tmp.to_base_units().m
+            tmp = corl_get_ureg().Quantity(row[f"{prefix}{column}"], units=row["_prev_units"])
             return tmp.m_as(row["units"])
 
         dataframe["_prev_units"] = dataframe["units"].copy()

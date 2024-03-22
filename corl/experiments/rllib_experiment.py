@@ -446,7 +446,7 @@ class RllibExperiment(BaseExperiment):
                                 self._logger.warning(f"module: {module0}, repopath: {repo_path} is invalid git repo\n")
                                 sys.stderr.write(f"module: {module0}, repopath: {repo_path} is invalid git repo\n")
         except ValueError:
-            warnings.warn("Unable to add the gitlab hash to experiment!!!")
+            warnings.warn("Unable to add the github hash to experiment!!!")
 
     def get_callbacks(self) -> type[EnvironmentDefaultCallbacks]:  # noqa: PLR6301
         """Get the environment callbacks"""

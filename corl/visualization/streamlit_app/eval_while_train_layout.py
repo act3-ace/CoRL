@@ -16,11 +16,15 @@ import pickle
 from collections.abc import Callable
 
 import streamlit as st
+from pydantic import validate_call
 
 from corl.evaluation.recording.folder import FolderRecord
 from corl.evaluation.runners.section_factories.engine.rllib.episode_artifact_logging_callback import EVAL_CHECKPOINTS_SUBDIR
+from corl.libraries.functor import Functor
 from corl.visualization.network_explainability.env_policy_transforms import AgentCheckpoint
+from corl.visualization.plotly_animator import FrameAxisBounds
 from corl.visualization.streamlit_app.default_layout import DefaultStreamlitPage, episode_artifact_tables
+from corl.visualization.streamlit_app.sections.trajectory_animation import trajectory_playback_section
 from corl.visualization.streamlit_app.utils import (
     _check_required_subdirectories_policy_viz,
     _group_checkpoints_by_input_output,
@@ -93,6 +97,25 @@ class StreamlitPageEvaluationWhileTraining(DefaultStreamlitPage):
             agent_name = policy_dir.parts[-1]
             agent_checkpoints.append(AgentCheckpoint(agent_name=agent_name, checkpoint_dir=policy_dir))
         return agent_checkpoints
+
+    @validate_call
+    def display_trajectory_animation_section(self, animator: Functor, frame_axis_bounds: FrameAxisBounds | None = None):
+        """
+        Displays the Trajectory Animation Section
+
+        Parameters
+        ----------
+        animator: Functor
+            A Functor defining the animator
+        frame_axis_bounds: FrameAxisBounds, optional
+            Sets the default frame axis bounds for the animation.
+        """
+        self.sess_state = trajectory_playback_section(
+            animator=animator,
+            sess_state=self.sess_state,
+            episode_artifacts_dict=self.episode_artifacts_dict,
+            frame_axis_bounds=frame_axis_bounds,
+        )
 
     def display_policy_network_viz_section(self) -> None:  # noqa: PLR0915
         # #########################################################################

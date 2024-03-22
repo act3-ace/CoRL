@@ -1,0 +1,23 @@
+# Currently the only configuration supported is the trajectory animation settings
+# This section defines the mapping between the serializers and deserializers.
+"streamlit_layout": {
+  # REQUIRED: The animator to use for the display trajectory animation section.
+  # Must be derived from corl.visualization.base_animator.
+  "display_trajectory_animation_section" : {
+    "animator": {
+      "functor": "corl.visualization.docking_animator.Docking1dAnimation",
+      "config": {
+        "platform_serializer_map": {
+          "corl.evaluation.serialize_platforms.serialize_Docking_1d":"corl.evaluation.serialize_platforms.DeserializeDocking1dPlotlyAnimation"},
+
+          "platform_color_map" : {"blue0":"blue"}
+
+      }
+    },
+    # Sets the frame axis bounds for the animation. This sets the default values and is optional.
+    "frame_axis_bounds": {
+      "functor": "corl.visualization.base_animator.FrameAxisBounds",
+      "config": {"xbounds": !!python/tuple [-40, 40], "ybounds": !!python/tuple [-2, 2]},
+    }
+  }
+}

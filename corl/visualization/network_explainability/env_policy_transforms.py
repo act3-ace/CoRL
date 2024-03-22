@@ -28,6 +28,7 @@ from pydantic import BaseModel, ConfigDict
 from ray.rllib.algorithms.ppo.ppo_torch_policy import PPOTorchPolicy
 from ray.rllib.evaluation.collectors.agent_collector import AgentCollector
 from ray.rllib.models.modelv2 import restore_original_dimensions
+from ray.rllib.models.preprocessors import get_preprocessor
 from ray.rllib.models.repeated_values import RepeatedValues
 from ray.rllib.policy import Policy
 from ray.rllib.policy.sample_batch import SampleBatch, concat_samples
@@ -167,7 +168,7 @@ class ACT3MultiAgentEnvToPolicyNetworkInputs:
         # found in the loaded checkpoint are ordered differently from the observation space found in the preprocessor.
 
         # This will output a dict of arrays (pre-flattened arrays)
-        _original_space_dict = preprocessor.observation_space.original_space.spaces
+        _original_space_dict = preprocessor.observation_space.original_space
         ref_idx_dict = restore_original_dimensions(
             np.expand_dims(np.arange(0, len(input_obs)), axis=0), obs_space=preprocessor.observation_space, tensorlib=np
         )
@@ -263,11 +264,18 @@ class ACT3MultiAgentEnvToPolicyNetworkInputs:
         _agent = self.env.agent_dict[agent_id]
         for idx, obs in enumerate(raw_observations):
             array_obs = self._get_transformed_obs(
-                _agent.create_training_observations(obs), preprocessor=policy_artifact.preprocessor, policy_filter=policy_artifact.filters
+                _agent.create_training_observations(obs),
+                preprocessor=get_preprocessor(self.env.observation_space[agent_id])(self.env.observation_space[agent_id]),  # type: ignore
+                policy_filter=policy_artifact.filters,
             )
             batch_obs.append(array_obs)
             if idx == 0:
-                self._get_policy_input_observation_names(input_obs=array_obs, preprocessor=policy_artifact.preprocessor)
+                self._get_policy_input_observation_names(
+                    input_obs=array_obs,
+                    preprocessor=get_preprocessor(self.env.observation_space[agent_id])(  # type: ignore
+                        self.env.observation_space[agent_id]  # type: ignore
+                    ),
+                )
         view_requirements = self.policies[agent_id].model.view_requirements
         sample_batch_list = []
 
@@ -327,9 +335,16 @@ def load_checkpoints(checkpoints: list[AgentCheckpoint]) -> dict[AgentID, PPOTor
     for agent_checkpoint in checkpoints:
         _policy = Policy.from_checkpoint(agent_checkpoint.checkpoint_dir)
         # Set the device
-        _policy.devices = [DEVICE]
-        _policy.device = DEVICE
+        if isinstance(_policy, Policy):
+            _policy.devices = [DEVICE]
+            _policy.device = DEVICE
 
-        _policy.model = _policy.model.to(DEVICE)
-        loaded_checkpoints[agent_checkpoint.agent_name] = _policy
+            _policy.model = _policy.model.to(DEVICE)
+            loaded_checkpoints[agent_checkpoint.agent_name] = _policy
+        else:
+            _policy[agent_checkpoint.agent_name].devices = [DEVICE]
+            _policy[agent_checkpoint.agent_name].device = DEVICE
+
+            _policy[agent_checkpoint.agent_name].model = _policy[agent_checkpoint.agent_name].model.to(DEVICE)
+            loaded_checkpoints[agent_checkpoint.agent_name] = _policy[agent_checkpoint.agent_name]
     return loaded_checkpoints

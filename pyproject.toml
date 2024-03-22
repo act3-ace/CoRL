@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "corl"
-version = "3.14.10"
+version = "3.14.12"
 description = "Core ACT3 Reinforcement Learning (RL) Library - Core framework and base implementations of common things such as controllers, glues, observes, sensors, evaluation, and etc"
 authors = [
     "Benjamin K Heiner <benjamin.heiner@us.af.mil>",
@@ -19,7 +19,7 @@ readme = "README.md"
 homepage = "https://github.com/act3-ace/CoRL"
 repository = "https://github.com/act3-ace/CoRL"
 documentation = "https://github.com/act3-ace/CoRL"
-keywords = ["Deep", "Reinforcement", "Learning", "CoRL", "***", "ACT3"]
+keywords = ["Deep", "Reinforcement", "Learning", "CoRL", "act3", "ACT3"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
@@ -75,7 +75,7 @@ torch = ">=2.0.0, !=2.0.1, !=2.1.0"
 
 [tool.poetry.group.lint.dependencies]
 ruff = "^0.0.291"
-mypy = "1.5.1"
+mypy = "~1.6"
 types-toml =">=0.10.8.7"
 black = "^23.7.0"
 bashate = "^2.1.0"
@@ -87,10 +87,14 @@ types-setuptools = ">=68.2.0.1"
 codespell = ">=2.2.6"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^7.1.2"
+pytest = "^8.0.2"
 pytest-cov = "2.11.1"
 pyinstrument = "^4.3.0"
 mock = "^5.0.1"
+pytest-sugar = ">=0.9.7"
+pytest-dependency = ">=0.5.1"
+pytest-xdist = "^3.5.0"
+psutil = "^5.9.8"
 
 [tool.poetry.group.profile.dependencies]
 memray = "^1.3.1"

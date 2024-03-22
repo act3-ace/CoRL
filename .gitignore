@@ -36,6 +36,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+testing.html
 htmlcov/
 .tox/
 .nox/
@@ -146,3 +147,6 @@ docker-compose-di2e.yml
 
 auth.toml
 pip.conf
+
+# github items
+bin

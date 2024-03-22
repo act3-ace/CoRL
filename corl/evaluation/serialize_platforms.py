@@ -13,6 +13,7 @@ This module contains logic to serialize different platforms
 
 
 from corl.evaluation.runners.section_factories.plugins.platform_serializer import PlatformSerializer
+from corl.simulators.docking_1d.properties import PositionProp as Docking1dPos
 from corl.visualization.platform_plotting_deserializer import PlatformDeserializerPlotlyAnimation
 
 
@@ -93,6 +94,30 @@ class Serialize_Pong(PlatformSerializer):
         return serialized_data
 
 
+class DeserializeDocking1dPlotlyAnimation(PlatformDeserializerPlotlyAnimation):
+    """
+    The deserializer for Docking-1d. This is an example
+    of how to return the necessary minimal data for
+    rendering a plotly trajectory animation within the streamlit application.
+    """
+
+    def get_position(self, serialized_data) -> tuple | list:  # noqa: PLR6301
+        return serialized_data["position"]
+
+    def get_position_units(self, serialized_data: dict) -> tuple | list:  # noqa: PLR6301
+        position_units = (Docking1dPos().unit for _ in serialized_data["position"])
+        return tuple(position_units)
+
+    def get_platform_name(self, serialized_data: dict) -> str:  # noqa: PLR6301
+        return serialized_data["name"]
+
+    def get_dimensionality(self, serialized_data: dict) -> int:  # noqa: PLR6301
+        return len(serialized_data["position"])
+
+    def get_metadata_for_text_display(self, serialized_data) -> dict[str, int | float | str]:  # noqa: PLR6301
+        return {"sim_time": serialized_data["sim_time"], "velocity": serialized_data["velocity"].item()}
+
+
 class DeserializePongPlotlyAnimation(PlatformDeserializerPlotlyAnimation):
     """
     The deserializer for Pong. This is an example
@@ -117,6 +142,9 @@ class DeserializePongPlotlyAnimation(PlatformDeserializerPlotlyAnimation):
     def get_dimensionality(self, serialized_data: dict) -> int:  # noqa: PLR6301
         """Returns the dimensionality of the world"""
         return len(serialized_data["position"])
+
+    def get_paddle_dimensions(self, serialized_data: dict):  # noqa: PLR6301
+        return {"width": serialized_data["paddle_width"], "height": serialized_data["paddle_height"]}
 
     def get_metadata_for_text_display(self, serialized_data):  # noqa: PLR6301
         """Returns data in a flattened dictionary that can be optionally displayed

@@ -1,27 +1,125 @@
 name: Build, Test, and Publish
 
 on:
+  pull_request:
   push:
-    branches: [ main ]
+    branches:
+      - "main"
+
+env:
+  SRC_DIR: corl
+  TEST_DIR: test
+  PY_VER: "3.11.4"
+  POETRY_VER: "1.6.1"
 
 jobs:
+  # lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     #
+  #     # Pull down the code
+  #     #
+  #     - name: Check out repository
+  #       uses: actions/checkout@v4
+  #     #
+  #     # Setup python
+  #     #
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: ${{ env.PY_VER }}
+  #     #
+  #     # Install poetry package manager
+  #     #
+  #     - name: Install Poetry
+  #       uses: snok/install-poetry@v1
+  #       with:
+  #         version: ${{ env.POETRY_VER }}
+  #         virtualenvs-create: false
+  #     #
+  #     # Install the poetry deps for CoRL
+  #     #
+  #     - name: Install Dependencies
+  #       run: poetry install --sync
+  #     #
+  #     # Linting
+  #     #
+  #     - name: check-added-large-files
+  #       run: pre-commit run --all-files check-added-large-files
+  #     - name: check-case-conflict
+  #       run: pre-commit run --all-files check-case-conflict
+  #     - name: check-json
+  #       run: pre-commit run --all-files check-json
+  #     - name: pretty-format-json
+  #       run: pre-commit run --all-files pretty-format-json
+  #     - name: check-merge-conflict
+  #       run: pre-commit run --all-files check-merge-conflict
+  #     # - name: check-symlinks # <--- need to look at this at some point
+  #     #   run: pre-commit run --all-files check-yaml
+  #     # - name: check-yaml # <--- need to look at this at some point
+  #     #   run: pre-commit run --all-files check-yaml
+  #     - name: debug-statements
+  #       run: pre-commit run --all-files debug-statements
+  #     - name: Detect Private Key
+  #       run: pre-commit run --all-files detect-private-key
+  #     - name: RUFF ${{ env.SRC_DIR }}
+  #       run: ruff --fix --exit-non-zero-on-fix ${{ env.SRC_DIR }}
+  #     - name: RUFF ${{ env.TEST_DIR }}
+  #       run: ruff --fix --exit-non-zero-on-fix ${{ env.TEST_DIR }}
+  #     # - name: mypy
+  #     #   run: bash -c "pip --disable-pip-version-check install types-tabulate && python -m mypy . --check-untyped-defs"
+  #     - name: Velin ${{ env.SRC_DIR }}
+  #       run: velin --write --no-fixers ${{ env.SRC_DIR }}
+  #     - name: Velin ${{ env.TEST_DIR }}
+  #       run: velin --write --no-fixers ${{ env.TEST_DIR }}
+  #     - name: BLACK ${{ env.SRC_DIR }}
+  #       run: black ${{ env.SRC_DIR }}
+  #     - name: BLACK ${{ env.TEST_DIR }}
+  #       run: black ${{ env.TEST_DIR }}
+  #     - name: codespell
+  #       run: codespell --ignore-words scripts/valid_words.txt --skip="*html,poetry.lock,pyproject.toml,valid_words.txt,*.css*,*.js*" .
+
   test:
-    runs-on: ubuntu-latest  # You can define a matrix for multiple OSes
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python environment
-        uses: actions/setup-python@v3
+      #
+      # Check out the repository
+      #
+      - name: Check out repository
+        uses: actions/checkout@v4
+      #
+      # Setup the python 
+      #
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.8  # Adjust as needed
+          python-version: ${{ env.PY_VER }}
+      #
+      # Setup the Poetry and install deps
+      #
       - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-      - name: Install dependencies
-        run: poetry install
-      - name: Run unit tests
-        run: poetry run pytest  # Adjust your test runner if needed
-      - name: Upload test results (optional)
-        uses: actions/upload-artifact@v3
+        uses: snok/install-poetry@v1
         with:
-          name: test-results
-          if: always()  # Upload results even on failures
+          version: ${{ env.POETRY_VER }}
+          virtualenvs-create: false
+      - name: Install Dependencies
+        run: poetry install --sync
+      #
+      # Verify that the tests pass
+      #
+      - name: Run tests
+        run: |
+          pytest test --cov=${{ env.SRC_DIR }}
+      #
+      # Build the poetry packages
+      #
+      - name: Package
+        run: poetry build
+      #
+      # Store the artifacts for later
+      #
+      - name: Store Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-distributions
+          path: dist/

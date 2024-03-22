@@ -32,6 +32,7 @@ from tqdm import tqdm
 from corl.evaluation.episode_artifact import EpisodeArtifact
 from corl.evaluation.evaluation_outcome import EvaluationOutcome
 from corl.evaluation.recording.folder import FolderRecord
+from corl.libraries.units import Quantity
 from corl.visualization.network_explainability.env_policy_transforms import _to_flattened_dict
 
 
@@ -181,7 +182,7 @@ class EpisodeArtifactTables:
                     test_case=epi_artifact.test_case,
                     frame_rate=epi_artifact.frame_rate,
                     worker_index=epi_artifact.worker_index,
-                    wall_time_sec=epi_artifact.wall_time_sec,
+                    wall_time_sec=epi_artifact.duration_sec,
                     steps=len(epi_artifact.steps),
                     seconds=1 / epi_artifact.frame_rate * len(epi_artifact.steps),
                 )
@@ -585,6 +586,13 @@ class EpisodeArtifactTables:
 
     def _process_raw_observation(self, observation: OrderedDict, multiplatform: bool = False):
         """Processes the raw observation"""
+        tmp = observation.copy()
+        for idx, val in observation.items():
+            for key, obs in val.items():
+                if isinstance(obs, Quantity):
+                    tmp[idx][key] = obs.m
+        observation = tmp
+
         if multiplatform:
             return flatten_dict.flatten(self._restucture_multiplatform_obs(observation), reducer=self._reducer)
         return flatten_dict.flatten(observation, reducer=self._reducer)

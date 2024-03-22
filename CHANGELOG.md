@@ -1,16 +1,30 @@
+## 3.14.12
+
+
+### Bug Fixes
+
+* lift restriction on validate_experiment_parse that prevnts... ()
+
+## 3.14.11
+
+
+### Bug Fixes
+
+* updates to resolve the reading of the value function in callbacks... ()
+
 ## 3.14.10
 
 
 ### Bug Fixes
 
-* Move self out of trial_name_prefix closure 
+* Move self out of trial_name_prefix closure ()
 
 ## 3.14.9
 
 
 ### Bug Fixes
 
-* Resolve "Fix reading policy configs" 
+* Resolve "Fix reading policy configs" ()
 
 ## 3.14.8
 
@@ -63,7 +77,7 @@
 
 ### Bug Fixes
 
-* add_simultor_ref_count ()
+* add_simulator_ref_count ()
 
 ## 3.14.1
 
@@ -549,7 +563,7 @@
 
 ### Bug Fixes
 
-* dockerfile pulled from *** ()
+* dockerfile pulled from repository manager ()
 
 
 ### Features
@@ -645,7 +659,7 @@ See merge request /act3-rl/corl!34
 *  too many lines of code in run_experiment() ()
 * 1. update requirements, 2. Make dict mapping, 3. add requirement ()
 * A number of changes related to output units ()
-* *** 163v2 ()
+* act3 163v2 ()
 * Ability to evaluate array action space ()
 * Acedt integration with evaluation framework ()
 * Add 2D support to observation_units() ()
@@ -899,35 +913,35 @@ See merge request /act3-rl/corl!34
 * get_sub_environments() is always empty for inference client ()
 * **gitignore:** Added ray_logs to gitignore ()
 * **gitignore:** Added vscode directory to gitignore ()
-* **gitlab-ci:** add stage ()
-* **gitlab-ci:** allow mkdocs to fail ()
-* **gitlab-ci:** buildkit release ()
-* **gitlab-ci:** Change stages ()
-* **gitlab-ci:** change to the pypi ()
-* **gitlab-ci:** minor change ()
-* **gitlab-ci:** minor change to kickoff pipeline ()
-* **gitlab-ci:** minor change to test pipeline ()
-* **gitlab-ci:** missed a plugin ()
-* **gitlab-ci:** missed busybox ()
-* **gitlab-ci:** mkdocs job crashing ()
-* **gitlab-ci:** monor change to force pipeline ()
-* **gitlab-ci:** put script back to old way ()
-* **gitlab-ci:** re-add slashes and update build args ()
-* **gitlab-ci:** remove slash ()
-* **gitlab-ci:** sigh, args back to old way ()
-* **gitlab-ci:** try to fix pages ()
-* **gitlab-ci:** turn off mkdocs job ()
-* **gitlab-ci:** update cicd settings for both envs ()
-* **gitlab-ci:** update job names ()
-* **gitlab-ci:** update kaniko executor string ()
-* **gitlab-ci:** update kaniko-args and version ()
-* **gitlab-ci:** update mkdocs installs ()
-* **gitlab-ci:** update mkdocs job ()
-* **gitlab-ci:** update other script ()
-* **gitlab-ci:** update tagged image ()
-* **gitlab-ci:** update tagged jobs for buildkit ()
-* **gitlab-ci:** update to new pipeline ()
-* **gitlab-ci:** yaml lint fix ()
+* **github-ci:** add stage ()
+* **github-ci:** allow mkdocs to fail ()
+* **github-ci:** buildkit release ()
+* **github-ci:** Change stages ()
+* **github-ci:** change to the pypi ()
+* **github-ci:** minor change ()
+* **github-ci:** minor change to kickoff pipeline ()
+* **github-ci:** minor change to test pipeline ()
+* **github-ci:** missed a plugin ()
+* **github-ci:** missed busybox ()
+* **github-ci:** mkdocs job crashing ()
+* **github-ci:** monor change to force pipeline ()
+* **github-ci:** put script back to old way ()
+* **github-ci:** re-add slashes and update build args ()
+* **github-ci:** remove slash ()
+* **github-ci:** sigh, args back to old way ()
+* **github-ci:** try to fix pages ()
+* **github-ci:** turn off mkdocs job ()
+* **github-ci:** update cicd settings for both envs ()
+* **github-ci:** update job names ()
+* **github-ci:** update kaniko executor string ()
+* **github-ci:** update kaniko-args and version ()
+* **github-ci:** update mkdocs installs ()
+* **github-ci:** update mkdocs job ()
+* **github-ci:** update other script ()
+* **github-ci:** update tagged image ()
+* **github-ci:** update tagged jobs for buildkit ()
+* **github-ci:** update to new pipeline ()
+* **github-ci:** yaml lint fix ()
 * Glue extractors ()
 * handle case when there's no info dict ()
 * hot fix to update epp parameter signature in experiment to match for save and load ()
@@ -971,7 +985,7 @@ See merge request /act3-rl/corl!34
 * Merge branch '49-baseplatformpart-validator' into 'main' (), closes 
 * Merge branch '67-observesensor-output-units' into 'main' (), closes  
 * Merge branch '74_configurable_sanity_check' into 'main' (), closes 
-* Merge branch '***-163v2' into 'main' ()
+* Merge branch 'act3-163v2' into 'main' ()
 * Merge branch 'add_create_training_observations_fallback' into 'main' ()
 * Merge branch 'auto_updates' of *****:act3-rl/act3-rl-core into auto_updates ()
 * Merge branch 'avoid_double_platform_delete' into 'main' ()
@@ -1217,7 +1231,7 @@ See merge request /act3-rl/corl!34
 * update external deps ()
 * update files and scripts for poetry ()
 * update for task needed for flight tests ()
-* Update gitlab pipeline version ()
+* Update github pipeline version ()
 * update image paths, changes for 620 ()
 * update install poetry command and fix poetry export command ()
 * update linting... ()
@@ -1226,7 +1240,7 @@ See merge request /act3-rl/corl!34
 * Update observation_units() ()
 * Update observation_units() ()
 * update oci_registry for buildkit, make changes for docker-compose ()
-* update permissions for hpc image in rl- ()
+* update permissions for hpc image in rl-simulator ()
 * update pip_index_url ()
 * Update plugin library dependency ()
 * update poetry python version ()
@@ -1245,7 +1259,7 @@ See merge request /act3-rl/corl!34
 * update to auto setup ()
 * update to correct circular dep ()
 * update to correct mkdocs?? ()
-* update to correct names for targets in .gitlab-ci.yml ()
+* update to correct names for targets in .github-ci.yml ()
 * update to fix scipy export issue ()
 * update to get box prop working ()
 * Update train_rl help messages ()
@@ -1276,7 +1290,7 @@ See merge request /act3-rl/corl!34
 * updates for code base ()
 * updates for code base... ()
 * updates for conflicts ()
-* updates for *** ()
+* updates for repository manager ()
 * updates for e4xternal deps ()
 * updates for external deps ()
 * updates for external deps ()
@@ -1292,22 +1306,22 @@ See merge request /act3-rl/corl!34
 * updates for numpy bool ()
 * updates for orginizatio, linting and testing ()
 * updates for population style training with PPO ()
-* updates for the code server and test for *** push ()
+* updates for the code server and test for repository manager push ()
 * updates for the league --- TEMP until we redesign restart ()
 * Updates for the memory store, valid states, and HL ()
 * updates for the memstore ()
 * Updates for VISTA model ()
 * updates linting ()
-* updates required for  ()
+* updates required for simulator ()
 * updates so that league aers go to the same dir every time --- skip the date and pbs keys ()
-* updates to (1) /tmp/data vs /opt/data supporting *** exploration and (2)... ()
+* updates to (1) /tmp/data vs /opt/data supporting repository manager exploration and (2)... ()
 * updates to add in clutter ()
 * updates to add in container building ()
 * updates to add in missing items and set path ()
 * updates to add in profile examples ()
 * updates to add in vscode builds ()
 * updates to add obs to the apply at agent level ()
-* updates to allow push to *** - temp fix --- also fix the linting ()
+* updates to allow push to repository manager - temp fix --- also fix the linting ()
 * updates to controller to report invalid state correctly for non len 1 arrays ()
 * updates to docker ()
 * updates to docker ()
@@ -1413,7 +1427,7 @@ See merge request /act3-rl/corl!34
 * get rid of unneeded typing.Union ()
 * **glue:** added glue multi wrapper base class ()
 * handling for checkpoint types beside rllib checkpoint, h5 and heuristic ()
-* Initial copy from *** act3 core ()
+* Initial copy from repository manager act3 core ()
 * initial pass at dependent random variables ()
 * make curl stage external container ()
 * Merge branch '17-update-ray-to-version-1.7' into 'main' (), closes 
@@ -1656,7 +1670,7 @@ See merge request act3-rl/corl!317
 
 ### Bug Fixes
 
-* Update gitlab pipeline version ()
+* Update github pipeline version ()
 
 
 ### Features
@@ -1689,7 +1703,7 @@ See merge request act3-rl/corl!317
 
 ### Bug Fixes
 
-* updates to (1) /tmp/data vs /opt/data supporting *** exploration and (2)... ()
+* updates to (1) /tmp/data vs /opt/data supporting repository manager exploration and (2)... ()
 
 ## 2.8.14
 
@@ -2553,9 +2567,9 @@ See merge request act3-rl/corl!317
 ### Bug Fixes
 
 * **Dockerfile:** update DOCKER_OCI_REG ()
-* **gitlab-ci:** mkdocs job crashing ()
-* **gitlab-ci:** try to fix pages ()
-* **gitlab-ci:** update tagged jobs for buildkit ()
+* **github-ci:** mkdocs job crashing ()
+* **github-ci:** try to fix pages ()
+* **github-ci:** update tagged jobs for buildkit ()
 * **remove:** remove pages changes ()
 
 ## 1.48.6
@@ -2565,20 +2579,20 @@ See merge request act3-rl/corl!317
 
 *  too many lines of code in run_experiment() ()
 * **Dockerfile:** update registry arg ()
-* **gitlab-ci:** add stage ()
-* **gitlab-ci:** buildkit release ()
-* **gitlab-ci:** minor change ()
-* **gitlab-ci:** minor change to kickoff pipeline ()
-* **gitlab-ci:** minor change to test pipeline ()
-* **gitlab-ci:** missed busybox ()
-* **gitlab-ci:** monor change to force pipeline ()
-* **gitlab-ci:** re-add slashes and update build args ()
-* **gitlab-ci:** remove slash ()
-* **gitlab-ci:** turn off mkdocs job ()
-* **gitlab-ci:** update job names ()
-* **gitlab-ci:** update mkdocs job ()
-* **gitlab-ci:** update to new pipeline ()
-* **gitlab-ci:** yaml lint fix ()
+* **github-ci:** add stage ()
+* **github-ci:** buildkit release ()
+* **github-ci:** minor change ()
+* **github-ci:** minor change to kickoff pipeline ()
+* **github-ci:** minor change to test pipeline ()
+* **github-ci:** missed busybox ()
+* **github-ci:** monor change to force pipeline ()
+* **github-ci:** re-add slashes and update build args ()
+* **github-ci:** remove slash ()
+* **github-ci:** turn off mkdocs job ()
+* **github-ci:** update job names ()
+* **github-ci:** update mkdocs job ()
+* **github-ci:** update to new pipeline ()
+* **github-ci:** yaml lint fix ()
 * make _add_git_hashes_to_config() and _update_rllib_config() private. ()
 * Merge branch 'make_run_experiment_loc_smaller' into 'main' ()
 * re-add slashes ()
@@ -2877,7 +2891,7 @@ See merge request act3-rl/corl!317
 
 ### Bug Fixes
 
-* **gitlab-ci:** update tagged image ()
+* **github-ci:** update tagged image ()
 * update cicd to use act3 jobs and make release image ()
 
 ## 1.42.1
@@ -2952,12 +2966,12 @@ See merge request act3-rl/corl!317
 * **DOckerfile:** update versions on external deps ()
 * **Dockerfile:** updates for 620 ()
 * fixed issue with moving to ray; and minor issue with episode done_string ()
-* **gitlab-ci:** put script back to old way ()
-* **gitlab-ci:** sigh, args back to old way ()
-* **gitlab-ci:** update cicd settings for both envs ()
-* **gitlab-ci:** update kaniko executor string ()
-* **gitlab-ci:** update kaniko-args and version ()
-* **gitlab-ci:** update other script ()
+* **github-ci:** put script back to old way ()
+* **github-ci:** sigh, args back to old way ()
+* **github-ci:** update cicd settings for both envs ()
+* **github-ci:** update kaniko executor string ()
+* **github-ci:** update kaniko-args and version ()
+* **github-ci:** update other script ()
 * linting ()
 * Merge branch 'auto_updates' of github.com/act3-ace:act3-rl/corl into auto_updates ()
 * Merge branch 'main' of github.com/act3-ace:act3-rl/corl into main ()
@@ -3937,7 +3951,7 @@ See merge request act3-rl/corl!317
 
 ### Bug Fixes
 
-* **gitlab-ci:** Change stages ()
+* **github-ci:** Change stages ()
 
 # 1.14.0
 
@@ -4027,7 +4041,7 @@ See merge request act3-rl/corl!317
 ### Bug Fixes
 
 * Merge branch 'fix/update_correct_names' into 'main' ()
-* update to correct names for targets in .gitlab-ci.yml ()
+* update to correct names for targets in .github-ci.yml ()
 
 ## 1.10.1
 
@@ -4224,9 +4238,9 @@ See merge request act3-rl/corl!317
 * **dockerfile:** update pip install ()
 * Fix imports ()
 * fix linting ()
-* **gitlab-ci:** allow mkdocs to fail ()
-* **gitlab-ci:** missed a plugin ()
-* **gitlab-ci:** update mkdocs installs ()
+* **github-ci:** allow mkdocs to fail ()
+* **github-ci:** missed a plugin ()
+* **github-ci:** update mkdocs installs ()
 * Glue extractors ()
 * Platform utilities ()
 * Platform utilities actually used ()
@@ -4261,7 +4275,7 @@ See merge request act3-rl/corl!317
 
 * add cicd ()
 * add more files ()
-* **gitlab-ci:** change to the pypi ()
+* **github-ci:** change to the pypi ()
 * pytlint ()
 * trying a differetn url ()
 * update branch ()

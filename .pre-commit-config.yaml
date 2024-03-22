@@ -53,7 +53,7 @@ repos:
         entry: check-yaml
         language: python
         types: [ yaml ]
-        exclude: "(^config.*|.gitlab-ci.yml|^test.*|^docs.*|mkdocs.yml$)"
+        exclude: "(^config.*|.github-ci.yml|^test.*|^docs.*|mkdocs.yml$)"
         args: [ "--allow-multiple-documents" ]
       - id: debug-statements
         name: Debug Statements (Python)

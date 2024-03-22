@@ -189,7 +189,7 @@ class DefaultStreamlitPage:
         clicked_button = st.button("Generate Policy Network Explainability Metrics")
 
         if clicked_button:
-            episode_artifact_files = list(self.full_experiment_path.glob("test_case*/batch.pkl"))
+            episode_artifact_files = list(self.full_experiment_path.glob("test_case*/*_episode_artifact.pkl"))
 
             self.sess_state.eval_net_viz = init_network_explainability_module(
                 agent_checkpoints=agent_checkpoints,
