@@ -32,7 +32,7 @@ rm -rf docker/*.crt
 rm -rf docker/*.sh
 
 # Clean up the files!!!
-python ../../corl/sanitize.py
+python $1/sanitize.py
 
 # Install the items need and make sure lock is good
 poetry lock

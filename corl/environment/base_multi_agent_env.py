@@ -14,6 +14,7 @@ import copy
 import typing
 from collections import OrderedDict
 
+import gymnasium
 import gymnasium.utils.seeding
 from pydantic import BaseModel
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
@@ -60,6 +61,8 @@ class BaseCorlMultiAgentEnv(MultiAgentEnv):
         self._state: BaseSimulatorState
         self._simulator: BaseSimulator
         self._episode_id: int | None = None
+        self.action_space: gymnasium.spaces.Dict
+        self.observation_space: gymnasium.spaces.Dict
 
     @staticmethod
     def get_validator() -> type[BaseCorlMultiAgentEnvValidator]:

@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Contains abstract interfaces defining how to record an Evaluation outcome
 """
+
 import typing
 from abc import abstractmethod
 from pathlib import Path

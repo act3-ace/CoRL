@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 
 Normalizer
 """
+
 import abc
 import copy
 from collections import OrderedDict

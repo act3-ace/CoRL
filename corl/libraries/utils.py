@@ -1,5 +1,6 @@
 """ non grouped utils
 """
+
 import math
 import typing
 from string import digits

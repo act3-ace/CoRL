@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Launch process for performing and visualizing an evaluation
 """
+
 import typing
 
 import jsonargparse

@@ -9,6 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
+
 from abc import abstractmethod
 
 from corl.libraries.units import Quantity
@@ -16,8 +17,7 @@ from corl.libraries.units import Quantity
 
 class BaseEppUpdate:
     @abstractmethod
-    def get_updates(self) -> dict[tuple[str, ...], Quantity | float | str]:
-        ...
+    def get_updates(self) -> dict[tuple[str, ...], Quantity | float | str]: ...
 
 
 def get_updates(updates: BaseEppUpdate, prefix: str | None = None) -> dict[tuple[str, ...], Quantity | float | str]:

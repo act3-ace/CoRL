@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 SimpleMultiPlatform Agent Class
 """
+
 import collections
 import typing
 from functools import cached_property
@@ -357,9 +358,11 @@ class SimpleMultiPlatform(BaseAgent):
         Returns agents normalized observation space
         """
         tmp = self._create_space(
-            space_getter=lambda glue_obj: glue_obj.normalized_observation_space
-            if glue_obj.config.training_export_behavior == TrainingExportBehavior.INCLUDE
-            else None
+            space_getter=lambda glue_obj: (
+                glue_obj.normalized_observation_space
+                if glue_obj.config.training_export_behavior == TrainingExportBehavior.INCLUDE
+                else None
+            )
         )
         tmp = gymnasium.spaces.Dict(
             {platform_name: Repeated(platform_space, max_len=1) for platform_name, platform_space in tmp.spaces.items()}

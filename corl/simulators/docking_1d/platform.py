@@ -3,7 +3,6 @@ This module extends corl.simulators.base_platform.BasePlatform to create a simpl
 docking platform.
 """
 
-
 import numpy as np
 
 from corl.libraries.units import corl_get_ureg

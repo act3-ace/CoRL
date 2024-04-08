@@ -9,6 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
+
 from collections import OrderedDict
 
 from corl.libraries.observation_util import filter_observations, mutate_observations

@@ -9,6 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
+
 import pytest
 
 from corl.test_utils import full_training

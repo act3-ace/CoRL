@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 The following module contains the implementation for the  stacked observation
 """
+
 import gymnasium
 import numpy as np
 from ray.rllib.models import ModelCatalog

@@ -12,6 +12,7 @@ Pong Game
 This class implements pong and is independing of RL based on
 https://github.com/techwithtim/Pong-Python
 """
+
 from enum import Enum
 
 import pygame

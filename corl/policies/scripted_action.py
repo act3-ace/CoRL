@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Scripted Action Policy
 """
+
 import typing
 
 import flatten_dict

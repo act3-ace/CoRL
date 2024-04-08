@@ -12,6 +12,7 @@ Classes that represent a metric generator
 
 A metric generator is a class that generates a metric.
 """
+
 import abc
 import typing
 

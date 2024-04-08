@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Module with implementation for multiple Observations
 """
+
 import logging
 
 from corl.rewards.base_measurement_operation import ExtractorSet, ObservationExtractorValidator

@@ -2,7 +2,6 @@
 This module defines the controller used by the agent to interact with its environment.
 """
 
-
 from corl.libraries.plugin_library import PluginLibrary
 from corl.libraries.units import Quantity
 from corl.simulators.base_parts import BaseController

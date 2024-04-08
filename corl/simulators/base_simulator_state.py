@@ -10,7 +10,6 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
 
-
 from pydantic import BaseModel, Extra
 
 

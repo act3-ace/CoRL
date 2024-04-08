@@ -9,6 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
+
 from abc import abstractmethod
 from collections.abc import Callable
 from typing import Any, Generic, TypeVar, final
@@ -65,8 +66,7 @@ T = TypeVar("T")
 #         return _TypeChecker()
 
 
-class SlotExpired(RuntimeError):
-    ...
+class SlotExpired(RuntimeError): ...
 
 
 class BaseSlot(Generic[T]):
@@ -91,8 +91,7 @@ class BaseSlot(Generic[T]):
         return self._on_message(data)
 
     @abstractmethod
-    def _on_message(self, data: T) -> Any:
-        ...
+    def _on_message(self, data: T) -> Any: ...
 
     def __setstate__(self, state):
         self.__dict__.update(state)

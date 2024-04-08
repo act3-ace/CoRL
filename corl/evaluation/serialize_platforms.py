@@ -11,7 +11,6 @@ limitation or restriction. See accompanying README and LICENSE for details.
 This module contains logic to serialize different platforms
 """
 
-
 from corl.evaluation.runners.section_factories.plugins.platform_serializer import PlatformSerializer
 from corl.simulators.docking_1d.properties import PositionProp as Docking1dPos
 from corl.visualization.platform_plotting_deserializer import PlatformDeserializerPlotlyAnimation

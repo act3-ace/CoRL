@@ -1,3 +1,31 @@
+# 3.16.0
+
+
+### Features
+
+* overseer_episode_artifact_logging ()
+
+## 3.15.2
+
+
+### Bug Fixes
+
+* updates for the aprs copy process ()
+
+## 3.15.1
+
+
+### Bug Fixes
+
+* fix_auto_rollout_fragment_length ()
+
+# 3.15.0
+
+
+### Features
+
+* Resolve "Add Evaluation API" ()
+
 ## 3.14.12
 
 

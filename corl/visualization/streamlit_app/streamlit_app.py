@@ -11,6 +11,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Entrypoint for Streamlit App
 """
+
 import jsonargparse
 import streamlit as st
 

@@ -14,7 +14,6 @@ from datetime import datetime
 from pathlib import Path
 
 import flatten_dict
-import gymnasium
 import numpy as np
 from ray.rllib import BaseEnv, RolloutWorker
 from ray.rllib.evaluation.episode_v2 import EpisodeV2
@@ -23,7 +22,7 @@ from ray.rllib.policy import Policy
 from ray.rllib.policy.sample_batch import SampleBatch
 from ray.rllib.utils.typing import AgentID, PolicyID
 
-from corl.environment.multi_agent_env import ACT3MultiAgentEnv
+from corl.environment.base_multi_agent_env import BaseCorlMultiAgentEnv
 from corl.evaluation.episode_artifact import EpisodeArtifact
 from corl.evaluation.runners.section_factories.engine.rllib.default_evaluation_callbacks import DefaultEvaluationCallbacks
 
@@ -162,7 +161,6 @@ class EpisodeArtifactLoggingCallback(DefaultEvaluationCallbacks):
         if not worker.config.in_evaluation:
             return
 
-        epoch = str(worker.config["training_iteration"]).zfill(EPOCH_ZFILL)
         env = base_env.get_sub_environments()[episode.env_id]
         done_string_list = []
         # Generate the filenames for trajectories
@@ -175,7 +173,13 @@ class EpisodeArtifactLoggingCallback(DefaultEvaluationCallbacks):
         done_string = "_".join(done_string_list)
         done_string = f"{episode_counter_str}-{worker_index_str}-{done_string}"
 
-        sub_directory = Path(worker._original_kwargs["log_dir"]) / "trajectories" / f"epoch_{epoch}"  # noqa: SLF001
+        log_artifacts_to_env_output_dir = worker.config.get("log_artifacts_to_env_output_dir", False)
+        if log_artifacts_to_env_output_dir:
+            sub_directory = Path(env.config.output_path)
+        else:
+            epoch = str(worker.config["training_iteration"]).zfill(EPOCH_ZFILL)
+            sub_directory = Path(worker._original_kwargs["log_dir"]) / "trajectories" / f"epoch_{epoch}"  # noqa: SLF001
+
         policy_artifact = {}
         for policy_id in policies:
             policy_artifact.update(
@@ -185,14 +189,22 @@ class EpisodeArtifactLoggingCallback(DefaultEvaluationCallbacks):
                     )
                 }
             )
-        assert isinstance(worker.env, ACT3MultiAgentEnv)
-        assert isinstance(worker.env.action_space, gymnasium.spaces.Dict)
-        assert isinstance(worker.env.observation_space, gymnasium.spaces.Dict)
+
+        if worker.env is None or not isinstance(worker.env, BaseCorlMultiAgentEnv):
+            raise RuntimeError(
+                f"Invalid Environment - Env must not be None and must be of type BaseCorlMultiAgentEnv; got {type(worker.env)}"
+            )
+
+        normalized_action_space = worker.env.action_space
+        normalized_observation_space = worker.env.observation_space
+        raw_action_space = getattr(worker.env, "_raw_action_space", worker.env.action_space)
+        raw_observation_space = getattr(worker.env, "_raw_observation_space", worker.env.observation_space)
+
         space_definitions = EpisodeArtifact.SpaceDefinitions(
-            action_space=worker.env._raw_action_space,  # noqa: SLF001
-            normalized_action_space=worker.env.action_space,
-            observation_space=worker.env._raw_observation_space,  # noqa: SLF001
-            normalized_observation_space=worker.env.observation_space,
+            action_space=raw_action_space,
+            normalized_action_space=normalized_action_space,
+            observation_space=raw_observation_space,
+            normalized_observation_space=normalized_observation_space,
         )
         episode_artifact = EpisodeArtifact(
             test_case=episode.user_data["test_case"],

@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Property Module
 """
+
 import abc
 import typing
 from collections.abc import KeysView

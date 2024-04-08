@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Parse the evaluation configuration
 """
+
 import copy
 import typing
 from collections import abc

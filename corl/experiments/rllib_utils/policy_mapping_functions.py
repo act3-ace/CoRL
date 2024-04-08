@@ -10,13 +10,13 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 policy mapping functions
 """
+
 from abc import abstractmethod
 
 from pydantic import BaseModel
 
 
-class PolicyMappingValidatorBase(BaseModel):
-    ...
+class PolicyMappingValidatorBase(BaseModel): ...
 
 
 class PolicyMappingBase:

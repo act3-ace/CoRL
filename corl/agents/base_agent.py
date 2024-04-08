@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Base Agent Class
 """
+
 from __future__ import annotations
 
 import abc
@@ -679,9 +680,11 @@ class BaseAgent:  # noqa: PLR0904
         Returns agents normalized observation space
         """
         normalized_obs_space = self._create_space(
-            space_getter=lambda glue_obj: glue_obj.normalized_observation_space
-            if glue_obj.config.training_export_behavior == TrainingExportBehavior.INCLUDE
-            else None
+            space_getter=lambda glue_obj: (
+                glue_obj.normalized_observation_space
+                if glue_obj.config.training_export_behavior == TrainingExportBehavior.INCLUDE
+                else None
+            )
         )
 
         self._obs_space_transformation = self.__create_obs_space_transformation(normalized_obs_space)

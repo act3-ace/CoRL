@@ -9,6 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
+
 import abc
 from collections import OrderedDict
 
@@ -53,5 +54,4 @@ class BaseWrapperReward(RewardFuncBase):
         next_state: BaseSimulatorState,
         observation_space: gymnasium.Space,
         observation_units: OrderedDict,
-    ) -> float:
-        ...
+    ) -> float: ...

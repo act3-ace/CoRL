@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Configures a rllib trainer to run evaluation
 """
+
 import copy
 import dataclasses
 import logging

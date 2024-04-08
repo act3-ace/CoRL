@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 
 PluginLibrary.AddClassToGroup(CLASS, "NAME", {"simulator": INTEGRATION_CLASS, "platform_type": AvailablePlatformTypes.XXXX})
 """
+
 import importlib
 import inspect
 import itertools

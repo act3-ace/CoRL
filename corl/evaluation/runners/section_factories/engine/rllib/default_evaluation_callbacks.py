@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Callbacks to do logging of episodes
 """
+
 import collections
 import copy
 import typing
@@ -27,6 +28,7 @@ from ray.rllib.utils.typing import AgentID, PolicyID
 
 from corl.environment.base_multi_agent_env import BaseCorlMultiAgentEnv
 from corl.evaluation.episode_artifact import EpisodeArtifact
+from corl.evaluation.runners.section_factories.plugins.platform_serializer import PlatformSerializer
 from corl.simulators.base_simulator import BaseSimulator
 
 
@@ -37,7 +39,7 @@ class DefaultEvaluationCallbacks(DefaultCallbacks, ABC):
     """
 
     @abstractmethod
-    def platform_serializer(self):
+    def platform_serializer(self) -> PlatformSerializer:
         """
         Function that holds a placeholder for the SerializePlatform object which contains a serialization function.
         The SerializePlatform object is to be instantiated and placed inside this method for future use
@@ -47,6 +49,44 @@ class DefaultEvaluationCallbacks(DefaultCallbacks, ABC):
     def extract_environment_state(self, env_state: dict):
         """Method that extracts any information in the environment state that needs to be saved"""
         return {}
+
+    def extract_step_data(self, env) -> dict[str, dict[str, typing.Any]]:  # noqa: PLR6301
+        """Method that extracts actions and observations for each agent in the environment
+        Returns
+        -------
+        dict[str, dict[str, typing.Any]]
+        dict[AGENT_ID, dict[Union[Literal['action'] | Literal['observation']], Any]]
+        """
+        step_data: dict[str, dict[str, typing.Any]] = {
+            agent_id: {"observation": collections.OrderedDict(), "action": collections.OrderedDict()} for agent_id in env.agent_dict
+        }
+
+        for agent_id, obj_pair in env.observation.items():
+            step_data[agent_id]["observation"] = obj_pair
+
+        if env._actions:  # noqa: SLF001
+            for agent_id, agent_data in env._actions[-1].items():  # noqa: SLF001
+                if isinstance(agent_data, dict):
+                    agent_data = flatten_dict.flatten(agent_data)  # noqa: PLW2901
+                    for part_name, value in agent_data.items():
+                        part_name = ".".join(part_name)  # noqa: PLW2901
+                        if isinstance(value, tuple) and len(value) > 0 and isinstance(value[0], dict):
+                            # handle RTAModule or otherwise wrapped controllers
+                            for elem in value:
+                                for sub_part_name, sub_value in elem.items():
+                                    step_data[agent_id]["action"][f"{part_name}.{sub_part_name}"] = sub_value
+                        else:
+                            step_data[agent_id]["action"][part_name] = value
+                elif isinstance(agent_data, np.ndarray):
+                    step_data[agent_id]["action"] = collections.OrderedDict()
+                    for i, val in enumerate(agent_data):
+                        step_data[agent_id]["action"][f"action_{i!s}"] = np.array([val])
+                else:
+                    raise ValueError("Only action types dict and np.ndarray are supported")
+
+                # step_data[agent_id]['action'] = agent_data    # change from corl2.0 merge
+
+        return step_data
 
     def on_episode_start(
         self,  # noqa: PLR6301
@@ -108,7 +148,7 @@ class DefaultEvaluationCallbacks(DefaultCallbacks, ABC):
         # Cooperative multiple inheritance
         super().on_episode_start(worker=worker, base_env=base_env, policies=policies, episode=episode, **kwargs)
 
-    def on_episode_step(  # noqa: PLR0912, PLR0915
+    def on_episode_step(
         self,
         *,
         worker: RolloutWorker,
@@ -151,34 +191,7 @@ class DefaultEvaluationCallbacks(DefaultCallbacks, ABC):
 
         # ######################################
         # # Step data - append on each step
-        step_data: dict[str, dict[str, typing.Any]] = {
-            agent_id: {"observation": collections.OrderedDict(), "action": collections.OrderedDict()} for agent_id in env.agent_dict
-        }
-
-        for agent_id, obj_pair in env.observation.items():
-            step_data[agent_id]["observation"] = obj_pair
-
-        if env._actions:  # noqa: SLF001
-            for agent_id, agent_data in env._actions[-1].items():  # noqa: SLF001
-                if isinstance(agent_data, dict):
-                    agent_data = flatten_dict.flatten(agent_data)  # noqa: PLW2901
-                    for part_name, value in agent_data.items():
-                        part_name = ".".join(part_name)  # noqa: PLW2901
-                        if isinstance(value, tuple) and len(value) > 0 and isinstance(value[0], dict):
-                            # handle RTAModule or otherwise wrapped controllers
-                            for elem in value:
-                                for sub_part_name, sub_value in elem.items():
-                                    step_data[agent_id]["action"][f"{part_name}.{sub_part_name}"] = sub_value
-                        else:
-                            step_data[agent_id]["action"][part_name] = value
-                elif isinstance(agent_data, np.ndarray):
-                    step_data[agent_id]["action"] = collections.OrderedDict()
-                    for i, val in enumerate(agent_data):
-                        step_data[agent_id]["action"][f"action_{i!s}"] = np.array([val])
-                else:
-                    raise ValueError("Only action types dict and np.ndarray are supported")
-
-                # step_data[agent_id]['action'] = agent_data    # change from corl2.0 merge
+        step_data = self.extract_step_data(env)
 
         # ##################################################
         # # Append the episode's step information to our agent_data knowledge
@@ -251,15 +264,24 @@ class DefaultEvaluationCallbacks(DefaultCallbacks, ABC):
         worker_env: BaseCorlMultiAgentEnv | None = worker.env  # type: ignore
         if worker_env is None:
             raise RuntimeError("Worker.env is None, this is a non op")
+
+        if not isinstance(worker_env, BaseCorlMultiAgentEnv):
+            raise RuntimeError("The env not inherit BaseCorlMultiAgentEnv")
+
         if not isinstance(worker_env.simulator, BaseSimulator):
             raise RuntimeError("The simulator attached to the worker does not inherit BaseSimulator")
         frame_rate = worker_env.simulator.frame_rate
 
+        normalized_action_space = worker_env.action_space
+        normalized_observation_space = worker_env.observation_space
+        raw_action_space = getattr(worker_env, "_raw_action_space", worker_env.action_space)
+        raw_observation_space = getattr(worker_env, "_raw_observation_space", worker_env.observation_space)
+
         space_definitions = EpisodeArtifact.SpaceDefinitions(
-            action_space=worker_env._raw_action_space,  # type: ignore # noqa: SLF001
-            normalized_action_space=worker_env.action_space,  # type: ignore
-            observation_space=worker_env._raw_observation_space,  # type: ignore  # noqa: SLF001
-            normalized_observation_space=worker_env.observation_space,  # type: ignore
+            action_space=raw_action_space,
+            normalized_action_space=normalized_action_space,
+            observation_space=raw_observation_space,
+            normalized_observation_space=normalized_observation_space,
         )
 
         # If we have yet to generate the episode artifact for this episode then do it

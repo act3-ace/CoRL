@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 property definitions
 """
+
 from typing import Annotated
 
 import numpy as np

@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Provides AvailablePlatformTypes for the Open ML Gymnasium Simulator
 """
+
 from __future__ import annotations
 
 from corl.libraries.plugin_library import PluginLibrary

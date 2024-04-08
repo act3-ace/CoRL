@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Contains processors that execute on given data
 """
+
 from __future__ import annotations
 
 import abc

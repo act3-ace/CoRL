@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Module with base implementations for Observations
 """
+
 from __future__ import annotations
 
 import logging

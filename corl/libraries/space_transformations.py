@@ -13,6 +13,7 @@ ENV Space Util Module
 this file is a mypy nightmare due to lots of typing unions and complex types
 do not trust mypy, trust the unit tests
 """
+
 import abc
 from typing import Annotated
 

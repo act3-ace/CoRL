@@ -102,8 +102,7 @@ class DoneFuncBase(EnvFuncBase):
         next_state: BaseSimulatorState,
         observation_space: gymnasium.Space,
         observation_units: OrderedDict,
-    ) -> bool:
-        ...
+    ) -> bool: ...
 
 
 class SharedDoneFuncBaseValidator(BaseModel):
@@ -153,5 +152,4 @@ class SharedDoneFuncBase(EnvFuncBase):
         observation_units: StateDict,
         local_dones: DoneDict,
         local_done_info: OrderedDict,
-    ) -> DoneDict:
-        ...
+    ) -> DoneDict: ...

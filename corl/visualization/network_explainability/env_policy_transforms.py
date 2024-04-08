@@ -265,16 +265,14 @@ class ACT3MultiAgentEnvToPolicyNetworkInputs:
         for idx, obs in enumerate(raw_observations):
             array_obs = self._get_transformed_obs(
                 _agent.create_training_observations(obs),
-                preprocessor=get_preprocessor(self.env.observation_space[agent_id])(self.env.observation_space[agent_id]),  # type: ignore
+                preprocessor=get_preprocessor(self.env.observation_space[agent_id])(self.env.observation_space[agent_id]),
                 policy_filter=policy_artifact.filters,
             )
             batch_obs.append(array_obs)
             if idx == 0:
                 self._get_policy_input_observation_names(
                     input_obs=array_obs,
-                    preprocessor=get_preprocessor(self.env.observation_space[agent_id])(  # type: ignore
-                        self.env.observation_space[agent_id]  # type: ignore
-                    ),
+                    preprocessor=get_preprocessor(self.env.observation_space[agent_id])(self.env.observation_space[agent_id]),
                 )
         view_requirements = self.policies[agent_id].model.view_requirements
         sample_batch_list = []

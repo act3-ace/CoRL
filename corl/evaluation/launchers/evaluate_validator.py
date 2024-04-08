@@ -9,6 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
+
 import difflib
 import gc
 import pprint
@@ -119,7 +120,7 @@ class EvalExperiment(BaseModel):
 
             self.algorithm_ = algorithm
 
-        return self.algorithm
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.algorithm_ is not None:

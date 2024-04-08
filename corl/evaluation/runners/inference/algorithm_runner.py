@@ -9,6 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
+
 import gc
 import logging
 import traceback
@@ -104,7 +105,7 @@ class AlgorithmRunner:
     def _runner(self) -> EnvRunnerV2:
         if self.__runner is None:
             multiple_episodes_in_batch = self.algorithm.config.batch_mode != "complete_episodes"
-            rollout_fragment_length = int(self.algorithm.config.rollout_fragment_length)
+            rollout_fragment_length = int(self.algorithm.config.get_rollout_fragment_length())
             self.__runner = EnvRunnerV2(
                 self.local_worker,
                 convert_to_base_env(env=self.local_worker.env),

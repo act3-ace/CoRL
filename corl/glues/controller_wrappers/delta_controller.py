@@ -11,6 +11,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 
 AvailablePlatforms
 """
+
 import logging
 import typing
 from collections import OrderedDict

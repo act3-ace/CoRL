@@ -12,6 +12,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 -------------
 ObserveSensorRepeated Glue
 """
+
 import typing
 from collections import OrderedDict
 from functools import cached_property

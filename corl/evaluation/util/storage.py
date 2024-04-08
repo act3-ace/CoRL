@@ -19,8 +19,7 @@ class Storage(ABC):
     Abstract class that defines an interface by which various kinds of storage can be utilized
     """
 
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
 
     @abstractmethod
     def load_artifacts_location(self, config: dict[str, str]):

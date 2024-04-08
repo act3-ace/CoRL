@@ -13,7 +13,6 @@ This module defines the TestCaseStrategy for running evaluation with the default
 Author: John McCarroll
 """
 
-
 from corl.evaluation.runners.section_factories.test_cases.test_case_manager import (
     TestCaseIndex,
     TestCaseStrategy,

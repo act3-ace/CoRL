@@ -3,7 +3,6 @@ This module defines the Docking1dSimulator class which maintains environment obj
 and progresses a simulated training episode via the step() method.
 """
 
-
 import numpy as np
 
 from corl.libraries.plugin_library import PluginLibrary

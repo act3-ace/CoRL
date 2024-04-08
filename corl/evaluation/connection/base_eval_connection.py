@@ -9,6 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
+
 import logging
 from abc import abstractmethod
 from typing import Annotated, Generic, TypeVar
@@ -22,8 +23,7 @@ from corl.libraries.factory import Factory
 EppUpdateT = TypeVar("EppUpdateT")
 
 
-class BaseEvalConnectionValidator(BaseModel):
-    ...
+class BaseEvalConnectionValidator(BaseModel): ...
 
 
 class BaseEvalConnection(Generic[EppUpdateT]):

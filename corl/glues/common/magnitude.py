@@ -13,6 +13,7 @@ Wrapper glue which returns the magnitude of its wrapped glue as an observation.
 
 Author: Jamie Cunningham
 """
+
 from collections import OrderedDict
 from functools import cached_property
 

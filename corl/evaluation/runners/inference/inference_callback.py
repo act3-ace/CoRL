@@ -9,6 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
+
 from abc import abstractmethod
 from collections.abc import Callable
 from typing import Generic, TypeVar
@@ -39,5 +40,4 @@ class InferenceCallback(DefaultCallbacks, Generic[T]):
         self.config = self.get_validator()(**dict(algorithm.config).get(f"{type(self).__name__}", {}))
 
     @abstractmethod
-    def process_message(self, message: T):
-        ...
+    def process_message(self, message: T): ...

@@ -11,6 +11,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 Extra callbacks that can be for evaluating during training to
 generate episode artifacts.
 """
+
 import typing
 
 from ray.rllib.utils.typing import MultiAgentDict

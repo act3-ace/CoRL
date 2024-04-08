@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Reward Functor Base Module
 """
+
 import abc
 from collections import OrderedDict
 
@@ -54,8 +55,7 @@ class RewardFuncBase(EnvFuncBase):
         next_state: BaseSimulatorState,
         observation_space: gymnasium.Space,
         observation_units: OrderedDict,
-    ) -> float:
-        ...
+    ) -> float: ...
 
     def post_process_trajectory(self, agent_id, state, batch, episode, policy):
         """Allows the user to modify the trajectory of the episode

@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Sensors for GymnasiumSimulator
 """
+
 # mypy really does not like the dynamic properties and dies on them,
 # this file must be excluded from linting
 # mypy: ignore-errors

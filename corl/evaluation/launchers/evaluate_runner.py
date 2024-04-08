@@ -9,6 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
+
 import gc
 import logging
 import os
@@ -71,8 +72,7 @@ class EvalRunnerValidator(BaseModel):
     connection: BaseEvalConnection | None = None
 
 
-class EppReset:
-    ...
+class EppReset: ...
 
 
 class EvalRunner:

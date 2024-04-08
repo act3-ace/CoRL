@@ -9,6 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
+
 import copy
 from abc import abstractmethod
 from collections.abc import Mapping
@@ -89,8 +90,7 @@ class BaseNetworkParameterProvider(EpisodeParameterProvider, BaseSlot[EppUpdate[
     @abstractmethod
     def _do_update_params(
         self, params: Mapping[tuple[str, ...], OverridableParameterWrapper], updates: T
-    ) -> Mapping[tuple[str, ...], OverridableParameterWrapper]:
-        ...
+    ) -> Mapping[tuple[str, ...], OverridableParameterWrapper]: ...
 
     # def __setstate__(self, state):
     #     self.__dict__.update(state)

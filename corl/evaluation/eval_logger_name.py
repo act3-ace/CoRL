@@ -10,4 +10,5 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Constant name for evaluation logger
 """
+
 EVAL_LOGGER_NAME = "Evaluator"

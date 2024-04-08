@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 
 Structures that hold parameters and the ability to update them.
 """
+
 import abc
 import typing
 import warnings
@@ -31,8 +32,7 @@ OtherVars = typing.Mapping[tuple[str, ...], Quantity]
 
 @runtime_checkable
 class _ConstraintCallbackType(Protocol):
-    def __call__(self, old_arg: Number, new_arg: Number) -> Number:
-        ...
+    def __call__(self, old_arg: Number, new_arg: Number) -> Number: ...
 
 
 class ParameterValidator(BaseModel):

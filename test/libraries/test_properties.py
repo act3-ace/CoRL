@@ -10,7 +10,6 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
 
-
 import typing
 
 import numpy as np

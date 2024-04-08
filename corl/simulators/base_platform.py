@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Base Platform Abstract Class Object
 """
+
 import abc
 
 from pydantic import BaseModel, ConfigDict

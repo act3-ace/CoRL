@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Abstract class to load agents
 """
+
 import re
 from abc import abstractmethod
 

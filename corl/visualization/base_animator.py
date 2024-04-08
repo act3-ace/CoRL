@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Base animator class for streamlit application.
 """
+
 from abc import ABC, abstractmethod
 from typing import TypeVar
 

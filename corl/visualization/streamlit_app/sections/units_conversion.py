@@ -139,11 +139,13 @@ def update_units_space_table(tables_dict: dict, new_units_map: dict) -> dict:
         for column in ["min", "max"]:
             # Convert the "normalized columns" that have not been normalized when units exist
             dataframe[f"normalized_{column}"] = dataframe.apply(
-                lambda row, column=column: apply_unit_conversion_to_row(row, "normalized_", column)
-                # Only performs conversions when the normalized
-                # and unnormalized columns match and units exist
-                if row["min"] == row["normalized_min"] and row["max"] == row["normalized_max"] and row["_prev_units"]
-                else row[f"normalized_{column}"],
+                lambda row, column=column: (
+                    apply_unit_conversion_to_row(row, "normalized_", column)
+                    # Only performs conversions when the normalized
+                    # and unnormalized columns match and units exist
+                    if row["min"] == row["normalized_min"] and row["max"] == row["normalized_max"] and row["_prev_units"]
+                    else row[f"normalized_{column}"]
+                ),
                 axis=1,
             )
             # Converts the unnormalized columns. NOTE: this must go after the normalized column.

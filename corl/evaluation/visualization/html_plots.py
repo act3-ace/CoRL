@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Print a visualization to screen
 """
+
 import os
 import pathlib
 import typing

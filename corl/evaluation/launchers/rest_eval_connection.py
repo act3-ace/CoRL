@@ -9,6 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
+
 from pathlib import Path
 from typing import Annotated
 
@@ -35,8 +36,7 @@ class _ResetSchema(BaseModel):
     config: Annotated[dict | None, BeforeValidator(build_config)] = None
 
 
-class RestEvalConnectionValidator(RestConnectionValidator, BaseEvalConnectionValidator):
-    ...
+class RestEvalConnectionValidator(RestConnectionValidator, BaseEvalConnectionValidator): ...
 
 
 class RestEvalConnection(BaseRestConnection, BaseEvalConnection[SimpleEppUpdate]):

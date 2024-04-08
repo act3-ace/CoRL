@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Records an evaluation outcome to a folder
 """
+
 import contextlib
 import logging
 import shutil

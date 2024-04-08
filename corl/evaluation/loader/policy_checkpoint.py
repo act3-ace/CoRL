@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Load and agent from Checkpoint file
 """
+
 import os
 import typing
 from pathlib import Path

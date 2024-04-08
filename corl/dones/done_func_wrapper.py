@@ -53,5 +53,4 @@ class BaseWrapperDone(DoneFuncBase):
         next_state: BaseSimulatorState,
         observation_space: gymnasium.Space,
         observation_units: OrderedDict,
-    ) -> bool:
-        ...
+    ) -> bool: ...

@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Contains classes to represent
 """
+
 import dataclasses
 from collections import defaultdict
 from typing import Any

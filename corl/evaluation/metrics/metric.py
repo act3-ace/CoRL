@@ -18,12 +18,10 @@ class Metric:
     """Abstract class that any metric is to inherit from"""
 
     @abc.abstractmethod
-    def __add__(self, rhs: typing.Any):
-        ...
+    def __add__(self, rhs: typing.Any): ...
 
     @abc.abstractmethod
-    def __truediv__(self, rhs: typing.Any):
-        ...
+    def __truediv__(self, rhs: typing.Any): ...
 
 
 class TerminalMetric(abc.ABC, Metric):  # Allows for enhanced type checking

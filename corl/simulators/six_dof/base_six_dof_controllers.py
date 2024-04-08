@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Base Integration Controls Module
 """
+
 import abc
 
 from corl.simulators.base_parts import BaseController

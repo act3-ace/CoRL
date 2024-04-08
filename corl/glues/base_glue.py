@@ -40,6 +40,7 @@ compatible with each other. For example if you try to add a pitch control with
 the stick and a pitch rate controller, the resulting behavior is not
 straightforward and may cause your backend to throw an error.
 """
+
 import abc
 import enum
 import logging

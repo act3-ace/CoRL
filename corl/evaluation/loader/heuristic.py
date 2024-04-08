@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Load an agent from a weight file
 """
+
 import dataclasses
 import logging
 

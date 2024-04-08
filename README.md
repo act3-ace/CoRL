@@ -93,7 +93,7 @@ Approved for public release: distribution unlimited.
 | :--------: | :--------------------: | :--------------: |
 | 2022-05-20 |     AFRL-2022-2455     | Initial release  |
 | 2023-03-02 | APRS-RYZ-2023-01-00006 | Second release   |
-| 2024-21-03 | AFRL-2024-1562         | Thirst release   |
+| 2024-21-03 | AFRL-2024-1562         | Third release   |
 
 #### 1.3.3.2. Designation Indicator
 

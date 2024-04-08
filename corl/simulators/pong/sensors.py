@@ -1,6 +1,7 @@
 """
 This module contains implementations of Sensors that reside on the Docking1dPlatform.
 """
+
 from typing import Annotated
 
 import numpy as np

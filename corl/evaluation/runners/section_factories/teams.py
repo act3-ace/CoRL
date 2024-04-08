@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Configures teams to perform in evaluation
 """
+
 import typing
 from typing import Annotated
 

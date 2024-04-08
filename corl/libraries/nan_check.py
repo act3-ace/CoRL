@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 
 NaN check module
 """
+
 import traceback
 
 import numpy as np

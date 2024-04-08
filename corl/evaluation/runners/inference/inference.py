@@ -10,7 +10,10 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
 
+from collections.abc import Iterator
+
 from pydantic import validator
+from ray.rllib.policy.sample_batch import MultiAgentBatch, SampleBatch
 
 from corl.evaluation.launchers.base_eval import BaseEvaluator, BaseEvaluatorValidator, EvalConfig
 
@@ -49,6 +52,6 @@ class Inference(BaseEvaluator):
     def stop(self):
         self._config.algorithm_runner.stop()
 
-    def __call__(self, config: EvalConfig, **kwargs):
+    def __call__(self, config: EvalConfig, **kwargs) -> Iterator[SampleBatch | MultiAgentBatch]:
         self._config.algorithm_runner.reset(config.experiment.algorithm)
         yield from self._config.algorithm_runner.run()

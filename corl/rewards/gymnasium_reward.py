@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Reward for GymnasiumSimulator
 """
+
 from corl.rewards.reward_func_base import RewardFuncBase
 
 

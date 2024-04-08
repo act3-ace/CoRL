@@ -12,6 +12,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Trajectory Animation Class
 """
+
 from collections.abc import Callable
 from typing import Any
 

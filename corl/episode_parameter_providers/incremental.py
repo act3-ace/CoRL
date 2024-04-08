@@ -15,7 +15,6 @@ the provided 'num_test_cases' int, to provide an accurate episode_id during eval
 Author: John McCarroll
 """
 
-
 from pydantic import ImportString
 
 from corl.episode_parameter_providers import EpisodeParameterProvider, EpisodeParameterProviderValidator, ParameterModel, Randomness
@@ -67,5 +66,3 @@ class IncrementalParameterProviderWrapper(EpisodeParameterProvider):
         self.index += 1
 
         return params, episode_id, env_epp_ctx
-
-    # TODO: delegate other methods to wrapped EPP?

@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 
 A set of standard config updates that can be used.
 """
+
 from corl.evaluation.runners.section_factories.plugins.config_updater import ConfigUpdate
 
 

@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Generate test cases from configuration
 """
+
 import itertools
 import logging
 

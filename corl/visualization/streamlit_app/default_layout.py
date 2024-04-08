@@ -12,6 +12,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Default layout for streamlit application
 """
+
 from collections.abc import Callable
 from pathlib import Path
 

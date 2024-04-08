@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 This Module contains logic to update the rllib config appropriately for evaluation purposes.
 """
+
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict

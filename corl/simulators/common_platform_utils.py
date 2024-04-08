@@ -10,6 +10,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 
 Common Platform Utils Module
 """
+
 import typing
 
 from corl.simulators.base_parts import BaseController, BasePlatformPart, BaseSensor

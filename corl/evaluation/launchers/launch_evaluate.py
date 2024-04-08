@@ -9,6 +9,7 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
+
 import logging
 from collections.abc import Sequence
 from pathlib import Path
@@ -133,7 +134,7 @@ def load_config(config_file: Path) -> dict[str, Any]:
     return cast(dict[str, Any], load_file(config_filename=config_file))
 
 
-def main(instantiated_args: jsonargparse.Namespace, config: dict[str, Any]):
+def main(cfg_path: Path, tmpdir_base: Path, config: dict[str, Any], include_dashboard: bool = False):
     """Main function block to evaluate from a configuration
 
     Parameters:
@@ -147,11 +148,11 @@ def main(instantiated_args: jsonargparse.Namespace, config: dict[str, Any]):
     connection = ConnectionValidator(**config).connection
 
     with add_context({"connection": connection}):
-        kwargs = {"path": instantiated_args.cfg, "raw_config": config, **config}
+        kwargs = {"path": cfg_path, "raw_config": config, **config}
         eval_schema = EvalConfig(**kwargs)
 
-        with ray_context(local_mode=eval_schema.experiment.engine.rllib.debug_mode, include_dashboard=instantiated_args.include_dashboard):
-            eval_runner = EvalRunner(tmpdir_base=instantiated_args.tmpdir_base, **{**config, "connection": connection})
+        with ray_context(local_mode=eval_schema.experiment.engine.rllib.debug_mode, include_dashboard=include_dashboard):
+            eval_runner = EvalRunner(tmpdir_base=tmpdir_base, **{**config, "connection": connection})
             eval_runner(eval_schema)
             eval_runner.run()
 
@@ -163,7 +164,7 @@ def pre_main(alternate_argv: Sequence[str] | None = None):
     instantiated, args = get_args(alternate_argv=alternate_argv)
     LoggingSetup(default_path=str(args.log_config), default_level=logging._nameToLevel[args.log_level])  # noqa: SLF001
     cfg = load_config(instantiated.cfg)
-    main(instantiated, cfg)
+    main(instantiated.cfg, instantiated.tmpdir_base, cfg, include_dashboard=instantiated.include_dashboard)
 
 
 if __name__ == "__main__":

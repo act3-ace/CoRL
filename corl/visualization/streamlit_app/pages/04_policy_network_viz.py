@@ -11,6 +11,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 Policy Network Visualization
 """
+
 import streamlit as st
 
 from corl.evaluation.recording.folder import EpisodeArtifactLoggingCallbackLoader, FolderRecord

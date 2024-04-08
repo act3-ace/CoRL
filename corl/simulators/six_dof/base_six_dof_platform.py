@@ -11,6 +11,7 @@ limitation or restriction. See accompanying README and LICENSE for details.
 Abstraction Class for 6DOF platform types that can provide
 some properties for common usage
 """
+
 import abc
 
 import corl.simulators.six_dof.base_six_dof_properties as six_dof_props

@@ -10,7 +10,6 @@ limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
 
-
 import corl.simulators.six_dof.base_six_dof_properties as six_dof_props
 
 
