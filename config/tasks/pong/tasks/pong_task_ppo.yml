@@ -33,6 +33,7 @@ config:
   env_config_updates: &env_config_updates
     TrialName: Pong
     output_path: /tmp//act3
+    observation_fn: corl.experiments.rllib_experiment.central_critic_observer
 
   # Change the default path for saving out the data
   tune_config_updates: &tune_config_updates
@@ -49,7 +50,7 @@ config:
   ray_config: !merge [!include ../ray_config.yml, *ray_config_updates]
   env_config: !merge [!include ../environments/pong_env.yml, *env_config_updates]
   tune_config: !merge [!include ../tune_config_ppo.yml, *tune_config_updates]
+
   extra_callbacks: [
     corl.environment.episode_artifact_callbacks.PongEpisodeArtifactLogger,
     corl.environment.custom_env_metrics.CustomPongMetrics]
-

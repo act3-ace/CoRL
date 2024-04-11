@@ -21,7 +21,7 @@ import sys
 import typing
 import warnings
 from datetime import datetime
-
+import numpy as np
 import git
 import ray
 from pydantic import AfterValidator, BaseModel, ConfigDict, ImportString, field_validator
@@ -43,6 +43,11 @@ from corl.libraries.factory import Factory
 from corl.libraries.file_path import CorlDirectoryPath
 from corl.parsers.yaml_loader import apply_patches, load_file
 from corl.policies.base_policy import BasePolicyValidator
+from ray.rllib.algorithms.callbacks import DefaultCallbacks
+from ray.rllib.policy.sample_batch import SampleBatch
+from ray.rllib.models import ModelCatalog
+from gymnasium.spaces import Dict
+from collections import OrderedDict
 
 
 class RllibPolicyMappingValidator(BaseModel):
@@ -51,6 +56,49 @@ class RllibPolicyMappingValidator(BaseModel):
     functor: ImportString = PolicyIsAgent
     config: dict = {}
 
+
+class FillInActions(DefaultCallbacks):
+    """Fills in the opponent actions info in the training batches."""
+
+    def on_postprocess_trajectory(
+        self,
+        worker,
+        episode,
+        agent_id,
+        policy_id,
+        policies,
+        postprocessed_batch,
+        original_batches,
+        **kwargs
+    ):
+        to_update = postprocessed_batch[SampleBatch.CUR_OBS]
+        other_policy_ids = [policy for policy in policies if policy != policy_id]
+        for other_policy_id in other_policy_ids:
+            action_encoder = ModelCatalog.get_preprocessor_for_space(worker.env.action_space[other_policy_id])
+            # set the other actions into the observation
+            # ? No value for single policy ? TODO 
+            other_policy_id, other_policy_class, other_policy_batch = original_batches[episode.policy_mapping_fn(other_policy_id, episode, worker)]
+            other_actions = np.array(
+                [action_encoder.transform({'PaddleController_Paddle_move': a[0]}) for a in other_policy_batch[SampleBatch.ACTIONS]]
+            )
+            to_update[:, -other_actions[0].size:] = other_actions
+
+def central_critic_observer(agents_obs, agents_act, **kw):
+    """Rewrites the agent obs to include opponent data for training."""
+    new_obs = OrderedDict()
+
+    for own_label in agents_obs.keys():
+        # Generate the combined oservation space
+        other_labels = [other_label for other_label in agents_obs.keys() if own_label != other_label]
+        new_obs[own_label] = OrderedDict(
+            {
+                "own": agents_obs[own_label], 
+                "other_obs": OrderedDict({ o_label: agents_obs[o_label] for o_label in other_labels}), 
+                "other_act": OrderedDict({ o_label: agents_act[0][o_label] for o_label in other_labels})
+            }
+        )
+
+    return new_obs
 
 class RllibExperimentValidator(BaseExperimentValidator):
     """
@@ -72,6 +120,7 @@ class RllibExperimentValidator(BaseExperimentValidator):
     hparam_search_class: ImportString | None = None
     hparam_search_config: dict[str, typing.Any] | None = None
     extra_callbacks: list[ImportString] | None = None
+    observation_fn: ImportString | None = None
     extra_tune_callbacks: list[ImportString] | None = None
     trial_creator_function: ImportString | None = None
     policy_mapping: RllibPolicyMappingValidator = RllibPolicyMappingValidator()
@@ -231,6 +280,10 @@ class RllibExperiment(BaseExperiment):
         # path to still work --- else index and replace with selected env.
         rllib_config = self._select_rllib_config(args.compute_platform)
 
+        base_trainer = self.config.tune_config["run_or_experiment"]
+        trainer_class = get_trainable_cls(base_trainer)
+
+        apply_patches([trainer_class.get_default_config().to_dict(), rllib_config])
         self.initialize_ray(args.compute_platform, args.debug)
 
         self.config.env_config["agents"], self.config.env_config["agent_platforms"] = self.create_agents(
@@ -261,6 +314,7 @@ class RllibExperiment(BaseExperiment):
         policies, train_policies, available_policies = self.create_policies(tmp_env)
 
         self._update_rllib_config(rllib_config, train_policies, policies, args, available_policies)
+       
         self._update_tune_config()
 
         self._enable_episode_parameter_provider_checkpointing()
@@ -324,7 +378,6 @@ class RllibExperiment(BaseExperiment):
         tmp_ac: agent_classes from temporary environment to get obs/action space, these should be
                 considered read only, and will be destroyed when training begins
         """
-
         rllib_config["multiagent"] = {
             "policies": policies,
             "policy_mapping_fn": self.config.policy_mapping.functor(**self.config.policy_mapping.config),
@@ -363,6 +416,9 @@ class RllibExperiment(BaseExperiment):
             callback_list.append(WeightLoaderCallback)
         if self.config.extra_callbacks:
             callback_list.extend(self.config.extra_callbacks)
+            if self.config.env_config["observation_fn"] is not None: 
+                callback_list.extend([FillInActions])
+
         rllib_config["callbacks"] = make_multi_callbacks(callback_list)
         rllib_config["env_config"] = self.config.env_config
         now = datetime.now()

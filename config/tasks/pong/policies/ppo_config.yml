@@ -1,6 +1,4 @@
 # ---------------------------------------------------------------------------
-#
-#
 # Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 # Reinforcement Learning (RL) Core.
 #
@@ -14,5 +12,5 @@ config: {
   "train_batch_size": 5000,
   "sgd_minibatch_size": 150,
   "num_sgd_iter": 30,
-  "batch_mode": "complete_episodes"
+  "batch_mode": "complete_episodes",
 }

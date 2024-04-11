@@ -1,6 +1,7 @@
 # This config defines the environment for the training loop. This includes the Simulator entity, type of platform, path
 # to the directory in which components (Sensors, Controllers, and Simulators) are registered with the PluginLibrary.
 {
+  "sanity_check_obs": 1,
   "horizon": 2500,
   "simulator": {
     "type": "PongSimulator",

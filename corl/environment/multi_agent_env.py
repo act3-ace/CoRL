@@ -9,7 +9,8 @@ The use, dissemination or disclosure of data in this file is subject to
 limitation or restriction. See accompanying README and LICENSE for details.
 ---------------------------------------------------------------------------
 """
-
+from gymnasium.spaces import Dict
+            
 import contextlib
 import copy
 import fractions
@@ -28,6 +29,7 @@ from itertools import chain
 from json import JSONEncoder, dumps, loads
 from pathlib import Path
 from typing import Annotated
+from pydantic import ImportString 
 
 import deepmerge
 import flatten_dict
@@ -150,6 +152,7 @@ def resolve_reference_store_factory(v):
 
 class ACT3MultiAgentEnvValidator(BaseCorlMultiAgentEnvValidator):
     """Validation model for the inputs of ACT3MultiAgentEnv"""
+    observation_fn: ImportString | None = None
 
     num_workers: NonNegativeInt = 0
     worker_index: NonNegativeInt = 0
@@ -590,6 +593,25 @@ class ACT3MultiAgentEnv(BaseCorlMultiAgentEnv):
                 agent_list=self._trainable_agent_dict.keys(), agent_function=lambda agent, _: agent.normalized_observation_space
             )
         )
+
+        if self.config.observation_fn is not None: 
+            new_observation_space = OrderedDict()
+            for agent_k, agent_v in self.observation_space.items():
+                own_obs = agent_v
+                other_obs = gymnasium.spaces.Dict({ other_agent_k: other_agent_v for other_agent_k, other_agent_v in self.observation_space.items() if agent_k != other_agent_k})
+                other_act = gymnasium.spaces.Dict({ other_agent_k: other_agent_v for other_agent_k, other_agent_v in self.action_space.items() if agent_k != other_agent_k})
+                
+                new_observation_space[agent_k] = gymnasium.spaces.Dict(
+                    OrderedDict({
+                        "own": own_obs, 
+                        "other_obs": other_obs, 
+                        "other_act": other_act
+                    })
+                )
+            
+            self._old_observation_space = self.observation_space
+            self.observation_space = gymnasium.spaces.Dict(new_observation_space)
+            
         self.full_observation_space = gymnasium.spaces.Dict(
             self.__agent_aggregator(agent_list=self.agent_dict.keys(), agent_function=lambda agent, _: agent.normalized_observation_space)
         )
@@ -721,7 +743,11 @@ class ACT3MultiAgentEnv(BaseCorlMultiAgentEnv):
 
         training_obs = self._create_training_observations(agent_list, self._obs_buffer)
 
-        return training_obs, trainable_info
+        if self.config.observation_fn is not None:
+            return self.config.observation_fn(training_obs, [self.action_space.sample()]), trainable_info
+        else:
+            return training_obs, trainable_info
+    
 
     def _reset_simulator(self, agent_configs=None) -> tuple[BaseSimulatorState, dict[str, typing.Any]]:
         sim_reset_args = copy.deepcopy(self.config.simulator_reset_parameters)
@@ -1019,7 +1045,10 @@ class ACT3MultiAgentEnv(BaseCorlMultiAgentEnv):
         # isinstance call and as such need to make sure items are
         # OrderedDicts
         #####################################################################
-        return trainable_observations, trainable_rewards, trainable_dones, {"__all__": trainable_dones["__all__"]}, trainable_info
+        if self.config.observation_fn is not None:
+            return self.config.observation_fn(trainable_observations, self._actions), trainable_rewards, trainable_dones, {"__all__": trainable_dones["__all__"]}, trainable_info
+        else:
+            return trainable_observations, trainable_rewards, trainable_dones, {"__all__": trainable_dones["__all__"]}, trainable_info
 
     def __get_done_from_platforms(self, alive_platforms: typing.Iterable[str], raw_action_dict):
         def or_merge(config, path, base, nxt):
