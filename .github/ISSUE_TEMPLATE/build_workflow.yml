@@ -1,0 +1,60 @@
+name: Testing
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "main"
+
+env:
+  SRC_DIR: corl
+  TEST_DIR: test
+  PY_VER: "3.11.4"
+  POETRY_VER: "1.6.1"
+
+jobs:
+  
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      #
+      # Check out the repository
+      #
+      - name: Check out repository
+        uses: actions/checkout@v4
+      #
+      # Setup the python 
+      #
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PY_VER }}
+      #
+      # Setup the Poetry and install deps
+      #
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VER }}
+          virtualenvs-create: false
+      - name: Install Dependencies
+        run: poetry install --sync
+      #
+      # Verify that the tests pass
+      #
+      - name: Run tests
+        run: |
+          pytest test --cov=${{ env.SRC_DIR }} -v
+      #
+      # Build the poetry packages
+      #
+      - name: Package
+        run: poetry build
+      #
+      # Store the artifacts for later
+      #
+      - name: Store Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-distributions
+          path: dist/

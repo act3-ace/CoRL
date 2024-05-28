@@ -1,15 +1,13 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 """
----------------------------------------------------------------------------
-
-
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
 Transforms the raw observations from the ACT3MultiAgentEnv into the transformed
 format a policy expects.
 """
@@ -261,7 +259,7 @@ class ACT3MultiAgentEnvToPolicyNetworkInputs:
             self.get_raw_observations(agent_id=agent_id, episode_artifact=episode_artifact, include_initial_state=include_initial_state)
         )
         policy_artifact: EpisodeArtifact.PolicyArtifact = episode_artifact.policy_artifact[agent_id]
-        _agent = self.env.agent_dict[agent_id]
+        _agent = self.env.corl_agent_dict[agent_id]
         for idx, obs in enumerate(raw_observations):
             array_obs = self._get_transformed_obs(
                 _agent.create_training_observations(obs),

@@ -1,16 +1,13 @@
-"""
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
-"""
-from gymnasium.spaces import Dict
-            
 import contextlib
 import copy
 import fractions
@@ -29,7 +26,6 @@ from itertools import chain
 from json import JSONEncoder, dumps, loads
 from pathlib import Path
 from typing import Annotated
-from pydantic import ImportString 
 
 import deepmerge
 import flatten_dict
@@ -50,7 +46,7 @@ from pydantic import (
     field_validator,
 )
 
-from corl.agents.base_agent import AgentParseInfo
+from corl.agents.base_agent import AgentParseInfo, BaseAgent
 from corl.dones.done_func_base import DoneFuncBase, SharedDoneFuncBase
 from corl.dones.episode_length_done import EpisodeLengthDone
 from corl.environment.base_multi_agent_env import BaseCorlMultiAgentEnv, BaseCorlMultiAgentEnvValidator
@@ -152,7 +148,6 @@ def resolve_reference_store_factory(v):
 
 class ACT3MultiAgentEnvValidator(BaseCorlMultiAgentEnvValidator):
     """Validation model for the inputs of ACT3MultiAgentEnv"""
-    observation_fn: ImportString | None = None
 
     num_workers: NonNegativeInt = 0
     worker_index: NonNegativeInt = 0
@@ -461,25 +456,20 @@ class ACT3MultiAgentEnv(BaseCorlMultiAgentEnv):
         self._trainable_agent_dict = {k: v for (k, v) in self._agent_dict.items() if v.trainable}
         self._non_trainable_agent_dict = {k: v for (k, v) in self._agent_dict.items() if not (v.trainable)}
 
-        # generate a mapping of agents to platforms and platforms to agents
-        # for quick access
-        self.agent_to_platforms: dict[str, list[str]] = {}
-        self.platform_to_agents: dict[str, list[str]] = {}
-
         for agent_name, agent_class in self._agent_dict.items():
-            self.agent_to_platforms[agent_name] = []
+            self._agent_to_platforms[agent_name] = []
             for platform_name in agent_class.platform_names:
-                self.agent_to_platforms[agent_name].append(platform_name)
-                if platform_name in self.platform_to_agents:
-                    self.platform_to_agents[platform_name].append(agent_name)
+                self._agent_to_platforms[agent_name].append(platform_name)
+                if platform_name in self._platform_to_agents:
+                    self._platform_to_agents[platform_name].append(agent_name)
                 else:
-                    self.platform_to_agents[platform_name] = [agent_name]
+                    self._platform_to_agents[platform_name] = [agent_name]
 
         # generate a dictionary that keeps track of which platforms that an
         # agent class controls are still operable, when all platforms are inoperable
         # the agent_class will be marked done
         self.agent_platform_inoperable_status = {}
-        for agent_name, agent_platforms in self.agent_to_platforms.items():
+        for agent_name, agent_platforms in self._agent_to_platforms.items():
             self.agent_platform_inoperable_status[agent_name] = {platform_name: False for platform_name in agent_platforms}
 
         def compute_lcm(values: list[fractions.Fraction]) -> float:
@@ -564,63 +554,47 @@ class ACT3MultiAgentEnv(BaseCorlMultiAgentEnv):
         # Create the observation and action space now that we have the glue
         # action space operations
         self._action_prop = DictProp(
-            spaces=self.__agent_aggregator(agent_list=self._trainable_agent_dict.keys(), agent_function=lambda agent, _: agent.action_prop)
+            spaces=self._agent_aggregator(agent_list=self._trainable_agent_dict.keys(), agent_function=lambda agent, _: agent.action_prop)
         )
         self._raw_action_space = self._action_prop.create_space()
         gymnasium_space_sort(self._raw_action_space)
         self._action_units = self._action_prop.get_units()
         self.action_space = gymnasium.spaces.Dict(
-            self.__agent_aggregator(
+            self._agent_aggregator(
                 agent_list=self._trainable_agent_dict.keys(), agent_function=lambda agent, _: agent.normalized_action_space
             )
         )
         gymnasium_space_sort(self.action_space)
         self.full_action_space = gymnasium.spaces.Dict(
-            self.__agent_aggregator(agent_list=self.agent_dict.keys(), agent_function=lambda agent, _: agent.normalized_action_space)
+            self._agent_aggregator(agent_list=self.corl_agent_dict.keys(), agent_function=lambda agent, _: agent.normalized_action_space)
         )
         gymnasium_space_sort(self.full_action_space)
 
         # obs space operations
         self._observation_prop = DictProp(
-            spaces=self.__agent_aggregator(
+            spaces=self._agent_aggregator(
                 agent_list=self._trainable_agent_dict.keys(), agent_function=lambda agent, _: agent.observation_prop
             )
         )
         self._raw_observation_space = self._observation_prop.create_space()
         self._observation_units = self._observation_prop.get_units()
         self.observation_space = gymnasium.spaces.Dict(
-            self.__agent_aggregator(
+            self._agent_aggregator(
                 agent_list=self._trainable_agent_dict.keys(), agent_function=lambda agent, _: agent.normalized_observation_space
             )
         )
 
-        if self.config.observation_fn is not None: 
-            new_observation_space = OrderedDict()
-            for agent_k, agent_v in self.observation_space.items():
-                own_obs = agent_v
-                other_obs = gymnasium.spaces.Dict({ other_agent_k: other_agent_v for other_agent_k, other_agent_v in self.observation_space.items() if agent_k != other_agent_k})
-                other_act = gymnasium.spaces.Dict({ other_agent_k: other_agent_v for other_agent_k, other_agent_v in self.action_space.items() if agent_k != other_agent_k})
-                
-                new_observation_space[agent_k] = gymnasium.spaces.Dict(
-                    OrderedDict({
-                        "own": own_obs, 
-                        "other_obs": other_obs, 
-                        "other_act": other_act
-                    })
-                )
-            
-            self._old_observation_space = self.observation_space
-            self.observation_space = gymnasium.spaces.Dict(new_observation_space)
-            
         self.full_observation_space = gymnasium.spaces.Dict(
-            self.__agent_aggregator(agent_list=self.agent_dict.keys(), agent_function=lambda agent, _: agent.normalized_observation_space)
+            self._agent_aggregator(
+                agent_list=self.corl_agent_dict.keys(), agent_function=lambda agent, _: agent.normalized_observation_space
+            )
         )
 
         self._set_space_seeds()
 
         # full obs
         self._full_observation_prop = DictProp(
-            spaces=self.__agent_aggregator(agent_list=self.agent_dict.keys(), agent_function=lambda agent, _: agent.observation_prop)
+            spaces=self._agent_aggregator(agent_list=self.corl_agent_dict.keys(), agent_function=lambda agent, _: agent.observation_prop)
         )
         self._full_observation_units = self._full_observation_prop.get_units()
 
@@ -743,11 +717,7 @@ class ACT3MultiAgentEnv(BaseCorlMultiAgentEnv):
 
         training_obs = self._create_training_observations(agent_list, self._obs_buffer)
 
-        if self.config.observation_fn is not None:
-            return self.config.observation_fn(training_obs, [self.action_space.sample()]), trainable_info
-        else:
-            return training_obs, trainable_info
-    
+        return training_obs, trainable_info
 
     def _reset_simulator(self, agent_configs=None) -> tuple[BaseSimulatorState, dict[str, typing.Any]]:
         sim_reset_args = copy.deepcopy(self.config.simulator_reset_parameters)
@@ -1045,10 +1015,7 @@ class ACT3MultiAgentEnv(BaseCorlMultiAgentEnv):
         # isinstance call and as such need to make sure items are
         # OrderedDicts
         #####################################################################
-        if self.config.observation_fn is not None:
-            return self.config.observation_fn(trainable_observations, self._actions), trainable_rewards, trainable_dones, {"__all__": trainable_dones["__all__"]}, trainable_info
-        else:
-            return trainable_observations, trainable_rewards, trainable_dones, {"__all__": trainable_dones["__all__"]}, trainable_info
+        return trainable_observations, trainable_rewards, trainable_dones, {"__all__": trainable_dones["__all__"]}, trainable_info
 
     def __get_done_from_platforms(self, alive_platforms: typing.Iterable[str], raw_action_dict):
         def or_merge(config, path, base, nxt):
@@ -1158,7 +1125,7 @@ class ACT3MultiAgentEnv(BaseCorlMultiAgentEnv):
                     self._save_state_pickle(err)
 
         return OrderedDict(
-            self.__agent_aggregator(
+            self._agent_aggregator(
                 agent_list=alive_agents,
                 agent_function=lambda agent, agent_id, all_agent_obs: agent.create_training_observations(all_agent_obs[agent_id]),
                 all_agent_obs=unit_extracted_obs,
@@ -1304,9 +1271,9 @@ class ACT3MultiAgentEnv(BaseCorlMultiAgentEnv):
                 observations.get(agent_name), rewards.get(agent_name), dones.get(agent_name), info.get(agent_name)
             )
 
-    def __agent_aggregator(self, agent_list, agent_function: typing.Callable, **kwargs) -> dict:
+    def _agent_aggregator(self, agent_list, agent_function: typing.Callable, **kwargs) -> dict:
         """
-        __agent_aggregator calls function on all agents and places the output in the in a dictionary.
+        _agent_aggregator calls function on all agents and places the output in the in a dictionary.
         Dictionary key set to the agent name and values are set to the return value of the method
 
         Parameters
@@ -1410,6 +1377,17 @@ class ACT3MultiAgentEnv(BaseCorlMultiAgentEnv):
         return self.config.epp
 
     @property
+    def epp_registry(self) -> dict[str, EpisodeParameterProvider]:
+        """
+        get the Episode Parameter Provider Registry
+
+        Returns
+        -------
+        dict[str, EpisodeParameterProvider]
+        """
+        return self.config.epp_registry
+
+    @property
     def agent_dict(self) -> dict[str, typing.Any]:
         """
         get the full agent dict
@@ -1418,6 +1396,17 @@ class ACT3MultiAgentEnv(BaseCorlMultiAgentEnv):
         -------
         dict[str, typing.Any]
             A dictionary of {agent_id, agent} for agents in env.
+        """
+        return self._agent_dict
+
+    @property
+    def corl_agent_dict(self) -> dict[str, BaseAgent]:
+        """
+        get agents in ACT3MultiAgentEnv
+
+        Returns
+        -------
+        dict[str, BaseAgent]
         """
         return self._agent_dict
 

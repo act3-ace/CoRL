@@ -1,13 +1,13 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
 Configures a rllib trainer to run evaluation
 """
 
@@ -221,7 +221,7 @@ class RllibTrainer:
 
                 def shutdown_epps(env: EnvType):
                     if isinstance(env, ACT3MultiAgentEnv):
-                        for epp in env.config.epp_registry.values():
+                        for epp in env.epp_registry.values():
                             epp.shutdown()
 
                 def cleanup_env(env: EnvType) -> list:

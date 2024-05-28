@@ -1,13 +1,13 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
 This base class (BasePlatformGlue) is the "glue" that sticks the base
 integration object(s) to the environment.This class and its derived classes
 are expected to be agnostic to the specific integration. The idea is that

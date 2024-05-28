@@ -1,20 +1,18 @@
-"""
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
-"""
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 
 import abc
 import typing
 from collections.abc import MutableMapping
 
-from pydantic import BaseModel, FilePath, ImportString, TypeAdapter, field_validator
+from pydantic import BaseModel, ImportString, TypeAdapter, field_validator
 
 from corl.agents.base_agent import AgentParseBase, AgentParseInfo
 from corl.libraries.file_path import CorlDirectoryPath
@@ -29,7 +27,7 @@ class ExperimentFileParse(BaseModel):
     config: the configuration to pass to that experiment
     """
 
-    config: FilePath
+    config: dict
     compute_platform: str = "local"
     platform_config: list[CorlPlatformConfigArgs]
     agent_config: list[CorlAgentConfigArgs]

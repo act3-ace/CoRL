@@ -1,29 +1,31 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
 Extra callbacks that can be for evaluating during training to
 generate episode artifacts.
 """
 
+import copy
 import typing
+from collections import OrderedDict
 
 from ray.rllib.utils.typing import MultiAgentDict
 
 import corl.experiments.rllib_utils.wrappers as rllib_wrappers
 from corl.agents.base_agent import BaseAgent
-from corl.environment.base_multi_agent_env import BaseCorlMultiAgentEnv
-from corl.environment.multi_agent_env import ACT3MultiAgentEnvValidator
+from corl.environment.base_multi_agent_env import BaseCorlMultiAgentEnv, BaseCorlMultiAgentEnvValidator
+from corl.environment.multi_agent_env import ACT3MultiAgentEnv
 from corl.episode_parameter_providers import EpisodeParameterProvider
 
 
-class CorlEnvWrapperValidator(ACT3MultiAgentEnvValidator):
+class CorlEnvWrapperValidator(BaseCorlMultiAgentEnvValidator):
     """Validation model for the inputs of CorlGroupedAgentEnv"""
 
     wrapped_env: str = "CorlMultiAgentEnv"
@@ -36,12 +38,12 @@ class CorlEnvWrapper(BaseCorlMultiAgentEnv):
         """Initialize CorlEnvWrapper."""
         self.config: CorlEnvWrapperValidator
         super().__init__(config)
-        self._wrapped_env: BaseCorlMultiAgentEnv = rllib_wrappers.get_rllib_environment_creator(self.config.wrapped_env)(config)
+        self._wrapped_env: ACT3MultiAgentEnv = rllib_wrappers.get_rllib_environment_creator(self.config.wrapped_env)(config)
         self._agent_dict = self._wrapped_env.agent_dict
-        self._observation_space = self._wrapped_env.observation_space
-        self._action_space = self._wrapped_env.action_space
         self._simulator = self._wrapped_env.simulator
         self._state = self._wrapped_env.state
+        self.observation_space = self._wrapped_env.observation_space
+        self.action_space = self._wrapped_env.action_space
 
     @staticmethod
     def get_validator() -> type[CorlEnvWrapperValidator]:
@@ -81,6 +83,28 @@ class CorlEnvWrapper(BaseCorlMultiAgentEnv):
         """
         return self._wrapped_env.epp
 
+    @property
+    def epp_registry(self) -> dict[str, EpisodeParameterProvider]:
+        """
+        get the Episode Parameter Provider Registry
+
+        Returns
+        -------
+        dict[str, EpisodeParameterProvider]
+        """
+        return self._wrapped_env.epp_registry
+
+    @property
+    def corl_agent_dict(self) -> dict[str, BaseAgent]:
+        """
+        get agents in ACT3MultiAgentEnv
+
+        Returns
+        -------
+        dict[str, BaseAgent]
+        """
+        return self._wrapped_env.corl_agent_dict
+
     def reset(self, *, seed=None, options=None) -> tuple[MultiAgentDict, MultiAgentDict]:
         """Reset env"""
         return_data = self._wrapped_env.reset(seed=seed, options=options)
@@ -119,10 +143,20 @@ class GroupedAgentsEnv(CorlEnvWrapper):
 
         self._groups = self.config.groups
         self._agent_id_to_group = self._create_agent_id_map(self._groups)
-        self._action_space = self._group_items(self._wrapped_env.action_space)
-        self._observation_space = self._group_items(self._wrapped_env.observation_space)
         self._info = self._group_items(self._wrapped_env.info)
-        self._agent_dict = self._create_agent_dict()
+        self._agent_dict = self._group_items(self._wrapped_env.agent_dict)
+        self.action_space = self._group_items(self._wrapped_env.action_space)
+        self.observation_space = self._group_items(self._wrapped_env.observation_space)
+        self._observation_units = self._group_items(self._wrapped_env.observation_units)
+
+        self._agent_to_platforms = {group: [] for group in self._groups}
+        for agent, platforms in self._wrapped_env.agent_to_platforms.items():
+            self._agent_to_platforms[self._agent_id_to_group[agent]].append(platforms)
+
+        self._platform_to_agents = {platform: [] for platform in self._wrapped_env.platform_to_agents}
+        for platform, agents in self._wrapped_env.platform_to_agents.items():
+            for agent in agents:
+                self._platform_to_agents[platform].append(self._agent_id_to_group[agent])
 
     @staticmethod
     def get_validator() -> type[GroupedAgentsEnvValidator]:
@@ -185,7 +219,15 @@ class GroupedAgentsEnv(CorlEnvWrapper):
         self._done_info = self._group_items(self._wrapped_env.done_info)
         self._reward_info = self._group_items(self._wrapped_env.reward_info)
         self._episode_id = self._wrapped_env.episode_id
-        self._state = self._wrapped_env.state
+        self._state = copy.deepcopy(self._wrapped_env.state)
+        self._state.episode_state = self._group_items(self._wrapped_env.state.episode_state)
+        for agent_name in self._agent_dict:
+            self._state.agent_episode_state[agent_name] = OrderedDict()
+
+        for platform_name in self.state.episode_state:
+            for agent_name in self.platform_to_agents.get(platform_name, []):
+                for done_name, done_status in self._state.episode_state[platform_name].items():
+                    self._state.agent_episode_state[agent_name][done_name] = done_status
 
     def _ungroup_items(self, grouped_dict):
         ungrouped_dict = type(grouped_dict)()

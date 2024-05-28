@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 from ray.rllib.algorithms.algorithm import Algorithm
 
 from corl.environment.multi_agent_env import ACT3MultiAgentEnv
@@ -11,7 +20,7 @@ def reset_epp(algorithm: Algorithm):
 
     def reset_env_epp(env) -> list:
         if isinstance(env, ACT3MultiAgentEnv):
-            for epp in env.config.epp_registry.values():
+            for epp in env.epp_registry.values():
                 epp.reset()
         return []
 

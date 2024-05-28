@@ -1,34 +1,31 @@
-"""
----------------------------------------------------------------------------.
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
-"""
-
+import contextlib
 import os
 import pathlib
 import time
 import typing
 
-import ray
 from pydantic import ConfigDict, ImportString, field_validator
-from pyinstrument import Profiler
 from ray.tune.registry import get_trainable_cls
 
-from corl.environment.default_env_rllib_callbacks import EnvironmentDefaultCallbacks
 from corl.environment.multi_agent_env import ACT3MultiAgentEnv, ACT3MultiAgentEnvValidator
 from corl.episode_parameter_providers import EpisodeParameterProvider
-from corl.episode_parameter_providers.remote import RemoteEpisodeParameterProvider
 from corl.experiments.base_experiment import BaseExperiment, BaseExperimentValidator, ExperimentFileParse
-from corl.libraries.factory import Factory
+from corl.experiments.rllib_utils.default_env_rllib_callbacks import EnvironmentDefaultCallbacks
 from corl.parsers.yaml_loader import apply_patches
 from corl.policies.base_policy import BasePolicyValidator
+
+with contextlib.suppress(Exception):
+    from pyinstrument import Profiler
 
 
 class BenchmarkExperimentValidator(BaseExperimentValidator):
@@ -55,6 +52,7 @@ class BenchmarkExperimentValidator(BaseExperimentValidator):
     trainable_config: dict[str, typing.Any] | None = None
     model_config = ConfigDict(arbitrary_types_allowed=True)
     benchmark_episodes: int = 10
+    profile: bool = False
 
     @field_validator("rllib_configs", mode="before")
     @classmethod
@@ -153,28 +151,10 @@ class BenchmarkExperiment(BaseExperiment):
             rllib_config["num_workers"] = 0
             self.config.ray_config["local_mode"] = True
 
-        self._add_trial_creator()
-
-        ray.init(**self.config.ray_config)
-
         self.config.env_config["agents"], self.config.env_config["agent_platforms"] = self.create_agents(
             args.platform_config,
             args.agent_config,
         )
-
-        # self.config.env_config["horizon"] = rllib_config["horizon"]
-
-        if not self.config.ray_config["local_mode"]:
-            self.config.env_config["episode_parameter_provider"] = RemoteEpisodeParameterProvider.wrap_epp_factory(
-                Factory(**self.config.env_config["episode_parameter_provider"]),
-                actor_name=ACT3MultiAgentEnv.episode_parameter_provider_name,
-            )
-
-            for agent_name, agent_configs in self.config.env_config["agents"].items():
-                agent_configs.class_config.config["episode_parameter_provider"] = RemoteEpisodeParameterProvider.wrap_epp_factory(
-                    Factory(**agent_configs.class_config.config["episode_parameter_provider"]),
-                    agent_name,
-                )
 
         self.config.env_config["epp_registry"] = ACT3MultiAgentEnvValidator(**self.config.env_config).epp_registry
 
@@ -188,8 +168,10 @@ class BenchmarkExperiment(BaseExperiment):
 
         env._simulator.save_episode_information = save_episode_information  # type: ignore  # noqa: SLF001
         env.config.deep_sanity_check = True
-        profiler = Profiler()
-        profiler.start()
+
+        if self.config.profile:
+            profiler = Profiler()
+            profiler.start()
 
         # retrieve action
         # if sanity_check_state_dict:
@@ -206,7 +188,7 @@ class BenchmarkExperiment(BaseExperiment):
             step = 0
 
             while not done:
-                multi_actions = self.generate_action(act_space)
+                multi_actions = act_space.sample()
                 _, _, trainable_done, _, _ = env.step(multi_actions)
                 done = trainable_done["__all__"]
                 step += 1
@@ -215,25 +197,22 @@ class BenchmarkExperiment(BaseExperiment):
             time.time()
         t2 = time.time()
 
-        profiler.stop()
+        if self.config.profile:
+            profiler.stop()
 
         step_per_second = total_timesteps / (t2 - t1)
         print(f"Total Steps  {total_timesteps}")
         print(f"Steps/Second {step_per_second}")
 
-        open_file_name = "testing.html"
-        if hasattr(self, "experiment_config_id"):
-            open_file_name = f"testing_{self.experiment_config_id}_{int(round(step_per_second))}.html"
+        if self.config.profile:
+            open_file_name = "testing.html"
+            if hasattr(self, "experiment_config_id"):
+                open_file_name = f"testing_{self.experiment_config_id}_{int(round(step_per_second))}.html"
 
-        with open(open_file_name, "w", encoding="utf-8") as f_html:
-            f_html.write(profiler.output_html())
+            with open(open_file_name, "w", encoding="utf-8") as f_html:
+                f_html.write(profiler.output_html())
 
         return step_per_second
-
-    def generate_action(self, act_space):  # noqa: PLR6301
-        """randomly select an action to take."""
-        # generate a random action
-        return {a_k: {s_k: s.sample() for s_k, s in a_s.spaces.items()} for a_k, a_s in act_space.spaces.items()}
 
     def get_callbacks(self) -> type[EnvironmentDefaultCallbacks]:  # noqa: PLR6301
         """Get the environment callbacks."""
@@ -300,7 +279,7 @@ class BenchmarkExperiment(BaseExperiment):
                 epp.save_checkpoint(checkpoint_folder / epp_name)
 
                 # Agents
-                for agent_name, agent_configs in env.agent_dict.items():
+                for agent_name, agent_configs in env.corl_agent_dict.items():
                     epp = agent_configs.config.epp
                     epp.save_checkpoint(checkpoint_folder / agent_name)
 
@@ -323,7 +302,7 @@ class BenchmarkExperiment(BaseExperiment):
                 epp.load_checkpoint(checkpoint_folder / epp_name)
 
                 # Agents
-                for agent_name, agent_configs in env.agent_dict.items():
+                for agent_name, agent_configs in env.corl_agent_dict.items():
                     epp = agent_configs.config.epp
                     epp.load_checkpoint(checkpoint_folder / agent_name)
 

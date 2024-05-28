@@ -1,3 +1,172 @@
+## 3.19.7
+
+
+### Bug Fixes
+
+* lock setuptools to <70 ()
+
+## 3.19.6
+
+
+### Bug Fixes
+
+* Fix episode artifact reader assertion ()
+
+## 3.19.5
+
+
+### Bug Fixes
+
+* Fix support empty obs ()
+
+## 3.19.4
+
+
+### Bug Fixes
+
+* fix episode artifact reader ()
+
+## 3.19.3
+
+
+### Bug Fixes
+
+* Change yaml loader corl_path to return str ()
+
+## 3.19.2
+
+
+### Bug Fixes
+
+* fix compute-platform cli argument default always taking priority over experiment file ()
+
+## 3.19.1
+
+
+### Bug Fixes
+
+* Use corl specific loader for yaml parser. This allows the user to use corl yaml constructs. ()
+
+# 3.19.0
+
+
+### Features
+
+* enable overwriting a task config from the experiment config via anchors ()
+
+# 3.18.0
+
+
+### Features
+
+* Add episode artifact reader to support offline learning using episode artifacts ()
+
+## 3.17.7
+
+
+### Bug Fixes
+
+* Make parameter overrides correctly load paths ()
+
+## 3.17.6
+
+
+### Bug Fixes
+
+* env wrappers ()
+
+## 3.17.5
+
+
+### Bug Fixes
+
+* updates docs. removes experiment docs until autogen solution is fixed. ()
+
+## 3.17.4
+
+
+### Bug Fixes
+
+* remove-memray this dependencies was causing problems down stream and is not used ()
+
+## 3.17.3
+
+
+### Bug Fixes
+
+* add testing for all configs and remove ray from benchmarks ()
+
+## 3.17.2
+
+
+### Bug Fixes
+
+* check if env is ActorHandle and skip callbacks. Our api does not handle this type ()
+
+## 3.17.1
+
+
+### Bug Fixes
+
+* Update .gitignore ()
+
+# 3.17.0
+
+
+### Features
+
+* add gym wrapper of corl env ()
+
+## 3.16.7
+
+
+### Bug Fixes
+
+* Add mass units to unit definitions ()
+
+## 3.16.6
+
+
+### Bug Fixes
+
+* **pre-commit:** Updates to support the pre-commit auto header check, poetry and etc. Also adds in small fix for the priv info env. ()
+* Update .gitignore ()
+
+## 3.16.5
+
+
+### Bug Fixes
+
+* move default callback locations to rllib experiment since they are rllib specific ()
+
+## 3.16.4
+
+
+### Bug Fixes
+
+* change trial name creator to plugin ()
+
+## 3.16.3
+
+
+### Bug Fixes
+
+* Updates to the documentation for evaluation and Streamlit documentation ()
+
+## 3.16.2
+
+
+### Bug Fixes
+
+* Updates centralized critic to work with trainable and non-trainable agents. ()
+
+## 3.16.1
+
+
+### Bug Fixes
+
+* adds in a centralized critic (), closes 
+
 # 3.16.0
 
 
@@ -584,7 +753,7 @@
 
 ### Bug Fixes
 
-* minor updates for supporting league play ()
+* minor updates for supporting arena algorithm ()
 
 # 3.2.0
 
@@ -1335,13 +1504,13 @@ See merge request /act3-rl/corl!34
 * updates for orginizatio, linting and testing ()
 * updates for population style training with PPO ()
 * updates for the code server and test for repository manager push ()
-* updates for the league --- TEMP until we redesign restart ()
+* updates for the arena --- TEMP until we redesign restart ()
 * Updates for the memory store, valid states, and HL ()
 * updates for the memstore ()
 * Updates for VISTA model ()
 * updates linting ()
 * updates required for simulator ()
-* updates so that league aers go to the same dir every time --- skip the date and pbs keys ()
+* updates so that arena aers go to the same dir every time --- skip the date and pbs keys ()
 * updates to (1) /tmp/data vs /opt/data supporting repository manager exploration and (2)... ()
 * updates to add in clutter ()
 * updates to add in container building ()

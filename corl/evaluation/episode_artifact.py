@@ -1,14 +1,12 @@
-"""
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
-"""
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 
 from __future__ import annotations
 
@@ -102,7 +100,7 @@ class EpisodeArtifact:
     observation_units: dict[str, typing.Any]
     platform_to_agents: dict[str, typing.Any]
     agent_to_platforms: dict[str, typing.Any]
-    done_config: EpisodeArtifact.DoneConfig
+    done_config: EpisodeArtifact.DoneConfig | None
     policy_artifact: dict[str, EpisodeArtifact.PolicyArtifact]
     initial_state: OrderedDict
     platform_serializer: PlatformSerializer

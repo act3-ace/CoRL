@@ -1,19 +1,18 @@
-"""
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
-"""
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 
 # https://docs.pytest.org/en/2.7.3/plugins.html?highlight=re
 
 import os
 import tempfile
+from pathlib import Path
 
 import pytest
 import ray
@@ -112,3 +111,15 @@ def optional_debuggable_ray(request):
         ray.init(**ray_config)
     else:
         yield False
+
+
+@pytest.fixture()
+def all_experiments():
+    all_experiments = []
+    for root, _, files in os.walk("config", topdown=False):
+        root_path = Path(root)
+        if "experiments" in root:
+            for name in files:
+                exp_path = root_path / name
+                all_experiments.append(exp_path)
+    return all_experiments

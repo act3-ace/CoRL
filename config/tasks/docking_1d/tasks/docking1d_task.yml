@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------------
 # Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-# Reinforcement Learning (RL) Core
+# Reinforcement Learning (RL) Core.
 #
 # This is a US Government Work not subject to copyright protection in the US.
 #
@@ -63,4 +63,4 @@ config:
   ray_config: !include ../ray_config.yml
   env_config: !merge [!include ../environments/docking1d_env.yml, *env_config_updates]
   tune_config: !merge [!include ../tune_config.yml, *tune_config_updates]
-  extra_callbacks: [corl.environment.episode_artifact_callbacks.Docking1dEpisodeArtifactLogger]
+  extra_callbacks: [corl.experiments.rllib_utils.episode_artifact_callbacks.Docking1dEpisodeArtifactLogger]

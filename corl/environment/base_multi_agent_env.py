@@ -1,14 +1,12 @@
-"""
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
-"""
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 
 import copy
 import typing
@@ -63,6 +61,11 @@ class BaseCorlMultiAgentEnv(MultiAgentEnv):
         self._episode_id: int | None = None
         self.action_space: gymnasium.spaces.Dict
         self.observation_space: gymnasium.spaces.Dict
+
+        # It may be necessary to set an abstract methods called during init
+        self._observation_units: OrderedDict = OrderedDict()
+        self._agent_to_platforms: dict[str, list[str]] = {}
+        self._platform_to_agents: dict[str, list[str]] = {}
 
     @staticmethod
     def get_validator() -> type[BaseCorlMultiAgentEnvValidator]:
@@ -168,7 +171,7 @@ class BaseCorlMultiAgentEnv(MultiAgentEnv):
         int or None
             the episode id
         """
-        return self.episode_id
+        return self._episode_id
 
     @property
     def local_variable_store(self) -> dict[str, typing.Any]:
@@ -195,6 +198,17 @@ class BaseCorlMultiAgentEnv(MultiAgentEnv):
         return self._agent_dict
 
     @property
+    def corl_agent_dict(self) -> dict[str, BaseAgent]:
+        """
+        get agents in ACT3MultiAgentEnv
+
+        Returns
+        -------
+        dict[str, BaseAgent]
+        """
+        raise NotImplementedError
+
+    @property
     def epp(self) -> EpisodeParameterProvider:
         """
         get the Episode Parameter Provider
@@ -206,6 +220,28 @@ class BaseCorlMultiAgentEnv(MultiAgentEnv):
         raise NotImplementedError
 
     @property
+    def epp_registry(self) -> dict[str, EpisodeParameterProvider]:
+        """
+        get the Episode Parameter Provider Registry
+
+        Returns
+        -------
+        dict[str, EpisodeParameterProvider]
+        """
+        raise NotImplementedError
+
+    @property
+    def observation_units(self) -> OrderedDict:
+        """
+        get the Episode Parameter Provider Registry
+
+        Returns
+        -------
+        dict
+        """
+        return self._observation_units
+
+    @property
     def glue_info(self) -> OrderedDict:
         """[summary]
 
@@ -213,6 +249,28 @@ class BaseCorlMultiAgentEnv(MultiAgentEnv):
             Union[OrderedDict, None] -- [description]
         """
         return self._info
+
+    @property
+    def agent_to_platforms(self) -> dict:
+        """
+        get the Episode Parameter Provider Registry
+
+        Returns
+        -------
+        dict
+        """
+        return self._agent_to_platforms
+
+    @property
+    def platform_to_agents(self) -> dict:
+        """
+        get the Episode Parameter Provider Registry
+
+        Returns
+        -------
+        dict
+        """
+        return self._platform_to_agents
 
     @staticmethod
     def _sanity_check(space: gymnasium.Space, space_sample: EnvSpaceUtil.sample_type) -> None:

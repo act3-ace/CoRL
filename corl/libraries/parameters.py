@@ -1,12 +1,13 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 """
--------------------------------------------------------------------------------
-The Autonomous Capabilities Team (ACT3) Deep Reinforcement Learning (D-RL) Environment
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
--------------------------------------------------------------------------------
 
 Structures that hold parameters and the ability to update them.
 """
@@ -24,6 +25,7 @@ from typing_extensions import Protocol
 
 from corl.libraries.factory import Factory
 from corl.libraries.units import Quantity, corl_get_ureg
+from corl.parsers.yaml_loader import Loader
 
 Number = StrictInt | float
 Randomness = Generator | RandomState
@@ -380,12 +382,25 @@ class OverridableParameterWrapper(Parameter):
 
         # Other attributes
         self.base = base
-        self.override_value: typing.Any = None
+        self._override_value: typing.Any = None
 
     @staticmethod
     def get_validator() -> typing.NoReturn:
         """OverridableParameterWrapper is not parsed using validators."""
         raise NotImplementedError()
+
+    @property
+    def override_value(self):
+        return self._override_value
+
+    @override_value.setter
+    def override_value(self, value):
+
+        if isinstance(value, str):
+            resolved_path, _ = Loader.find_file(value, ".")
+            self._override_value = str(resolved_path) if resolved_path else value
+        else:
+            self._override_value = value
 
     def get_constraint(self, name: str) -> _ConstraintCallbackType | None:
         return self.base.get_constraint(name=name)

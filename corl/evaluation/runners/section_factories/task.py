@@ -1,13 +1,13 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
 Defines a task
 """
 
@@ -16,9 +16,9 @@ import warnings
 
 from pydantic import BaseModel, ConfigDict, Field, dataclasses, field_validator, model_validator
 
-from corl.environment.default_env_rllib_callbacks import DefaultCallbacks, EnvironmentDefaultCallbacks
 from corl.evaluation.runners.section_factories.teams import Teams
 from corl.experiments.base_experiment import ExperimentParse
+from corl.experiments.rllib_utils.default_env_rllib_callbacks import DefaultCallbacks, EnvironmentDefaultCallbacks
 from corl.experiments.rllib_utils.policy_mapping_functions import PolicyIsAgent
 from corl.parsers.yaml_loader import load_file
 

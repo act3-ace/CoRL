@@ -1,0 +1,36 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
+{
+  "config": "config/tasks/pong/tasks/pong_task_marwil.yml",
+  "platform_config": [
+    {
+      "name": "paddle0",
+      "config": "config/tasks/pong/platforms/paddle.yml"
+    },
+    {
+      "name": "paddle1",
+      "config": "config/tasks/pong/platforms/paddle.yml"
+    }
+  ],
+  "agent_config": [
+    {
+      "name": "default_policy",
+      "platforms": ["paddle0"],
+      "config": "config/tasks/pong/agents/paddle_agent.yml",
+      "policy": "config/tasks/pong/policies/marwil_config.yml"
+    },
+    {
+      "name": "paddle1_ctrl",
+      "platforms": ["paddle1"],
+      "config": "config/tasks/pong/agents/paddle_agent.yml",
+      "policy": "config/tasks/pong/policies/marwil_config.yml"
+    }
+  ]
+}

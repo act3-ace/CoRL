@@ -1,0 +1,27 @@
+name: Make Poetry Badges
+on:
+  push:
+    branches: [main]
+
+jobs:
+  generate-badge:
+    runs-on: ubuntu-latest  # Workflow runs on Ubuntu virtual machine
+    steps:
+      - uses: actions/checkout@v3  # Checks out the repository code
+
+      - name: Install dependencies  # Install required tools
+        run: pip install toml
+
+      - name: Parse version from pyproject.toml  
+        id: parse_version
+        run: |
+          python -c "import toml; with open('pyproject.toml') as f: d = toml.load(f); print(d['tool']['poetry']['version'])" > version.txt
+
+      - name: Generate Badge  
+        uses: badges/shields@main  # Use shields/shields action for badge generation
+        with:
+          schema: badge
+          label: version
+          message: ${{ steps.parse_version.outputs.version }}  # Use parsed version for badge message
+          color: green
+          style: flat-square

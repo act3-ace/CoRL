@@ -1,14 +1,12 @@
-"""
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
-"""
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 
 import gc
 import importlib
@@ -21,7 +19,7 @@ import sys
 import typing
 import warnings
 from datetime import datetime
-import numpy as np
+
 import git
 import ray
 from pydantic import AfterValidator, BaseModel, ConfigDict, ImportString, field_validator
@@ -32,22 +30,43 @@ from ray.tune.registry import get_trainable_cls, register_env
 
 import corl.experiments.rllib_utils.wrappers as rllib_wrappers
 from corl.environment.base_multi_agent_env import BaseCorlMultiAgentEnv
-from corl.environment.default_env_rllib_callbacks import EnvironmentDefaultCallbacks
+from corl.environment.centralized_critic_environment import CorlCentralizedCriticEnvWrapper
 from corl.environment.environment_wrappers import GroupedAgentsEnv
 from corl.environment.multi_agent_env import ACT3MultiAgentEnv
 from corl.episode_parameter_providers import EpisodeParameterProvider
 from corl.episode_parameter_providers.remote import RemoteEpisodeParameterProvider
 from corl.experiments.base_experiment import BaseExperiment, BaseExperimentValidator, ExperimentFileParse
+from corl.experiments.rllib_utils.default_env_rllib_callbacks import EnvironmentDefaultCallbacks
 from corl.experiments.rllib_utils.policy_mapping_functions import PolicyIsAgent
 from corl.libraries.factory import Factory
 from corl.libraries.file_path import CorlDirectoryPath
 from corl.parsers.yaml_loader import apply_patches, load_file
 from corl.policies.base_policy import BasePolicyValidator
-from ray.rllib.algorithms.callbacks import DefaultCallbacks
-from ray.rllib.policy.sample_batch import SampleBatch
-from ray.rllib.models import ModelCatalog
-from gymnasium.spaces import Dict
-from collections import OrderedDict
+
+
+def basic_trial_creator(config):
+    """Updates the trial name based on the HPC Job Number and the trial name in the configuration"""
+    if "trial_name_creator" not in config.tune_config:
+        trial_prefix = os.environ.get("PBS_JOBID", os.environ.get("TRIAL_NAME_PREFIX", ""))
+        trial_name = ""
+
+        if "TrialName" in config.env_config:
+            trial_name = "-" + config.env_config["TrialName"] if trial_prefix else config.env_config["TrialName"]
+
+        def trial_name_prefix(trial):
+            """
+            Args:
+                trial (Trial): A generated trial object.
+
+            Returns:
+                trial_name (str): String representation of Trial prefixed
+                    by the contents of the environment variable:
+                    PBS_JOBID or TRIAL_NAME_PREFIX
+                    followed by the TrialName element of the environment configuration
+            """
+            return f"{trial_prefix}{trial_name}-{trial.trial_id}"
+
+        config.tune_config["trial_name_creator"] = trial_name_prefix
 
 
 class RllibPolicyMappingValidator(BaseModel):
@@ -56,49 +75,6 @@ class RllibPolicyMappingValidator(BaseModel):
     functor: ImportString = PolicyIsAgent
     config: dict = {}
 
-
-class FillInActions(DefaultCallbacks):
-    """Fills in the opponent actions info in the training batches."""
-
-    def on_postprocess_trajectory(
-        self,
-        worker,
-        episode,
-        agent_id,
-        policy_id,
-        policies,
-        postprocessed_batch,
-        original_batches,
-        **kwargs
-    ):
-        to_update = postprocessed_batch[SampleBatch.CUR_OBS]
-        other_policy_ids = [policy for policy in policies if policy != policy_id]
-        for other_policy_id in other_policy_ids:
-            action_encoder = ModelCatalog.get_preprocessor_for_space(worker.env.action_space[other_policy_id])
-            # set the other actions into the observation
-            # ? No value for single policy ? TODO 
-            other_policy_id, other_policy_class, other_policy_batch = original_batches[episode.policy_mapping_fn(other_policy_id, episode, worker)]
-            other_actions = np.array(
-                [action_encoder.transform({'PaddleController_Paddle_move': a[0]}) for a in other_policy_batch[SampleBatch.ACTIONS]]
-            )
-            to_update[:, -other_actions[0].size:] = other_actions
-
-def central_critic_observer(agents_obs, agents_act, **kw):
-    """Rewrites the agent obs to include opponent data for training."""
-    new_obs = OrderedDict()
-
-    for own_label in agents_obs.keys():
-        # Generate the combined oservation space
-        other_labels = [other_label for other_label in agents_obs.keys() if own_label != other_label]
-        new_obs[own_label] = OrderedDict(
-            {
-                "own": agents_obs[own_label], 
-                "other_obs": OrderedDict({ o_label: agents_obs[o_label] for o_label in other_labels}), 
-                "other_act": OrderedDict({ o_label: agents_act[0][o_label] for o_label in other_labels})
-            }
-        )
-
-    return new_obs
 
 class RllibExperimentValidator(BaseExperimentValidator):
     """
@@ -120,9 +96,8 @@ class RllibExperimentValidator(BaseExperimentValidator):
     hparam_search_class: ImportString | None = None
     hparam_search_config: dict[str, typing.Any] | None = None
     extra_callbacks: list[ImportString] | None = None
-    observation_fn: ImportString | None = None
     extra_tune_callbacks: list[ImportString] | None = None
-    trial_creator_function: ImportString | None = None
+    trial_creator_function: ImportString | None = basic_trial_creator
     policy_mapping: RllibPolicyMappingValidator = RllibPolicyMappingValidator()
     environment: str = "CorlMultiAgentEnv"
     policies: dict[str, str] = {}
@@ -280,10 +255,6 @@ class RllibExperiment(BaseExperiment):
         # path to still work --- else index and replace with selected env.
         rllib_config = self._select_rllib_config(args.compute_platform)
 
-        base_trainer = self.config.tune_config["run_or_experiment"]
-        trainer_class = get_trainable_cls(base_trainer)
-
-        apply_patches([trainer_class.get_default_config().to_dict(), rllib_config])
         self.initialize_ray(args.compute_platform, args.debug)
 
         self.config.env_config["agents"], self.config.env_config["agent_platforms"] = self.create_agents(
@@ -297,7 +268,8 @@ class RllibExperiment(BaseExperiment):
         if args.name:
             self.config.env_config["TrialName"] = args.name
 
-        self._add_trial_creator()
+        if self.config.trial_creator_function:
+            self.config.trial_creator_function(self.config)
 
         if not self.config.ray_config["local_mode"]:
             self.config.env_config["episode_parameter_provider"] = RemoteEpisodeParameterProvider.wrap_epp_factory(
@@ -309,12 +281,12 @@ class RllibExperiment(BaseExperiment):
                 agent_configs.class_config.config["episode_parameter_provider"] = RemoteEpisodeParameterProvider.wrap_epp_factory(
                     Factory(**agent_configs.class_config.config["episode_parameter_provider"]), agent_name
                 )
-        tmp_env: ACT3MultiAgentEnv = self.create_environment()
-        self.config.env_config["epp_registry"] = tmp_env.config.epp_registry
+        tmp_env: BaseCorlMultiAgentEnv = self.create_environment()
+        self.config.env_config["epp_registry"] = tmp_env.epp_registry
         policies, train_policies, available_policies = self.create_policies(tmp_env)
 
         self._update_rllib_config(rllib_config, train_policies, policies, args, available_policies)
-       
+
         self._update_tune_config()
 
         self._enable_episode_parameter_provider_checkpointing()
@@ -414,10 +386,9 @@ class RllibExperiment(BaseExperiment):
                     algorithm.workers.sync_weights()
 
             callback_list.append(WeightLoaderCallback)
+
         if self.config.extra_callbacks:
             callback_list.extend(self.config.extra_callbacks)
-            if self.config.env_config["observation_fn"] is not None: 
-                callback_list.extend([FillInActions])
 
         rllib_config["callbacks"] = make_multi_callbacks(callback_list)
         rllib_config["env_config"] = self.config.env_config
@@ -511,6 +482,7 @@ class RllibExperiment(BaseExperiment):
 
     def _register_envs(self):  # noqa: PLR6301
         register_env("CorlMultiAgentEnv", lambda config: ACT3MultiAgentEnv(config))
+        register_env("CorlCentralizedCriticEnvWrapper", lambda config: CorlCentralizedCriticEnvWrapper(config))
         register_env("CorlGroupedAgentEnv", lambda config: GroupedAgentsEnv(config))
 
     def _select_rllib_config(self, platform: str | None) -> dict[str, typing.Any]:
@@ -566,11 +538,11 @@ class RllibExperiment(BaseExperiment):
             # Environment
             epp_name = ACT3MultiAgentEnv.episode_parameter_provider_name
             env = cls.workers.local_worker().env
-            epp: EpisodeParameterProvider = env.config.epp
+            epp: EpisodeParameterProvider = env.epp
             epp.save_checkpoint(checkpoint_folder / epp_name)
 
             # Agents
-            for agent_name, agent_configs in env.agent_dict.items():
+            for agent_name, agent_configs in env.corl_agent_dict.items():
                 epp = agent_configs.config.epp
                 epp.save_checkpoint(checkpoint_folder / agent_name)
 
@@ -596,7 +568,7 @@ class RllibExperiment(BaseExperiment):
             epp.load_checkpoint(checkpoint_folder / epp_name)
 
             # Agents
-            for agent_name, agent_configs in env.agent_dict.items():
+            for agent_name, agent_configs in env.corl_agent_dict.items():
                 epp = agent_configs.config.epp
                 epp.load_checkpoint(checkpoint_folder / agent_name)
 
@@ -605,30 +577,3 @@ class RllibExperiment(BaseExperiment):
         trainer_class.load_checkpoint = load_checkpoint
 
         self.config.tune_config["run_or_experiment"] = trainer_class
-
-    def _add_trial_creator(self):
-        """Updates the trial name based on the HPC Job Number and the trial name in the configuration"""
-        if "trial_name_creator" not in self.config.tune_config:
-            if self.config.trial_creator_function is None:
-                trial_prefix = os.environ.get("PBS_JOBID", os.environ.get("TRIAL_NAME_PREFIX", ""))
-                trial_name = ""
-
-                if "TrialName" in self.config.env_config:
-                    trial_name = "-" + self.config.env_config["TrialName"] if trial_prefix else self.config.env_config["TrialName"]
-
-                def trial_name_prefix(trial):
-                    """
-                    Args:
-                        trial (Trial): A generated trial object.
-
-                    Returns:
-                        trial_name (str): String representation of Trial prefixed
-                            by the contents of the environment variable:
-                            PBS_JOBID or TRIAL_NAME_PREFIX
-                            followed by the TrialName element of the environment configuration
-                    """
-                    return f"{trial_prefix}{trial_name}-{trial}"
-
-                self.config.tune_config["trial_name_creator"] = trial_name_prefix
-            else:
-                self.config.tune_config["trial_name_creator"] = self.config.trial_creator_function

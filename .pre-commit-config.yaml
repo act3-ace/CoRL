@@ -4,91 +4,206 @@
 # -------------------------------------------------------------------------------
 # https://github.com/apache/airflow/blob/master/.pre-commit-config.yaml
 
+################################################################################
+# Types of commit hooks to use by the setup
+################################################################################
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+
+################################################################################
+# Language versions to use by the setup (default only python)
+################################################################################
 default_language_version:
   python: python3.10
+
+################################################################################
+# Pre-Commit Items
+################################################################################
 repos:
+  ################################################################################
+  #    - Extra Checks on pre-commit
+  ################################################################################
   - repo: local
     hooks:
-# The following hooks are from pre-commit-hooks package
+      - id: conventional-pre-commit
+        name: Conventional Commit (local)
+        entry: conventional-pre-commit
+        language: python
+        stages:
+          - commit-msg
+  - repo: http://github.com/Quard/license-header-checker
+    rev: v0.2.1
+    hooks:
+      - id: license-header-checker
+        name: license-header-checker-yaml
+        files: \.yml$
+        args: &license-args
+          - --license
+          - |
+            ---------------------------------------------------------------------------
+            Air Force Research Laboratory \(AFRL\) Autonomous Capabilities Team \(ACT3\)
+            Reinforcement Learning \(RL\) Core.
+
+            This is a US Government Work not subject to copyright protection in the US.
+
+            The use, dissemination or disclosure of data in this file is subject to
+            limitation or restriction. See accompanying README and LICENSE for details.
+            ---------------------------------------------------------------------------
+        stages:
+          - commit
+      - id: license-header-checker
+        name: license-header-checker-py
+        files: \.py$
+        args: *license-args
+        stages:
+          - commit
+  ################################################################################
+  # - POETRY --- Make sure that we commit items which work before push
+  ################################################################################
+  - repo: https://github.com/python-poetry/poetry
+    rev: 1.8.2
+    hooks:
+      # https://python-poetry.org/docs/main/pre-commit-hooks/#poetry-check
+      - id: poetry-check
+        stages:
+          - commit
+      # https://python-poetry.org/docs/main/pre-commit-hooks/#poetry-lock
+      # - id: poetry-lock
+      #   stages:
+      #     - commit
+      # # https://python-poetry.org/docs/main/pre-commit-hooks/#poetry-export
+      # - id: poetry-export
+      #   stages:
+      #     - commit
+      # # https://python-poetry.org/docs/main/pre-commit-hooks/#poetry-install
+      # - id: poetry-install
+      #   args: ["--sync"]
+      #   stages:
+      #     - commit
+  ################################################################################
+  #    - Standard Pre-Commit Checks
+  ################################################################################
+  - repo: local
+    hooks:
       - id: check-added-large-files
         name: Check for added large files
         description: Prevent giant files from being committed
         entry: check-added-large-files
         language: python
+        stages:
+          - commit
       - id: check-case-conflict
         name: Check for case conflicts
         description: Check for files that would conflict in case-insensitive filesystems
         entry: check-case-conflict
         language: python
+        stages:
+          - commit
       - id: check-json
         name: Check JSON
         description: This hook checks json files for parseable syntax.
         entry: check-json
         language: python
-        types: [ json ]
-        exclude: ".devcontainer/devcontainer.json"
+        types:
+          - json
+        exclude: .vscode/launch.json,.devcontainer/devcontainer.json
+        stages:
+          - commit
       - id: pretty-format-json
         name: Pretty format JSON
         description: This hook sets a standard for formatting JSON files.
         entry: pretty-format-json
         language: python
-        types: [ json ]
-        exclude: ".devcontainer/devcontainer.json"
-        args: [ "--no-sort-keys", "--indent", "2" ]
+        types:
+          - json
+        exclude: .devcontainer/devcontainer.json
+        args:
+          - --no-sort-keys
+          - --indent
+          - "2"
+        stages:
+          - commit
       - id: check-merge-conflict
         name: Check for merge conflicts
         description: Check for files that contain merge conflict strings.
         entry: check-merge-conflict
         language: python
-        types: [ text ]
+        types:
+          - text
+        stages:
+          - commit
       - id: check-symlinks
         name: Check for broken symlinks
         description: Checks for symlinks which do not point to anything.
         entry: check-symlinks
         language: python
-        types: [ symlink ]
+        types:
+          - symlink
+        stages:
+          - commit
       - id: check-yaml
         name: Check Yaml
         description: This hook checks yaml files for parseable syntax.
         entry: check-yaml
         language: python
-        types: [ yaml ]
-        exclude: "(^config.*|.github-ci.yml|^test.*|^docs.*|mkdocs.yml$)"
-        args: [ "--allow-multiple-documents" ]
+        types: [yaml]
+        exclude: (^config.*|.github-ci.yml|^test.*|^docs.*|mkdocs.yml$)
+        args:
+          - --allow-multiple-documents
+        stages:
+          - commit
       - id: debug-statements
         name: Debug Statements (Python)
         description: Check for debugger imports and py37+ `breakpoint()` calls in python source.
         entry: debug-statement-hook
         language: python
-        types: [ python ]
+        types:
+          - python
+        stages:
+          - commit
       - id: detect-private-key
         name: Detect Private Key
         description: Detects the presence of private keys
         entry: detect-private-key
         language: python
-        types: [ text ]
+        types:
+          - text
+        stages:
+          - commit
       - id: no-commit-to-branch
         name: "Don't commit to branch"
         entry: no-commit-to-branch
         language: python
         pass_filenames: false
         always_run: true
-        args: [ '--branch', 'master', '--branch', 'develop', '--branch', 'main']
-# End hooks from pre-commit-hooks package
+        args:
+          - --branch
+          - master
+          - --branch
+          - develop
+          - --branch
+          - main
+        stages:
+          - commit
+      # End hooks from pre-commit-hooks package
       - id: bashate
         name: bashate
         description: This hook runs bashate for linting shell scripts
         entry: bashate
         language: python
-        types: [ shell ]
-        args: [ "--ignore=E003,E006,E040" ]
+        types:
+          - shell
+        args:
+          - --ignore=E003,E006,E040
         verbose: false
-      # - id: detect-secrets
-      #   name: detect-secrets
-      #   description: An enterprise friendly way of detecting and preventing secrets in code.
-      #   entry: detect-secrets
-      #   language: system
-      #   args: [ "audit", ".secrets.baseline" ]
+        stages:
+          - commit
+  ################################################################################
+  #    - Linting items
+  ################################################################################
+  - repo: local
+    hooks:
       - id: blacken-docs
         name: blacken-docs
         description: Run `black` on python code blocks in documentation files
@@ -96,7 +211,9 @@ repos:
         language: python
         language_version: python3
         files: '\.(rst|md|markdown|py|tex)$'
-# Start python formatters
+        exclude: docs/tutorials/streamlit-visualization-tutorial.md
+        stages:
+          - commit
       - id: black
         name: black
         files: corl
@@ -104,35 +221,49 @@ repos:
         entry: black
         language: python
         minimum_pre_commit_version: 2.9.2
-        types_or: [python, pyi]
+        types_or:
+          - python
+          - pyi
         require_serial: true
+        stages:
+          - commit
       - id: ruff
         name: ruff
         description: ruff linting
         entry: ruff
         files: corl
-        stages: [ commit ]
+        stages:
+          - commit
         language: system
-        args: [ --fix, --exit-non-zero-on-fix ]
-        types: [ python ]
-# Start python linters
+        args:
+          - --fix
+          - --exit-non-zero-on-fix
+        types:
+          - python
       - id: mypy
         name: mypy
         files: corl
-        stages: [ commit ]
+        stages:
+          - commit
         language: system
-        entry: bash -c "pip --disable-pip-version-check install types-tabulate && python -m mypy . --check-untyped-defs"
-        types: [ python ]
+        entry: bash -c "pip --disable-pip-version-check install types-tabulate && python -m mypy corl"
+        types:
+          - python
       - id: velin
         name: Velin
         description: This hook attempt to reformat docstrings using numpydoc format.
-        entry: velin  # GOOD
+        entry: velin # GOOD
         language: python
         language_version: python3
-        types: [text]
-        types_or: [python]
-        args: ["--write","--no-fixers"]
-        stages: [ commit ]
+        types:
+          - text
+        types_or:
+          - python
+        args:
+          - --write
+          - --no-fixers
+        stages:
+          - commit
       - id: black-test
         name: black-test
         files: test
@@ -140,20 +271,31 @@ repos:
         entry: black
         language: python
         minimum_pre_commit_version: 2.9.2
-        types_or: [python, pyi]
+        types_or:
+          - python
+          - pyi
         require_serial: true
+        stages:
+          - commit
       - id: ruff-test
         name: ruff-test
         description: ruff linting
         entry: ruff
         files: test
-        stages: [ commit ]
+        stages:
+          - commit
         language: system
-        args: [ --fix, --exit-non-zero-on-fix ]
-        types: [ python ]
+        args:
+          - --fix
+          - --exit-non-zero-on-fix
+        types:
+          - python
       - id: codespell
         name: codespell
         description: Checks for common misspellings in text files.
         entry: codespell --ignore-words scripts/valid_words.txt --skip="*html,poetry.lock,pyproject.toml,valid_words.txt,*.css*,*.js*" .
         language: python
-        types: [text]
+        types:
+          - text
+        stages:
+          - commit

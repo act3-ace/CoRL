@@ -17,7 +17,7 @@ ARG NEW_GID=1000
 ARG NEW_UID=1000
 ARG NEW_GROUP=developer
 ARG NEW_USER=developer
-ARG POETRY_VERSION=1.6.1
+ARG POETRY_VERSION=1.8.2
 
 RUN apt-get update -y && \
   apt-get install -y --no-install-recommends \

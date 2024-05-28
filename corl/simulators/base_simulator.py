@@ -1,14 +1,12 @@
-"""
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
-"""
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 
 import typing
 from abc import ABC, abstractmethod
@@ -99,7 +97,8 @@ def validation_helper_units_and_parameters(value: dict[str, typing.Any]) -> dict
 class SimulatorDefaultCallbacks:
     """This class allows the simulator to add simulator specific operation into the environment callbacks.
 
-    These methods are called at the end of corl.environment.default_env_rllib_callbacks.EnvironmentDefaultCallbacks methods of the same
+    These methods are called at the end of
+    corl.experiments.rllib_utils.default_env_rllib_callbacks.EnvironmentDefaultCallbacks methods of the same
     name.
     """
 

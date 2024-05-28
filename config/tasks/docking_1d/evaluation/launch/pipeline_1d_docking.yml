@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 eval_config: config/tasks/docking_1d/evaluation/launch/eval_1d_docking.yml
 gen_metrics_config: config/tasks/docking_1d/evaluation/launch/metrics_gen_1d_docking.yml
 visualize_config: config/tasks/docking_1d/evaluation/launch/visualize_1d_docking.yml

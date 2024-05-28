@@ -1,0 +1,60 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
+
+auto_system_detect_class: corl.experiments.base_experiment.BaseAutoDetect
+experiment_class: corl.experiments.rllib_experiment.RllibExperiment
+
+config:
+  policy_mapping:
+    functor: corl.experiments.rllib_utils.policy_mapping_functions.SinglePolicy
+    config:
+      policy_id: "default_policy"
+
+  rllib_config_updates: &rllib_config_updates
+    input_config:
+        inputs: /tmp/data/corl/offline-data/episode-artifacts-pong/ # Path to episode artifacts you want to train with
+        agent_id_in_artifacts: paddle0_ctrl
+    input_: corl.evaluation.runners.section_factories.engine.rllib.offline_rl.episode_artifact_reader.EpisodeArtifactReader
+    evaluation_config:
+      input: "sampler"
+    evaluation_interval: 50
+    evaluation_duration: 50
+    evaluation_num_workers: 1 # This is in addition to num_workers
+    evaluation_duration_unit: episodes
+    actions_in_input_normalized: True
+
+  # No overrides for ray as there are no changes
+  ray_config_updates: &ray_config_updates
+    local_mode: False
+
+  # Change the default path for saving out the data
+  env_config_updates: &env_config_updates
+    TrialName: Pong
+    output_path: /tmp/data/corl/marwil/
+
+  # Change the default path for saving out the data
+  tune_config_updates: &tune_config_updates
+    local_dir: /tmp/data/corl/marwil/episode-artifact-reader/
+    run_or_experiment: MARWIL
+
+  ####################################################################
+  # Setup the actual keys used by the code
+  # Note that items are patched from the update section
+  ###################################################################
+  rllib_configs:
+    default: [!include ../rllib_config.yml, *rllib_config_updates]
+    local: [!include ../rllib_config.yml,  *rllib_config_updates]
+
+  ray_config: [!include ../ray_config.yml, *ray_config_updates]
+  env_config: [!include ../environments/pong_env.yml, *env_config_updates]
+  tune_config: [!include ../tune_config_ppo.yml, *tune_config_updates]
+  extra_callbacks: [
+    corl.experiments.rllib_utils.episode_artifact_callbacks.PongEpisodeArtifactLogger,
+    corl.experiments.rllib_utils.custom_env_metrics.CustomPongMetrics]

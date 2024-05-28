@@ -1,12 +1,13 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 """
--------------------------------------------------------------------------------
-The Autonomous Capabilities Team (ACT3) Deep Reinforcement Learning (D-RL) Environment
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
--------------------------------------------------------------------------------
 
 Module containing unit dimensions and functions to convert between units
 """
@@ -468,6 +469,10 @@ def default_unit_definitions(ureg):
 
     ureg.add_dimension(name="angular_velocity", base_unit_known_as=("radian/second", "radian / second", "rad/sec", "rad/s"))
     ureg.add_unit(1 / 57.2958, "radian/second", ("degree / second", "degrees / second", "deg/s", "deg/sec"))
+
+    ureg.add_dimension(name="weight", base_unit_known_as=("gram", "grams", "g"))
+    ureg.add_unit(1000, "gram", ("kilogram", "kilograms", "kg"))
+    ureg.add_unit(453.592, "gram", ("pound", "pounds", "lb", "lbs"))
 
 
 class UnitRegistryConfiguration(BaseModel):

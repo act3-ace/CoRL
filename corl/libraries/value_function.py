@@ -1,13 +1,13 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
 Library to extract the value function from within callbacks
 """
 
@@ -17,6 +17,8 @@ from ray.rllib import BaseEnv
 from ray.rllib.evaluation.episode_v2 import EpisodeV2
 from ray.rllib.policy import Policy
 from ray.rllib.utils.typing import PolicyID
+
+from corl.experiments.rllib_utils.callbacks import get_corl_sub_env
 
 
 def extract_value_function_step_callback(
@@ -32,9 +34,10 @@ def extract_value_function_step_callback(
     if policies is None:
         return {}
 
-    env = base_env.get_sub_environments()[episode.env_id]
+    if (env := get_corl_sub_env(base_env, episode)) is None:
+        return {}
 
-    non_trainable_agent_dict = {k: v for (k, v) in env.agent_dict.items() if not (v.trainable)}
+    non_trainable_agent_dict = {k: v for (k, v) in env.corl_agent_dict.items() if not (v.trainable)}
     # Map of policy_id to agent_id(s)
     policy_id_map = defaultdict(list)
     for agent_id in env.agent_to_platforms:

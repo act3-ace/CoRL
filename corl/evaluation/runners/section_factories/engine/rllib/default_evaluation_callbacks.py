@@ -1,13 +1,13 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
 Callbacks to do logging of episodes
 """
 
@@ -29,6 +29,7 @@ from ray.rllib.utils.typing import AgentID, PolicyID
 from corl.environment.base_multi_agent_env import BaseCorlMultiAgentEnv
 from corl.evaluation.episode_artifact import EpisodeArtifact
 from corl.evaluation.runners.section_factories.plugins.platform_serializer import PlatformSerializer
+from corl.experiments.rllib_utils.callbacks import get_corl_sub_env
 from corl.simulators.base_simulator import BaseSimulator
 
 
@@ -97,9 +98,13 @@ class DefaultEvaluationCallbacks(DefaultCallbacks, ABC):
         episode: EpisodeV2,
         **kwargs,
     ) -> None:
-        """See corl.environment.default_env_rllib_callbacks.EnvironmentDefaultCallbacks.on_episode_start"""
+        """See corl.experiments.rllib_utils.default_env_rllib_callbacks.EnvironmentDefaultCallbacks.on_episode_start"""
 
-        env = base_env.get_sub_environments()[episode.env_id]
+        super().on_episode_start(worker=worker, base_env=base_env, policies=policies, episode=episode, **kwargs)
+
+        if (env := get_corl_sub_env(base_env, episode)) is None:
+            return
+
         episode.user_data["initial_state"] = env.observation
 
         episode.user_data["eval"] = {
@@ -107,21 +112,14 @@ class DefaultEvaluationCallbacks(DefaultCallbacks, ABC):
             for agent_id in env.agent_dict
         }
 
-        agent_dones = {}
-        for agent_id in env.agent_dict:
-            agent_dones[agent_id] = env.agent_dict[agent_id].config.dones
-
         episode.user_data["test_case"] = env.episode_id
         episode.user_data["env_config"] = worker.config["env_config"]
         episode.user_data["params"] = flatten_dict.flatten(env.local_variable_store, reducer="dot")
         episode.user_data["start_time"] = datetime.now()
         episode.user_data["episode_artifacts_filenames"] = {}
-        episode.user_data["observation_units"] = env._observation_units  # noqa: SLF001
+        episode.user_data["observation_units"] = env.observation_units
         episode.user_data["platform_to_agents"] = env.platform_to_agents
         episode.user_data["agent_to_platforms"] = env.agent_to_platforms
-        episode.user_data["done_config"] = EpisodeArtifact.DoneConfig(
-            task=env.config.dones.task, world=env.config.dones.world, agent_dones=agent_dones
-        )
 
         step_data: dict[str, dict[str, typing.Any]] = {
             agent_id: {"observation": collections.OrderedDict(), "action": collections.OrderedDict()} for agent_id in env.agent_dict
@@ -141,12 +139,9 @@ class DefaultEvaluationCallbacks(DefaultCallbacks, ABC):
 
         # collect and add full set of parameter values for episode
         parameter_values = {"environment": flatten_dict.flatten(env.local_variable_store, reducer="dot")}
-        for agent_id, agent in env.agent_dict.items():
+        for agent_id, agent in env.corl_agent_dict.items():
             parameter_values[agent_id] = flatten_dict.flatten(agent.local_variable_store, reducer="dot")
         episode.user_data["parameter_values"] = parameter_values
-
-        # Cooperative multiple inheritance
-        super().on_episode_start(worker=worker, base_env=base_env, policies=policies, episode=episode, **kwargs)
 
     def on_episode_step(
         self,
@@ -157,9 +152,12 @@ class DefaultEvaluationCallbacks(DefaultCallbacks, ABC):
         episode: EpisodeV2,
         **kwargs,
     ) -> None:
-        """See corl.environment.default_env_rllib_callbacks.EnvironmentDefaultCallbacks.on_episode_step"""
+        """See corl.experiments.rllib_utils.default_env_rllib_callbacks.EnvironmentDefaultCallbacks.on_episode_step"""
 
-        env = base_env.get_sub_environments()[episode.env_id]
+        super().on_episode_step(worker=worker, base_env=base_env, policies=policies, episode=episode, **kwargs)
+
+        if (env := get_corl_sub_env(base_env, episode)) is None:
+            return
 
         episode.user_data["eval"] = {
             agent_id: {"episode": {"done": {}, "reward": {}, "total_reward": np.nan, "episode_state": {}}, "step": []}
@@ -207,16 +205,13 @@ class DefaultEvaluationCallbacks(DefaultCallbacks, ABC):
                 res = 0.0
             return res
 
-        for agent_id, trainable_agent in env.agent_dict.items():
-            # If the platform doesn't exists anymore there is nothing to do.
-            # # Assumes 1:1 map of agent to platform
-            if len([item for item in serialized_platforms if item["name"] == trainable_agent.platform_names[0]]) != 0:
-                step.agents[agent_id] = EpisodeArtifact.AgentStep(
-                    observations=step_data[agent_id]["observation"],
-                    actions=step_data[agent_id]["action"],
-                    rewards=map_agent_reward.get(agent_id),
-                    total_reward=get_agent_reward(episode, agent_id),
-                )
+        for agent_id in env.agent_dict:
+            step.agents[agent_id] = EpisodeArtifact.AgentStep(
+                observations=step_data[agent_id]["observation"],
+                actions=step_data[agent_id]["action"],
+                rewards=map_agent_reward.get(agent_id),
+                total_reward=get_agent_reward(episode, agent_id),
+            )
 
         episode.user_data["steps"].append(step)
         episode.user_data["walltime_sec"].append(datetime.utcnow().timestamp())
@@ -237,9 +232,6 @@ class DefaultEvaluationCallbacks(DefaultCallbacks, ABC):
 
         episode.user_data["eval"][agent_id]["episode"]["episode_state"] = episode_state[agent_id]
 
-        # Cooperative multiple inheritance
-        super().on_episode_step(worker=worker, base_env=base_env, policies=policies, episode=episode, **kwargs)
-
     def on_postprocess_trajectory(
         self,
         *,
@@ -252,7 +244,7 @@ class DefaultEvaluationCallbacks(DefaultCallbacks, ABC):
         original_batches: dict[AgentID, tuple[Policy, SampleBatch]],
         **kwargs,
     ) -> None:
-        """See corl.environment.default_env_rllib_callbacks.EnvironmentDefaultCallbacks.on_postprocess_trajectory"""
+        """See corl.experiments.rllib_utils.default_env_rllib_callbacks.EnvironmentDefaultCallbacks.on_postprocess_trajectory"""
 
         policy_artifact = {
             agent_id: EpisodeArtifact.PolicyArtifact(
@@ -306,7 +298,7 @@ class DefaultEvaluationCallbacks(DefaultCallbacks, ABC):
                         observation_units=episode.user_data["observation_units"],
                         platform_to_agents=episode.user_data["platform_to_agents"],
                         agent_to_platforms=episode.user_data["agent_to_platforms"],
-                        done_config=episode.user_data["done_config"],
+                        done_config=None,
                         initial_state=episode.user_data["initial_state"],
                         policy_artifact=policy_artifact,
                         space_definitions=space_definitions,

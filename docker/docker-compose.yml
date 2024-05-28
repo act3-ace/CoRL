@@ -1,4 +1,4 @@
-# -------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
 # Reinforcement Learning (RL) Core.
 #
@@ -6,7 +6,7 @@
 #
 # The use, dissemination or disclosure of data in this file is subject to
 # limitation or restriction. See accompanying README and LICENSE for details.
-# -------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 version: "3.8"
 
 services:
@@ -31,10 +31,10 @@ services:
       - "/tmp/.X11-unix:/tmp/.X11-unix:rw"
       #
       # for development, link the host folder containing code to /opt/project in container
-      - "$CODE_PATH/:/opt/project"
+      - "../:/opt/project"
       #
       # for development, link the host folder containing data to /tmp/data/corl in container
-      - "$DATA_PATH:/tmp/data/corl"
+      - "~/data:/tmp/data/corl"
       #
       # copy in command history
       - "corl-bashhistory:/commandhistory"

@@ -1,14 +1,12 @@
-"""
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
-"""
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 
 import collections
 import copy
@@ -57,10 +55,9 @@ class Loader(yaml.SafeLoader):
 
         self.cwd_path = Path.cwd()
 
-        self._pkg_paths = get_pkgs_paths()
         self._distribution = None
 
-        for site_path in self._pkg_paths:
+        for site_path in get_pkgs_paths():
             if site_path in self.root_path.parents:
                 str(Path(*self.root_path.relative_to(site_path).parts[:1]))
                 if site_path != self.cwd_path:
@@ -115,35 +112,36 @@ class Loader(yaml.SafeLoader):
         loader_string = self.construct_scalar(node)
         assert isinstance(loader_string, str)
 
-        filename, distribution = self._find_file(loader_string)
+        filename, distribution = self.find_file(loader_string, self.root_path, self.cwd_path, self._distribution)
 
         if not filename:
             raise RuntimeError(f"{loader_string} not found when yaml parsing")
 
         return filename.absolute() if absolute else filename.resolve(), distribution
 
-    def _find_file(self, loader_string) -> tuple[Path | None, importlib_metadata.Distribution | None]:
+    @staticmethod
+    def find_file(loader_string, root_path, cwd_path=".", distribution=None) -> tuple[Path | None, importlib_metadata.Distribution | None]:
         """ """
         # Check if file is relative to current file
         if loader_string.startswith("."):
-            tmp_path = Path(self.root_path, loader_string)
+            tmp_path = Path(root_path, loader_string)
             if tmp_path.is_file():
-                return tmp_path, self._distribution
+                return tmp_path, distribution
             return None, None
 
         # Check if file is in current repo
-        cwd_path = Path(self.cwd_path, loader_string)
+        cwd_path = Path(cwd_path, loader_string)
         if cwd_path.is_file():
             return cwd_path, None
 
         # Check if file is in current module
-        if self._distribution:
-            module_path = Path(get_distribution_path(self._distribution), loader_string)
+        if distribution:
+            module_path = Path(get_distribution_path(distribution), loader_string)
             if module_path.is_file():
-                return module_path, self._distribution
+                return module_path, distribution
 
         # Check if file is in a different site pkg module
-        for pkg_path in self._pkg_paths:
+        for pkg_path in get_pkgs_paths():
             site_path = Path(pkg_path, loader_string)
             if site_path.is_file():
                 return site_path, importlib_metadata.distribution(str(Path(*site_path.relative_to(pkg_path).parts[:1])))
@@ -153,7 +151,7 @@ class Loader(yaml.SafeLoader):
     def construct_str(self, node):
         # Implement custom string handling here
         if Path(node.value).suffix:
-            new_file_path, _ = self._find_file(node.value)
+            new_file_path, _ = self.find_file(node.value, self.root_path, self.cwd_path, self._distribution)
             if new_file_path:
                 return str(new_file_path)
         return node.value
@@ -316,7 +314,7 @@ def construct_include(loader: Loader, node: yaml.Node) -> Any:
 def construct_path(loader: Loader, node: yaml.Node) -> Any:
     """Construct file path associated with node"""
     filename, _ = loader.build_file_path(node)
-    return filename
+    return str(filename)
 
 
 def construct_include_direct(loader: Loader, node: yaml.Node) -> Any:

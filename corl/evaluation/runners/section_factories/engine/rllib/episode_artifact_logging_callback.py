@@ -1,11 +1,12 @@
-"""
----------------------------------------------------------------------------
-
-This is a US Government Work not subject to copyright protection in the US.
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
-"""
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 
 import os
 import pickle
@@ -25,6 +26,7 @@ from ray.rllib.utils.typing import AgentID, PolicyID
 from corl.environment.base_multi_agent_env import BaseCorlMultiAgentEnv
 from corl.evaluation.episode_artifact import EpisodeArtifact
 from corl.evaluation.runners.section_factories.engine.rllib.default_evaluation_callbacks import DefaultEvaluationCallbacks
+from corl.experiments.rllib_utils.callbacks import get_corl_sub_env
 
 EPOCH_ZFILL = 6
 EVAL_CHECKPOINTS_SUBDIR = "eval_checkpoints"
@@ -102,9 +104,11 @@ class EpisodeArtifactLoggingCallback(DefaultEvaluationCallbacks):
         **kwargs,
     ) -> None:
         # At this point, episode.user_data has been initialized. Here we add the initial state.
-        env = base_env.get_sub_environments()[episode.env_id]
-        episode.user_data["initial_state"] = env.observation
         super().on_episode_start(worker=worker, base_env=base_env, policies=policies, episode=episode, **kwargs)
+
+        if (env := get_corl_sub_env(base_env, episode)) is None:
+            return
+        episode.user_data["initial_state"] = env.observation
 
     def on_episode_step(
         self,  # noqa: PLR6301
@@ -115,8 +119,11 @@ class EpisodeArtifactLoggingCallback(DefaultEvaluationCallbacks):
         episode: EpisodeV2,
         **kwargs,
     ) -> None:
-        # Logs the magnitude of each action
-        env = base_env.get_sub_environments()[episode.env_id]
+        super().on_episode_step(worker=worker, policies=policies, base_env=base_env, episode=episode, **kwargs)
+
+        if (env := get_corl_sub_env(base_env, episode)) is None:
+            return
+
         if env.actions:
             # Cycles through each agent
             for agent_id, action_dict in env.actions[-1].items():
@@ -127,8 +134,6 @@ class EpisodeArtifactLoggingCallback(DefaultEvaluationCallbacks):
                     metric_name = f"{agent_id}/{flattened_name}"
                     episode.custom_metrics[metric_name] = value
                     episode.custom_metrics[f"{metric_name}_mag"] = np.abs(value)
-
-        super().on_episode_step(worker=worker, policies=policies, base_env=base_env, episode=episode, **kwargs)
 
     def on_episode_end(
         self, *, worker: RolloutWorker, base_env: BaseEnv, policies: dict[PolicyID, Policy], episode: EpisodeV2, **kwargs
@@ -161,7 +166,9 @@ class EpisodeArtifactLoggingCallback(DefaultEvaluationCallbacks):
         if not worker.config.in_evaluation:
             return
 
-        env = base_env.get_sub_environments()[episode.env_id]
+        if (env := get_corl_sub_env(base_env, episode)) is None:
+            return
+
         done_string_list = []
         # Generate the filenames for trajectories
         for platform_name, done_dict in env.done_info.items():
@@ -224,7 +231,7 @@ class EpisodeArtifactLoggingCallback(DefaultEvaluationCallbacks):
             observation_units=env._observation_units,  # noqa: SLF001
             platform_to_agents=env.platform_to_agents,
             agent_to_platforms=env.agent_to_platforms,
-            done_config=episode.user_data["done_config"],
+            done_config=None,
             initial_state=episode.user_data["initial_state"],
             policy_artifact=policy_artifact,
             space_definitions=space_definitions,

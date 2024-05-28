@@ -1,13 +1,13 @@
+# ---------------------------------------------------------------------------
+# Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
+# Reinforcement Learning (RL) Core.
+#
+# This is a US Government Work not subject to copyright protection in the US.
+#
+# The use, dissemination or disclosure of data in this file is subject to
+# limitation or restriction. See accompanying README and LICENSE for details.
+# ---------------------------------------------------------------------------
 """
----------------------------------------------------------------------------
-Air Force Research Laboratory (AFRL) Autonomous Capabilities Team (ACT3)
-Reinforcement Learning (RL) Core.
-
-This is a US Government Work not subject to copyright protection in the US.
-
-The use, dissemination or disclosure of data in this file is subject to
-limitation or restriction. See accompanying README and LICENSE for details.
----------------------------------------------------------------------------
 Extra callbacks that can be for evaluating during training to
 generate episode artifacts.
 """
@@ -59,7 +59,15 @@ class CorlCentralizedCriticActionFill(DefaultCallbacks):
         return updated_dict
 
     def on_postprocess_trajectory(
-        self, worker, episode, agent_id, policy_id, policies, postprocessed_batch, original_batches, **kwargs  # noqa: PLR6301
+        self,  # noqa: PLR6301
+        worker,
+        episode,
+        agent_id,
+        policy_id,
+        policies,
+        postprocessed_batch,
+        original_batches,
+        **kwargs,
     ):
         """Replaces the actions stored as part of obs which are off by 1 with the actual actions at timestamp"""
         # TODO THIS WILL NEED TO BE UPDATED TO HANDLE MA CASE... Not in setup on CORL currently
@@ -146,7 +154,7 @@ class CentralCriticObserver:
                 # N.B. These will be replaced with batch updates in callback...
                 other_act[key] = (
                     in_agents_act[0][key]
-                    if key in in_agents_act[0]
+                    if key in in_agents_act[0] and in_agents_act[0][key]
                     else observation_space[current_agent_str][CorlCentralizedCriticEnvWrapper.OTHER_ACT_STR][key].sample()
                 )
                 # Determine if we have observations ... If not generate it and make sure it is normalized...
@@ -309,31 +317,55 @@ class CorlCentralizedCriticEnvWrapper(ACT3MultiAgentEnv):
         )
 
     def reset(self, *, seed=None, options=None) -> tuple[OrderedDict, OrderedDict]:
+        #
         # Get the trainable items from the base environment
+        #
         training_obs, trainable_info = super().reset(seed=seed, options=options)
+
+        #
         # Generate observations for the other non trainable parts if enabled
+        # (filter processing when there are no trainable dones - handles the removal case)
+        #
         non_training_obs = None
-        if self.config.process_nontrainables:
+        if self.config.process_nontrainables and training_obs:
             # Populate the non trainable observations
             agent_list = list(self._agent_dict.keys())
             non_training_obs = self._create_non_training_observations(agent_list, self._obs_buffer)
+
         new_training_obs = self.config.observation_fn(
-            training_obs, [self.action_space.sample()], self.observation_space, non_training_obs
+            training_obs,  # Trainable agnet observations
+            [self.action_space.sample()],  # First time through there are no actions
+            self.observation_space,  # The adjusted observation with privalaged information
+            non_training_obs,  # The non trainable obs
         )  # type: ignore
+
         return new_training_obs, trainable_info
 
     def step(self, action_dict: dict):
         """Returns observations from ready agents."""
+        #
         # Get the trainable items from the base environment
+        #
         trainable_observations, trainable_rewards, trainable_dones, dones, trainable_info = super().step(action_dict)
+
+        #
         # Generate observations for the other non trainable parts if enabled
+        # (filter processing when there are no trainable dones - handles the removal case)
+        #
         non_training_obs = None
-        if self.config.process_nontrainables:
-            # Populate the non trainable observations
+        if self.config.process_nontrainables and trainable_observations:
             agent_list = list(self._agent_dict.keys())
             non_training_obs = self._create_non_training_observations(agent_list, self._obs_buffer)
+
+        new_training_obs = self.config.observation_fn(
+            trainable_observations,  # Trainable agnet observations
+            self._actions,  # First time through there are no actions
+            self.observation_space,  # The adjusted observation with privalaged information
+            non_training_obs,  # The non trainable obs
+        )  # type: ignore
+
         return (
-            self.config.observation_fn(trainable_observations, self._actions, self.observation_space, non_training_obs),  # type: ignore
+            new_training_obs,
             trainable_rewards,
             trainable_dones,
             dones,
