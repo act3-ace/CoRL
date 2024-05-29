@@ -22,7 +22,7 @@ from corl.visualization.streamlit_app.utils import checkbox_grid, confidence_int
 
 
 def agent_steps_section(  # noqa: PLR0915
-    tables_dict: dict[str, pd.DataFrame],
+    tables_dict: dict[str, pd.DataFrame | list[FlattenedAgentStep]],
     sess_state: SessionStateProxy,
 ) -> SessionStateProxy:
     """
@@ -41,21 +41,20 @@ def agent_steps_section(  # noqa: PLR0915
 
     _section_headers()
     sess_state.show_mean_with_ci = False
-    agent_step_table = tables_dict["FlattenedAgentStep"]
+    agent_step_table: list[FlattenedAgentStep] = tables_dict["FlattenedAgentStep"]
+    metadata: pd.DataFrame = tables_dict["EpisodeMetaData"]
+    space_data: pd.DataFrame = tables_dict["SpaceData"]
 
     ###########################################################################
     # User Input: Select Attributes to Plot
     ###########################################################################
     user_selected_attributes = expander_select_attributes(agent_step_table)
 
-    test_case_idx = st.number_input(
-        label="Test Case Number", min_value=agent_step_table["test_case"].min(), max_value=agent_step_table["test_case"].max()
-    )
+    test_case_idx = st.number_input(label="Test Case Number", min_value=metadata["test_case"].min(), max_value=metadata["test_case"].max())
 
     sess_state.test_case_selected = test_case_idx
-    attributes_filter = agent_step_table["attribute_name"].isin(user_selected_attributes)
-    # Depending on the selections below, the test case filter may not be used.
-    agents = agent_step_table["agent_id"].unique().tolist()
+
+    agents = space_data["agent_id"].unique().tolist()
     agents.sort()
 
     # #####################################################
@@ -87,9 +86,11 @@ def agent_steps_section(  # noqa: PLR0915
     agent_tabs = st.tabs(agents)
     for idx, agent_id in enumerate(agents):
         # Filter by agent and selected attributes
-        agent_filter = agent_step_table["agent_id"] == agent_id
         # Makes a copy so that we do not modify the underlying dataframe
-        _subset_df = agent_step_table.loc[attributes_filter & agent_filter].copy()
+        filtered_agent_steps = [
+            step for step in agent_step_table if (step.attribute_name in user_selected_attributes) and (step.agent_id == agent_id)
+        ]
+        _subset_df = pd.DataFrame(filtered_agent_steps)
         if _subset_df.empty:
             continue
         # Creates agent tabs
@@ -192,7 +193,7 @@ def agent_steps_section(  # noqa: PLR0915
     return sess_state
 
 
-def expander_select_attributes(agent_step_table: pd.DataFrame) -> list[str]:
+def expander_select_attributes(agent_step_table: list[FlattenedAgentStep]) -> list[str]:
     """Creates a section grouped by attribute type (e.g. observations, actions, rewards) for a grid
     of attributes to select from. Returns the selected attributes.
 
@@ -209,7 +210,15 @@ def expander_select_attributes(agent_step_table: pd.DataFrame) -> list[str]:
     List[str]
         A list of selected attributes
     """
-    selections_table = agent_step_table[["attribute_descrip", "attribute_name", "units"]].drop_duplicates()
+
+    already_seen = []
+    subset = []
+    for row in agent_step_table:
+        if row.attribute_name not in already_seen:
+            subset.append(row)
+            already_seen.append(row.attribute_name)
+    selections_table: pd.DataFrame = pd.DataFrame(subset)[["attribute_descrip", "attribute_name", "units"]]
+
     idx_has_units = selections_table["units"].notnull()
     selections_table["attribute_name_w_units"] = selections_table["attribute_name"].copy()
     selections_table.loc[idx_has_units, "attribute_name_w_units"] = (
@@ -468,7 +477,7 @@ def _expander_filter_dataframe(tables_dict: dict, filtered_agent_table: pd.DataF
     Dataframe filter GUI
     """
     table_names = [
-        name for name, pd_table in tables_dict.items() if "test_case" in pd_table.columns and name != FlattenedAgentStep.__name__
+        name for name, pd_table in tables_dict.items() if name != FlattenedAgentStep.__name__ and "test_case" in pd_table.columns
     ]
     _agent_id_key = filtered_agent_table["agent_id"].unique()[0]
     with st.expander("**Advanced: Filter Test Cases (Show All / Aggregate Only)**"):

@@ -185,7 +185,7 @@ class EpisodeArtifactLoggingCallbackLoader(IRecord):
                 # The episode artifact test case number doesn't matter
                 # for artifacts saved from training
             episode_artifact.test_case = idx
-            artifacts_dict[idx] = episode_artifact
+            artifacts_dict[idx] = [episode_artifact]
 
             # Build the test case dataframe: the test cases dataframe stores the reset parameters
             # we grab the information from the episode artifact

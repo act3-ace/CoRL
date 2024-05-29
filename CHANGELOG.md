@@ -1,3 +1,10 @@
+## 3.19.8
+
+
+### Bug Fixes
+
+* Fix streamlit eval outcome ()
+
 ## 3.19.7
 
 

@@ -12,7 +12,6 @@ Converts the episode artifact into flattened tables
 """
 
 import copy
-import time
 import typing
 import warnings
 from collections import OrderedDict
@@ -137,7 +136,7 @@ class EpisodeArtifactTables:
         input_path = Path(input_path)
         self.config: EpisodeArtifactTablesValidator = EpisodeArtifactTablesValidator(input_path=input_path, file_loader=file_loader)
         self.reader = self.config.file_loader(input_path)
-        self.evaluation_outcome: EvaluationOutcome = self.load_episode_artifacts()
+        self.evaluation_outcome = self.load_episode_artifacts()
         self.status_bar = status_bar
         self.print_func = print_func
 
@@ -147,7 +146,7 @@ class EpisodeArtifactTables:
         self.agent_dones_table = pd.DataFrame([], columns=list(AgentDoneStatus.__dataclass_fields__.keys()))
         self.platform_dones_table = pd.DataFrame([], columns=list(PlatformDoneStates.__dataclass_fields__.keys()))
         self.episode_metadata_table = pd.DataFrame([], columns=list(EpisodeMetaData.__dataclass_fields__.keys()))
-        self.agent_steps_table = pd.DataFrame([], columns=list(FlattenedAgentStep.__dataclass_fields__.keys()))
+        self.agent_steps_table: list[FlattenedAgentStep] = []
         self.space_data_table = pd.DataFrame([], columns=list(SpaceData.__dataclass_fields__.keys()))
 
         # Populates the tables defined above
@@ -164,13 +163,17 @@ class EpisodeArtifactTables:
 
     def load_episode_artifacts(self) -> EvaluationOutcome:
         """Calls the reader to load episode artifact"""
-        return self.reader.load()
+        evaluation_outcome = self.reader.load()
+        for test_idx, artifacts_list in evaluation_outcome.episode_artifacts.items():
+            if len(artifacts_list) > 1:
+                raise NotImplementedError
+            evaluation_outcome.episode_artifacts[test_idx] = artifacts_list[0]
+        return evaluation_outcome
 
     def _populate_tables(self):
         episode_metadata = []
         agent_done_statuses = []
         platform_done_states = []
-        steps = []
 
         space_data_table = self._populate_space_data_table()
 
@@ -193,7 +196,7 @@ class EpisodeArtifactTables:
             platform_done_states.extend(self._generate_rows_platform_dones(episode_artifact=epi_artifact))
 
             # Process Agent Steps
-            steps.extend(self._generate_rows_agent_steps(episode_artifact=epi_artifact, space_data_table=space_data_table))
+            self.agent_steps_table.extend(self._generate_rows_agent_steps(episode_artifact=epi_artifact, space_data_table=space_data_table))
 
         self.print_func("Populating space data table...")
         self.space_data_table = pd.DataFrame(space_data_table)
@@ -201,11 +204,6 @@ class EpisodeArtifactTables:
         self.agent_dones_table = pd.DataFrame(agent_done_statuses)
         self.print_func("Populating platform done states table...")
         self.platform_dones_table = pd.DataFrame(platform_done_states)
-        start = time.time()
-        self.print_func("Populating steps table...this could take awhile")
-        self.agent_steps_table = pd.DataFrame(steps)
-        end = time.time()
-        self.print_func(f"|----Took {end-start} seconds")
         self.print_func("Populating episode metadata table...")
         self.episode_metadata_table = pd.DataFrame(episode_metadata)
 
@@ -259,7 +257,10 @@ class EpisodeArtifactTables:
                 # Observations: Creates a row of data for each observation
                 # #############################################################
                 flattened_obs = self._process_raw_observation(agent_step.observations, multiplatform=len(platform_names) > 1)
-                obs_space = episode_artifact.space_definitions.observation_space[agent_name]
+                obs_space = episode_artifact.space_definitions.observation_space.get(agent_name)
+                # Support for agents with no observation spaces- these are needed for unit conversions
+                if not obs_space:
+                    continue
                 # Process multiplatform observation space. This will get rid of the top-level
                 # Repeated space.
                 if len(platform_names) > 1:
@@ -551,7 +552,7 @@ class EpisodeArtifactTables:
                 for item in space_data_table
                 if (item.agent_id == flatten_agent_step_kwargs["agent_id"]) and (item.attribute_name == attribute_name)
             ]
-            assert len(units) <= 1
+            assert len(set(units)) <= 1
             unit = units[0] if len(units) > 0 else None
         if attribute_name_suffix:
             attribute_name = f"{attribute_name}{attribute_name_suffix}"
